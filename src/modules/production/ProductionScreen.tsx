@@ -1,105 +1,36 @@
-import { useMoney, useCurrencySymbol } from '../../hooks/useMoney';
-import { openSheet } from '../../navigation/sheets';
-import { theme, useColors } from '../../theme';
 import React, { useState } from 'react';
-import {
-  useProductionSetups,
-  useProductionBatches,
-  useSetSetupStatus,
-  useReverseProductionBatch,
-} from '../../hooks/api/useProduction';
+import { openSheet } from '../../navigation/sheets';
+import { theme } from '../../theme';
+import { useMoney } from '../../hooks/useMoney';
+import { useProductionSetups, useProductionBatches } from '../../hooks/api/useProduction';
 import { useIngredients } from '../../hooks/api/useInventory';
-import { useAppStore } from '../../stores/useAppStore';
 import {
-  ScreenContainer,
-  Box,
-  Stack,
-  Row,
-  Typography,
-  Card,
-  Button,
   Badge,
-  Divider,
-  ConfirmDialog,
+  Box,
+  Button,
+  Card,
   ChipPicker,
   EmptyState,
+  IconTile,
   LoadingState,
+  Row,
   ScreenList,
-  ProgressBar,
-  InsetStats,
+  Stack,
+  Typography,
 } from '../../components';
-import { ProductionSetup, ProductionBatch } from '../../types';
 
 type ProductionTab = 'setups' | 'batches';
 
+/** Recipes and batch history. Rows stay short; tap one for its full details. */
 export const ProductionScreen: React.FC = () => {
   const money = useMoney();
-  const symbol = useCurrencySymbol();
-  const colors = useColors();
-  const { data: ingredients = [] } = useIngredients();
-  const seriesColors = [
-    colors.brand.primary,
-    colors.accent.warning,
-    colors.accent.success,
-    colors.accent.info,
-    colors.accent.error,
-  ];
   const [activeTab, setActiveTab] = useState<ProductionTab>('setups');
-  const [batchToReverse, setBatchToReverse] = useState<ProductionBatch | null>(null);
-
   const { data: setups = [], isLoading: loadingSetups } = useProductionSetups();
   const { data: batches = [], isLoading: loadingBatches } = useProductionBatches();
-
-  const setStatusMutation = useSetSetupStatus();
-  const reverseBatchMutation = useReverseProductionBatch();
-  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
-
-  const handleStartRun = (setupId: string) => {
-    openSheet('start_batch', { setupId });
-  };
-
-  const handleToggleSetupStatus = async (setup: ProductionSetup) => {
-    const newStatus = setup.status === 'active' ? 'paused' : 'active';
-    try {
-      await setStatusMutation.mutateAsync({ id: setup.id, status: newStatus });
-      setBannerAlert({
-        title: 'Recipe Updated',
-        message: `Recipe "${setup.name}" is now ${newStatus}.`,
-        variant: 'info',
-      });
-    } catch (err: any) {
-      setBannerAlert({
-        title: 'Status Error',
-        message: err.message,
-        variant: 'danger',
-      });
-    }
-  };
-
-  const handleConfirmReversal = async () => {
-    if (!batchToReverse) return;
-    try {
-      await reverseBatchMutation.mutateAsync({
-        batchId: batchToReverse.id,
-        reason: 'Operator reversal from production screen',
-      });
-      setBannerAlert({
-        title: 'Batch Reversal Confirmed',
-        message: `Batch ${batchToReverse.batchNumber} has been reversed. Raw materials & packaging containers have been returned to inventory, and finished stock was decremented.`,
-        variant: 'warning',
-      });
-      setBatchToReverse(null);
-    } catch (err: any) {
-      setBannerAlert({
-        title: 'Reversal Failed',
-        message: err.message,
-        variant: 'danger',
-      });
-    }
-  };
+  const { data: ingredients = [] } = useIngredients();
 
   const header = (
-    <>
+    <Stack gap="md" style={{ marginBottom: theme.spacing.md }}>
       <Row gap="sm" wrap>
         <Button
           label="Start Batch"
@@ -114,361 +45,135 @@ export const ProductionScreen: React.FC = () => {
           onPress={() => openSheet('create_setup')}
         />
       </Row>
-
       <ChipPicker
+        variant="segmented"
         options={[
           { value: 'setups', label: 'Recipes', count: setups.length },
-          { value: 'batches', label: 'Batches & History', count: batches.length },
+          { value: 'batches', label: 'Batches', count: batches.length },
         ]}
         selected={activeTab}
         onSelect={(tab) => setActiveTab(tab as ProductionTab)}
       />
-    </>
-  );
-
-  const overlays = (
-    <>
-      {/* Controlled Reversal Confirmation Dialog */}
-      <ConfirmDialog
-        visible={!!batchToReverse}
-        onClose={() => setBatchToReverse(null)}
-        onConfirm={handleConfirmReversal}
-        title="Reverse Production Batch?"
-        message={`Are you sure you want to reverse batch ${batchToReverse?.batchNumber}? This will create compensating stock movements, returning consumed ingredients and packaging to inventory, and reducing finished goods by ${batchToReverse?.unitsPacked || batchToReverse?.bagsPacked} ${batchToReverse?.outputUnit || 'units'}.`}
-        confirmLabel="Confirm Controlled Reversal"
-        cancelLabel="Keep Batch"
-        isDestructive
-        loading={reverseBatchMutation.isPending}
-      />
-    </>
+    </Stack>
   );
 
   if (activeTab === 'setups') {
     return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-            </Stack>
-          }
-          data={setups}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingSetups ? (
-              <LoadingState message="Loading recipes..." />
-            ) : setups.length === 0 ? (
-              <EmptyState
-                title="No Recipes Yet"
-                description="Create a recipe to prefill ingredients and quantities for daily batches."
-                actionLabel="+ Create First Setup"
-                onAction={() => openSheet('create_setup')}
-              />
-            ) : null
-          }
-          renderItem={({ item: setup }) => (
-            <Card key={setup.id} variant="elevated" padding="normal">
-              <Row justify="space-between" align="flex-start" gap="sm">
-                <Box flex={1} style={{ marginRight: theme.spacing.sm }}>
-                  <Row gap="xs" align="center" wrap>
-                    <Typography variant="title" weight="bold" color="primary">
-                      {setup.name}
-                    </Typography>
-                    <Badge label={`v${setup.version}`} variant="forest" size="sm" />
-                    <Badge
-                      label={setup.status.toUpperCase()}
-                      variant={setup.status === 'active' ? 'success' : 'neutral'}
-                      size="sm"
-                    />
-                  </Row>
-                  <Typography
-                    variant="bodySmall"
-                    color="secondary"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    Produces: {setup.productName} ({setup.unitSize || setup.bagWeightKg}{' '}
-                    {setup.baseUnit || 'kg'} per {setup.outputUnit || 'unit'})
-                  </Typography>
-                  <Typography variant="caption" color="muted">
-                    Target Batch Output: {setup.targetUnits || setup.targetBags}{' '}
-                    {setup.outputUnit || 'units'} (
-                    {(
-                      (setup.targetUnits || setup.targetBags || 0) *
-                      (setup.unitSize || setup.bagWeightKg || 0)
-                    ).toLocaleString('en-IN')}{' '}
-                    {setup.baseUnit || 'kg'})
-                  </Typography>
-                </Box>
-              </Row>
-
-              <Divider variant="subtle" spacing="sm" />
-
-              {(() => {
-                const lines = setup.recipeItems.map((item, index) => {
-                  const cost = ingredients.find((i) => i.id === item.ingredientId)?.unitCost ?? 0;
-                  return { item, index, cost: item.targetQuantity * cost };
-                });
-                const batchCost = lines.reduce((sum, line) => sum + line.cost, 0);
-                const units = setup.targetUnits || setup.targetBags || 0;
-                return (
-                  <Stack gap="md">
-                    <InsetStats
-                      stats={[
-                        {
-                          label: 'Standard batch cost',
-                          value: `${money(Math.round(batchCost))}`,
-                        },
-                        {
-                          label: 'Cost per unit',
-                          value: units > 0 ? `${symbol}${(batchCost / units).toFixed(2)}` : '—',
-                        },
-                      ]}
-                    />
-                    <Box>
-                      <Typography
-                        variant="label"
-                        color="muted"
-                        style={{ marginBottom: theme.spacing.xs }}
-                      >
-                        Formulation
-                      </Typography>
-                      <ProgressBar
-                        height={8}
-                        accessibilityLabel="Formulation distribution by quantity"
-                        segments={lines.map((line) => ({
-                          value: line.item.targetQuantity,
-                          color: seriesColors[line.index % seriesColors.length],
-                        }))}
-                      />
-                      <Stack gap="xxs" style={{ marginTop: theme.spacing.sm }}>
-                        {lines.map((line) => (
-                          <Row key={line.item.ingredientId ?? line.index} justify="space-between">
-                            <Row gap="xs" align="center">
-                              <Box
-                                style={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: theme.radii.full,
-                                  backgroundColor: seriesColors[line.index % seriesColors.length],
-                                }}
-                              />
-                              <Typography variant="bodySmall" color="secondary">
-                                {line.item.ingredientName}
-                              </Typography>
-                            </Row>
-                            <Typography variant="dataMedium" color="primary" tabular>
-                              {line.item.targetQuantity} {line.item.unit}
-                            </Typography>
-                          </Row>
-                        ))}
-                      </Stack>
-                    </Box>
-                  </Stack>
-                );
-              })()}
-
-              {setup.notes && (
-                <Typography
-                  variant="caption"
-                  color="muted"
-                  style={{ marginTop: theme.spacing.xsm, fontStyle: 'italic' }}
-                >
-                  Instructions: {setup.notes}
-                </Typography>
-              )}
-
-              <Divider variant="subtle" spacing="sm" />
-
-              {/* Setup Actions */}
-              <Row gap="sm" justify="flex-end">
-                <Button
-                  label={setup.status === 'active' ? 'Pause Recipe' : 'Activate'}
-                  variant="ghost"
-                  size="sm"
-                  onPress={() => handleToggleSetupStatus(setup)}
-                />
-                {setup.status === 'active' && (
-                  <Button
-                    label="Start Batch From This"
-                    variant="primary"
-                    size="sm"
-                    leftIcon="play-outline"
-                    onPress={() => handleStartRun(setup.id)}
-                  />
-                )}
-              </Row>
-            </Card>
-          )}
-        />
-        {overlays}
-      </>
-    );
-  }
-
-  if (activeTab === 'batches') {
-    return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-              <Stack gap="md">
-                {' '}
-                <Typography variant="bodySmall" color="secondary">
-                  Authoritative batch costing and atomic inventory movements.
-                </Typography>
-              </Stack>
-            </Stack>
-          }
-          data={batches}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingBatches ? (
-              <LoadingState message="Loading completed batches..." />
-            ) : batches.length === 0 ? (
-              <EmptyState
-                title="No Production Batches Yet"
-                description="Start your first batch using an active recipe."
-                actionLabel="+ Start Batch"
-                onAction={() => openSheet('start_batch')}
-              />
-            ) : null
-          }
-          renderItem={({ item: batch }) => (
+      <ScreenList
+        header={header}
+        data={setups}
+        keyExtractor={(row) => row.id}
+        placeholder={
+          loadingSetups ? (
+            <LoadingState message="Loading recipes..." />
+          ) : setups.length === 0 ? (
+            <EmptyState
+              title="No recipes yet"
+              description="Create a recipe to prefill ingredients and quantities for daily batches."
+              actionLabel="+ New Recipe"
+              onAction={() => openSheet('create_setup')}
+            />
+          ) : null
+        }
+        renderItem={({ item: setup }) => {
+          const active = setup.status === 'active';
+          const units = setup.targetUnits || setup.targetBags || 0;
+          const batchCost = setup.recipeItems.reduce(
+            (sum, item) =>
+              sum +
+              item.targetQuantity *
+                (ingredients.find((i) => i.id === item.ingredientId)?.unitCost ?? 0),
+            0,
+          );
+          return (
             <Card
-              key={batch.id}
-              variant={batch.status === 'reversed' ? 'flat' : 'elevated'}
-              padding="normal"
-              style={{
-                opacity: batch.status === 'reversed' ? 0.75 : 1,
-              }}
+              variant="elevated"
+              padding="compact"
+              onPress={() => openSheet('recipe_detail', { setupId: setup.id })}
             >
-              <Row justify="space-between" align="flex-start" gap="sm">
-                <Box flex={1} style={{ marginRight: theme.spacing.sm }}>
-                  <Row gap="xs" align="center" wrap>
-                    <Typography variant="title" weight="bold" color="primary">
-                      {batch.batchNumber}
-                    </Typography>
-                    <Badge
-                      label={batch.status.toUpperCase()}
-                      variant={batch.status === 'confirmed' ? 'success' : 'danger'}
-                      size="sm"
-                    />
-                  </Row>
-                  <Typography
-                    variant="bodySmall"
-                    color="secondary"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    {batch.productName} • v{batch.setupVersion}
+              <Row gap="sm" align="center">
+                <IconTile icon="flask-outline" tone={active ? 'primary' : 'neutral'} size={40} />
+                <Box flex={1}>
+                  <Typography variant="title" color="primary" numberOfLines={1}>
+                    {setup.name}
                   </Typography>
-                  <Typography variant="caption" color="muted">
-                    Production Date: {batch.date}
+                  <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                    {setup.productName}
+                    {units > 0 && batchCost > 0 ? ` • ${money(batchCost / units)} per unit` : ''}
                   </Typography>
                 </Box>
-
-                {/* Unit Cost Highlights */}
-                <Box align="flex-end" style={{ minWidth: 85, flexShrink: 0 }}>
-                  <Typography variant="bodyLarge" weight="bold" color="brandDeep">
-                    {symbol}
-                    {(batch.directCostPerUnit || batch.directCostPerBag || 0).toFixed(1)}
-                  </Typography>
-                  <Typography variant="caption" color="muted">
-                    cost / {batch.outputUnit || 'unit'}
-                  </Typography>
-                </Box>
+                <Badge
+                  label={active ? 'Active' : 'Paused'}
+                  variant={active ? 'success' : 'neutral'}
+                  size="sm"
+                />
               </Row>
-
-              <Divider variant="subtle" spacing="sm" />
-
-              {/* Batch Cost & Yield Summary */}
-              <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
-                <Typography variant="bodySmall" color="secondary">
-                  Output Produced:
-                </Typography>
-                <Typography variant="bodySmall" weight="bold" color="primary">
-                  {batch.unitsPacked || batch.bagsPacked} {batch.outputUnit || 'units'} (
-                  {batch.actualFinishedQuantity || batch.actualFinishedWeightKg}{' '}
-                  {batch.baseUnit || 'kg'})
-                </Typography>
-              </Row>
-
-              <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
-                <Typography variant="bodySmall" color="secondary">
-                  Direct Batch Cost:
-                </Typography>
-                <Typography variant="bodySmall" weight="bold" color="primary">
-                  {money(batch.directBatchCost)} ({symbol}
-                  {(batch.directCostPerBaseUnit || batch.directCostPerKg || 0).toFixed(2)}/
-                  {batch.baseUnit || 'kg'})
-                </Typography>
-              </Row>
-
-              {/* Consumed Ingredients Breakdown */}
-              <Box bg="surfaceSecondary" padding="compact" borderRadius="md" marginTop="xs">
-                <Typography
-                  variant="label"
-                  color="muted"
-                  style={{ marginBottom: theme.spacing.xs }}
-                >
-                  ACTUAL INGREDIENTS CONSUMED
-                </Typography>
-                {batch.itemsConsumed.map((item) => (
-                  <Row key={item.ingredientId} justify="space-between">
-                    <Typography variant="caption" color="secondary">
-                      • {item.ingredientName}:
-                    </Typography>
-                    <Typography variant="caption" weight="semibold" color="primary">
-                      {item.actualQuantity} {item.unit} ({money(item.lineCost)})
-                    </Typography>
-                  </Row>
-                ))}
-                <Row justify="space-between" style={{ marginTop: theme.spacing.xxs }}>
-                  <Typography variant="caption" color="secondary">
-                    • Packaging / Container Units:
-                  </Typography>
-                  <Typography variant="caption" weight="semibold" color="primary">
-                    {batch.packagingUsedUnits || batch.packagingUsedBags}{' '}
-                    {batch.outputUnit || 'pcs'} ({money(batch.packagingCost)})
-                  </Typography>
-                </Row>
-              </Box>
-
-              {batch.notes && (
-                <Typography
-                  variant="caption"
-                  color="muted"
-                  style={{ marginTop: theme.spacing.xsm }}
-                >
-                  Notes: {batch.notes}
-                </Typography>
-              )}
-
-              {/* Controlled Reversal Action (PRD Section 3.6 & 5.6) */}
-              {batch.status === 'confirmed' && (
-                <Box marginTop="md" align="flex-end">
-                  <Button
-                    label="Reverse Batch"
-                    variant="danger"
-                    size="sm"
-                    leftIcon="arrow-undo-outline"
-                    onPress={() => setBatchToReverse(batch)}
-                  />
-                </Box>
-              )}
             </Card>
-          )}
-        />
-        {overlays}
-      </>
+          );
+        }}
+      />
     );
   }
 
   return (
-    <ScreenContainer>
-      <Stack gap="lg">{header}</Stack>
-      {overlays}
-    </ScreenContainer>
+    <ScreenList
+      header={header}
+      data={batches}
+      keyExtractor={(row) => row.id}
+      placeholder={
+        loadingBatches ? (
+          <LoadingState message="Loading batches..." />
+        ) : batches.length === 0 ? (
+          <EmptyState
+            title="No batches yet"
+            description="Start your first batch using an active recipe."
+            actionLabel="+ Start Batch"
+            onAction={() => openSheet('start_batch')}
+          />
+        ) : null
+      }
+      renderItem={({ item: batch }) => {
+        const reversed = batch.status === 'reversed';
+        return (
+          <Card
+            variant="elevated"
+            padding="compact"
+            onPress={() => openSheet('batch_detail', { batchId: batch.id })}
+          >
+            <Row gap="sm" align="center">
+              <IconTile
+                icon={reversed ? 'refresh' : 'checkmark'}
+                tone={reversed ? 'danger' : 'success'}
+                size={32}
+              />
+              <Box flex={1}>
+                <Row gap="xs" align="center">
+                  <Typography variant="dataMedium" color="secondary">
+                    {batch.batchNumber.replace(/^BAT-\d+-/, '#')}
+                  </Typography>
+                  <Typography
+                    variant="title"
+                    color="primary"
+                    numberOfLines={1}
+                    style={{ flexShrink: 1 }}
+                  >
+                    {batch.productName}
+                  </Typography>
+                </Row>
+                <Typography variant="bodySmall" color="secondary">
+                  {batch.unitsPacked} {batch.outputUnit} • {batch.date}
+                </Typography>
+              </Box>
+              <Badge
+                label={reversed ? 'Reversed' : 'Done'}
+                variant={reversed ? 'danger' : 'success'}
+                size="sm"
+              />
+            </Row>
+          </Card>
+        );
+      }}
+    />
   );
 };
 

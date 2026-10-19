@@ -1,26 +1,25 @@
-import { useMoney } from '../../hooks/useMoney';
-import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
+import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
+import { useMoney } from '../../hooks/useMoney';
 import { useCustomerPayments } from '../../hooks/api/useSales';
 import { useCustomers } from '../../hooks/api/useCustomers';
 import { useExpenses } from '../../hooks/api/useExpenses';
 import {
-  Box,
-  Stack,
-  Row,
-  Typography,
-  Card,
-  Button,
   Badge,
-  ListItem,
-  Divider,
+  Box,
+  Button,
+  Card,
   ChipPicker,
-  LoadingState,
   EmptyState,
+  Icon,
+  IconTile,
+  LoadingState,
+  Row,
   ScreenList,
+  Stack,
+  Typography,
 } from '../../components';
-import { Customer } from '../../types';
 
 type LedgerTab = 'payments' | 'customers' | 'expenses';
 
@@ -29,284 +28,211 @@ export interface LedgerScreenProps {
   tabs?: LedgerTab[];
 }
 
+const LABEL: Record<LedgerTab, string> = {
+  customers: 'Customers',
+  payments: 'Payments',
+  expenses: 'Expenses',
+};
+
+/** Customers, payments received and expenses as short rows; tap for full details. */
 export const LedgerScreen: React.FC<LedgerScreenProps> = ({
   tabs = ['customers', 'payments', 'expenses'],
 }) => {
   const money = useMoney();
   const [activeTab, setActiveTab] = useState<LedgerTab>(tabs[0]);
-
   const { data: customers = [], isLoading: loadingCustomers } = useCustomers();
-  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
-
-  const handleCollectPayment = (customer: Customer) => {
-    openSheet('record_payment', { customerId: customer.id });
-  };
-
   const {
     data: payments = [],
     isLoading: loadingPayments,
-    refetch: refetchPayments,
+    refetch,
+    isRefetching,
   } = useCustomerPayments();
+  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
 
-  const handleRefresh = async () => {
-    await refetchPayments();
+  const counts: Record<LedgerTab, number> = {
+    customers: customers.length,
+    payments: payments.length,
+    expenses: expenses.length,
   };
 
+  const action =
+    activeTab === 'customers' ? (
+      <Button
+        label="Add Customer"
+        variant="primary"
+        leftIcon="person-add-outline"
+        onPress={() => openSheet('create_customer')}
+      />
+    ) : activeTab === 'payments' ? (
+      <Button
+        label="Receive Payment"
+        variant="primary"
+        leftIcon="cash-outline"
+        onPress={() => openSheet('record_payment')}
+      />
+    ) : (
+      <Button
+        label="Record Expense"
+        variant="primary"
+        leftIcon="add-circle-outline"
+        onPress={() => openSheet('create_expense')}
+      />
+    );
+
   const header = (
-    <>
+    <Stack gap="md" style={{ marginBottom: theme.spacing.md }}>
+      <Row>{action}</Row>
       {tabs.length > 1 && (
         <ChipPicker
-          options={tabs.map((id) => ({
-            value: id,
-            label: id === 'payments' ? 'Payments' : id === 'customers' ? 'Customers' : 'Expenses',
-            count:
-              id === 'payments'
-                ? payments.length
-                : id === 'customers'
-                  ? customers.length
-                  : expenses.length,
-          }))}
+          variant="segmented"
+          options={tabs.map((id) => ({ value: id, label: LABEL[id], count: counts[id] }))}
           selected={activeTab}
           onSelect={(tab) => setActiveTab(tab as LedgerTab)}
         />
       )}
-    </>
+    </Stack>
   );
-
-  const overlays = null;
 
   if (activeTab === 'customers') {
     return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-              <Stack gap="md">
-                {' '}
-                <Row justify="space-between" align="center">
-                  <Typography variant="bodySmall" color="secondary">
-                    Everyone you sell to, with what they owe you.
-                  </Typography>
-                  <Button
-                    label="+ Add Customer"
-                    variant="primary"
-                    size="sm"
-                    leftIcon="person-add-outline"
-                    onPress={() => openSheet('create_customer')}
-                  />
-                </Row>
-              </Stack>
-            </Stack>
-          }
-          data={customers}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingCustomers ? (
-              <LoadingState message="Loading customers ledger..." />
-            ) : customers.length === 0 ? (
-              <EmptyState
-                title="No Customers Yet"
-                description="Register your buyers to track what they owe you."
-                actionLabel="+ Add Customer"
-                onAction={() => openSheet('create_customer')}
-              />
-            ) : null
-          }
-          renderItem={({ item: c }) => (
-            <Card
-              key={c.id}
-              variant="elevated"
-              padding="normal"
-              onPress={() => {
-                openSheet('customer_detail', { customerId: c.id });
-              }}
-            >
-              <Row justify="space-between" align="flex-start">
-                <Box flex={1}>
-                  <Typography variant="title" weight="bold" color="primary">
-                    {c.name}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="muted"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    Phone: {c.phone} • Address: {c.address}
-                  </Typography>
-                  {c.gstin && (
-                    <Typography variant="caption" weight="semibold" color="secondary">
-                      GSTIN: {c.gstin}
-                    </Typography>
-                  )}
-                </Box>
-
+      <ScreenList
+        header={header}
+        data={customers}
+        keyExtractor={(row) => row.id}
+        placeholder={
+          loadingCustomers ? (
+            <LoadingState message="Loading customers..." />
+          ) : customers.length === 0 ? (
+            <EmptyState
+              title="No customers yet"
+              description="Add the people and shops you sell to."
+              actionLabel="+ Add Customer"
+              onAction={() => openSheet('create_customer')}
+            />
+          ) : null
+        }
+        renderItem={({ item: customer }) => (
+          <Card
+            variant="elevated"
+            padding="compact"
+            onPress={() => openSheet('customer_detail', { customerId: customer.id })}
+          >
+            <Row gap="sm" align="center">
+              <IconTile icon="person-outline" tone="primary" size={32} />
+              <Box flex={1}>
+                <Typography variant="title" color="primary" numberOfLines={1}>
+                  {customer.name}
+                </Typography>
+                <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                  {customer.phone}
+                </Typography>
+              </Box>
+              {customer.outstandingBalance > 0 ? (
                 <Box align="flex-end">
-                  <Typography
-                    variant="bodyLarge"
-                    weight="bold"
-                    color={c.outstandingBalance > 0 ? 'warning' : 'success'}
-                  >
-                    {money(c.outstandingBalance)}
+                  <Typography variant="dataMedium" color="warning" tabular>
+                    {money(customer.outstandingBalance)}
                   </Typography>
-                  <Badge
-                    label={c.outstandingBalance > 0 ? 'DUES PENDING' : 'ALL CLEAR'}
-                    variant={c.outstandingBalance > 0 ? 'warning' : 'success'}
-                    size="sm"
-                  />
+                  <Typography variant="caption" color="muted">
+                    owes you
+                  </Typography>
                 </Box>
-              </Row>
-
-              <Divider variant="subtle" spacing="sm" />
-
-              <Row justify="space-between" align="center">
-                <Button
-                  label="View Ledger"
-                  variant="ghost"
-                  size="sm"
-                  leftIcon="person-outline"
-                  onPress={() => {
-                    openSheet('customer_detail', { customerId: c.id });
-                  }}
-                />
-
-                {c.outstandingBalance > 0 && (
-                  <Button
-                    label="Receive Payment"
-                    variant="primary"
-                    size="sm"
-                    leftIcon="cash-outline"
-                    onPress={() => handleCollectPayment(c)}
-                  />
-                )}
-              </Row>
-            </Card>
-          )}
-        />
-        {overlays}
-      </>
-    );
-  }
-
-  if (activeTab === 'expenses') {
-    return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-              <Stack gap="md">
-                {' '}
-                <Row justify="space-between" align="center">
-                  <Typography variant="bodySmall" color="secondary">
-                    Factory utilities, labour wages, delivery fuel, and machine upkeep.
-                  </Typography>
-                  <Button
-                    label="+ Record Expense"
-                    variant="primary"
-                    size="sm"
-                    leftIcon="add-circle-outline"
-                    onPress={() => openSheet('create_expense')}
-                  />
-                </Row>
-              </Stack>
-            </Stack>
-          }
-          data={expenses}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingExpenses ? (
-              <LoadingState message="Loading factory expenses..." />
-            ) : expenses.length === 0 ? (
-              <EmptyState
-                title="No Expenses Recorded"
-                description="Log operating costs to track realistic factory profitability."
-                actionLabel="+ Record Expense"
-                onAction={() => openSheet('create_expense')}
-              />
-            ) : null
-          }
-          renderItem={({ item: e }) => (
-            <Card variant="elevated" padding="compact">
-              <ListItem
-                key={e.id}
-                title={e.description}
-                subtitle={`Category: ${e.category.toUpperCase()} • Voucher #${e.expenseNumber}`}
-                meta={`Date: ${e.date}`}
-                value={`${money(e.amount)}`}
-                valueColor="error"
-                badge={{
-                  label: e.category.toUpperCase(),
-                  variant:
-                    e.category === 'labour'
-                      ? 'forest'
-                      : e.category === 'electricity'
-                        ? 'warning'
-                        : 'neutral',
-                }}
-              />
-            </Card>
-          )}
-        />
-        {overlays}
-      </>
+              ) : (
+                <Typography variant="bodySmall" color="success">
+                  Settled
+                </Typography>
+              )}
+              <Icon name="chevron-forward" size={18} color="subtle" />
+            </Row>
+          </Card>
+        )}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+      />
     );
   }
 
   if (activeTab === 'payments') {
     return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-              <Stack gap="md">
-                {' '}
-                <Typography variant="bodySmall" color="secondary">
-                  Customer collections ledger and payment receipts.
+      <ScreenList
+        header={header}
+        data={payments}
+        keyExtractor={(row) => row.id}
+        placeholder={
+          loadingPayments ? (
+            <LoadingState message="Loading payments..." />
+          ) : payments.length === 0 ? (
+            <EmptyState
+              title="No payments yet"
+              description="Payments you receive against invoices appear here."
+              actionLabel="+ Receive Payment"
+              onAction={() => openSheet('record_payment')}
+            />
+          ) : null
+        }
+        renderItem={({ item: payment }) => (
+          <Card variant="elevated" padding="compact">
+            <Row gap="sm" align="center">
+              <IconTile icon="cash-outline" tone="success" size={32} />
+              <Box flex={1}>
+                <Typography variant="title" color="primary" numberOfLines={1}>
+                  {payment.customerName}
                 </Typography>
-              </Stack>
-            </Stack>
-          }
-          data={payments}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingPayments ? (
-              <LoadingState message="Loading payment records..." />
-            ) : payments.length === 0 ? (
-              <EmptyState
-                title="No Payments Recorded"
-                description="Payments received against invoices will appear here."
-                actionLabel="+ Receive Payment"
-                onAction={() => openSheet('record_payment')}
-              />
-            ) : null
-          }
-          renderItem={({ item: p }) => (
-            <Card variant="elevated" padding="compact">
-              <ListItem
-                key={p.id}
-                title={p.customerName}
-                subtitle={`Receipt #${p.paymentNumber} • Mode: ${p.paymentMethod.toUpperCase()}`}
-                meta={`${p.date} • ${p.notes || 'Payment credited'}`}
-                value={`${money(p.amount)}`}
-                valueColor="success"
-                badge={{
-                  label: p.paymentMethod.toUpperCase(),
-                  variant: 'forest',
-                }}
-              />
-            </Card>
-          )}
-          refreshing={false}
-          onRefresh={handleRefresh}
-        />
-        {overlays}
-      </>
+                <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                  {payment.date} • {payment.paymentMethod.replace('_', ' ')}
+                </Typography>
+              </Box>
+              <Typography variant="dataMedium" color="success" tabular>
+                +{money(payment.amount)}
+              </Typography>
+            </Row>
+          </Card>
+        )}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+      />
     );
   }
 
-  return null;
+  return (
+    <ScreenList
+      header={header}
+      data={expenses}
+      keyExtractor={(row) => row.id}
+      placeholder={
+        loadingExpenses ? (
+          <LoadingState message="Loading expenses..." />
+        ) : expenses.length === 0 ? (
+          <EmptyState
+            title="No expenses yet"
+            description="Log wages, power, fuel and other costs to see real profit."
+            actionLabel="+ Record Expense"
+            onAction={() => openSheet('create_expense')}
+          />
+        ) : null
+      }
+      renderItem={({ item: expense }) => (
+        <Card variant="elevated" padding="compact">
+          <Row gap="sm" align="center">
+            <IconTile icon="wallet-outline" tone="warning" size={32} />
+            <Box flex={1}>
+              <Typography variant="title" color="primary" numberOfLines={1}>
+                {expense.description}
+              </Typography>
+              <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                {expense.date}
+              </Typography>
+            </Box>
+            <Box align="flex-end">
+              <Typography variant="dataMedium" color="error" tabular>
+                −{money(expense.amount)}
+              </Typography>
+              <Badge label={expense.category} variant="neutral" size="sm" />
+            </Box>
+          </Row>
+        </Card>
+      )}
+    />
+  );
 };
 
 export default LedgerScreen;

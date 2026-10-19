@@ -1,47 +1,36 @@
-import { useMoney } from '../../hooks/useMoney';
-import React from 'react';
+import React, { useState } from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
+import { useMoney } from '../../hooks/useMoney';
 import { usePurchases, useSuppliers } from '../../hooks/api/useInventory';
 import {
+  Badge,
   Box,
   Button,
   Card,
   ChipPicker,
   EmptyState,
+  Icon,
+  IconTile,
   LoadingState,
   Row,
   ScreenList,
-  InsetStats,
   Stack,
   Typography,
-  Badge,
-  Divider,
 } from '../../components';
-import { Purchase } from '../../types';
 
 type ProcureTab = 'bills' | 'suppliers';
 
+/** Purchase bills and suppliers. Rows stay short; tap one for everything about it. */
 export const ProcureScreen: React.FC = () => {
   const money = useMoney();
-  const [activeTab, setActiveTab] = React.useState<ProcureTab>('bills');
-
-  const {
-    data: purchases = [],
-    isLoading: loadingPurchases,
-    refetch: refetchPurchases,
-    isRefetching,
-  } = usePurchases();
+  const [activeTab, setActiveTab] = useState<ProcureTab>('bills');
+  const { data: purchases = [], isLoading: loadingBills, refetch, isRefetching } = usePurchases();
   const { data: suppliers = [], isLoading: loadingSuppliers } = useSuppliers();
-
-  const handleOpenPurchaseDetail = (purchase: Purchase) => {
-    openSheet('purchase_detail', { purchaseId: purchase.id });
-  };
-
-  const totalPayable = suppliers.reduce((sum, s) => sum + (s.balanceDue || 0), 0);
+  const payable = suppliers.reduce((sum, s) => sum + (s.balanceDue || 0), 0);
 
   const header = (
-    <>
+    <Stack gap="md" style={{ marginBottom: theme.spacing.md }}>
       <Row gap="sm" wrap>
         <Button
           label="Purchase Bill"
@@ -56,234 +45,133 @@ export const ProcureScreen: React.FC = () => {
           onPress={() => openSheet('create_supplier')}
         />
       </Row>
-
-      <InsetStats
-        stats={[
-          {
-            label: 'Payables',
-            value: `${money(totalPayable)}`,
-            valueColor: totalPayable > 0 ? 'warning' : 'primary',
-          },
-          { label: 'Suppliers', value: String(suppliers.length) },
-          { label: 'Bills', value: String(purchases.length) },
-        ]}
-      />
-
+      <Card variant="elevated" padding="compact">
+        <Row justify="space-between" align="center">
+          <Typography variant="bodySmall" color="secondary">
+            You owe suppliers
+          </Typography>
+          <Typography variant="dataLarge" color={payable > 0 ? 'warning' : 'primary'} tabular>
+            {money(payable)}
+          </Typography>
+        </Row>
+      </Card>
       <ChipPicker
+        variant="segmented"
         options={[
-          { value: 'bills', label: 'Purchase Bills', count: purchases.length },
+          { value: 'bills', label: 'Bills', count: purchases.length },
           { value: 'suppliers', label: 'Suppliers', count: suppliers.length },
         ]}
         selected={activeTab}
         onSelect={(tab) => setActiveTab(tab as ProcureTab)}
       />
-    </>
+    </Stack>
   );
 
   if (activeTab === 'bills') {
     return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-              <Stack gap="md">
-                {' '}
-                <Row justify="space-between" align="center">
-                  <Typography variant="bodySmall" color="secondary">
-                    Raw material inward bills and supplier payables.
-                  </Typography>
-                  <Button
-                    label="+ Record Purchase"
-                    variant="primary"
-                    size="sm"
-                    leftIcon="cart-outline"
-                    onPress={() => openSheet('record_purchase')}
-                  />
-                </Row>
-              </Stack>
-            </Stack>
-          }
-          data={purchases}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingPurchases ? (
-              <LoadingState message="Loading inward purchases..." />
-            ) : purchases.length === 0 ? (
-              <EmptyState
-                title="No Purchase Bills"
-                description="Log inward raw materials and packaging deliveries to maintain accurate inventory."
-                actionLabel="+ Record Purchase Bill"
-                onAction={() => openSheet('record_purchase')}
+      <ScreenList
+        header={header}
+        data={purchases}
+        keyExtractor={(row) => row.id}
+        placeholder={
+          loadingBills ? (
+            <LoadingState message="Loading bills..." />
+          ) : purchases.length === 0 ? (
+            <EmptyState
+              title="No purchase bills"
+              description="Record a delivery to keep stock and payables accurate."
+              actionLabel="+ Purchase Bill"
+              onAction={() => openSheet('record_purchase')}
+            />
+          ) : null
+        }
+        renderItem={({ item: bill }) => (
+          <Card
+            variant="elevated"
+            padding="compact"
+            onPress={() => openSheet('purchase_detail', { purchaseId: bill.id })}
+          >
+            <Row gap="sm" align="center">
+              <IconTile
+                icon="cart-outline"
+                tone={bill.balanceDue > 0 ? 'warning' : 'success'}
+                size={32}
               />
-            ) : null
-          }
-          renderItem={({ item: pur }) => (
-            <Card
-              key={pur.id}
-              variant="elevated"
-              padding="normal"
-              onPress={() => handleOpenPurchaseDetail(pur)}
-            >
-              <Row justify="space-between" align="flex-start" gap="sm">
-                <Box flex={1}>
-                  <Row gap="xs" align="center" wrap>
-                    <Typography variant="title" weight="bold" color="primary">
-                      {pur.purchaseNumber}
-                    </Typography>
-                    <Badge
-                      label={pur.paymentStatus.toUpperCase()}
-                      variant={
-                        pur.paymentStatus === 'paid'
-                          ? 'success'
-                          : pur.paymentStatus === 'partial'
-                            ? 'warning'
-                            : 'danger'
-                      }
-                      size="sm"
-                    />
-                  </Row>
-                  <Typography
-                    variant="bodyMedium"
-                    weight="semibold"
-                    color="secondary"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    {pur.supplierName}
-                  </Typography>
-                  <Typography variant="caption" color="muted">
-                    Inward Date: {pur.date} • {pur.quantity.toLocaleString('en-IN')} {pur.unit} of{' '}
-                    {pur.itemName}
-                  </Typography>
-                  {pur.billNumber && (
-                    <Typography variant="caption" weight="semibold" color="primary">
-                      Supplier Bill #{pur.billNumber}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box align="flex-end" style={{ minWidth: 90, flexShrink: 0 }}>
-                  <Typography variant="bodyLarge" weight="bold" color="brandDeep">
-                    {money(pur.totalAmount)}
-                  </Typography>
-                  {pur.balanceDue > 0 && (
-                    <Typography variant="caption" weight="semibold" color="warning">
-                      Payable: {money(pur.balanceDue)}
-                    </Typography>
-                  )}
-                </Box>
-              </Row>
-
-              <Divider variant="subtle" spacing="sm" />
-
-              <Row justify="space-between" align="center">
-                <Typography variant="caption" color="secondary">
-                  Paid: {money(pur.amountPaid)}
+              <Box flex={1}>
+                <Typography variant="title" color="primary" numberOfLines={1}>
+                  {bill.supplierName}
                 </Typography>
-                <Button
-                  label="View Voucher & PDF"
-                  variant="ghost"
+                <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                  {bill.itemName} • {bill.date}
+                </Typography>
+              </Box>
+              <Box align="flex-end">
+                <Typography variant="dataMedium" color="primary" tabular>
+                  {money(bill.totalAmount)}
+                </Typography>
+                <Badge
+                  label={bill.balanceDue > 0 ? `Due ${money(bill.balanceDue)}` : 'Paid'}
+                  variant={bill.balanceDue > 0 ? 'warning' : 'success'}
                   size="sm"
-                  leftIcon="document-text-outline"
-                  onPress={() => handleOpenPurchaseDetail(pur)}
                 />
-              </Row>
-            </Card>
-          )}
-          refreshing={isRefetching}
-          onRefresh={refetchPurchases}
-        />
-      </>
+              </Box>
+            </Row>
+          </Card>
+        )}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+      />
     );
   }
 
-  if (activeTab === 'suppliers') {
-    return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-            </Stack>
-          }
-          data={suppliers}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingSuppliers ? (
-              <LoadingState message="Loading suppliers..." />
-            ) : suppliers.length === 0 ? (
-              <EmptyState
-                title="No Suppliers Registered"
-                description="Register raw material and packaging vendors to record incoming stock shipments."
-                actionLabel="+ Add First Supplier"
-                onAction={() => openSheet('create_supplier')}
-              />
-            ) : null
-          }
-          renderItem={({ item: sup }) => (
-            <Card key={sup.id} variant="elevated" padding="normal">
-              <Row justify="space-between" align="center">
-                <Box flex={1}>
-                  <Typography variant="bodyLarge" weight="bold" color="primary">
-                    {sup.name}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="secondary"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    Phone: {sup.phone}
-                  </Typography>
-                  {sup.gstNumber && (
-                    <Typography variant="caption" color="muted">
-                      GST: {sup.gstNumber}
-                    </Typography>
-                  )}
-                  {sup.address && (
-                    <Typography variant="caption" color="muted">
-                      {sup.address}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box align="flex-end">
-                  <Typography variant="caption" color="muted">
-                    Payables Outstanding
-                  </Typography>
-                  <Typography
-                    variant="bodyLarge"
-                    weight="bold"
-                    color={sup.balanceDue > 0 ? 'warning' : 'success'}
-                  >
-                    {money(sup.balanceDue || 0)}
-                  </Typography>
-                  <Button
-                    label="Edit"
-                    variant="ghost"
-                    size="sm"
-                    leftIcon="create-outline"
-                    onPress={() => openSheet('edit_supplier', { supplierId: sup.id })}
-                  />
-                  <Button
-                    label="+ Record Bill"
-                    variant="subtle"
-                    size="sm"
-                    leftIcon="cart-outline"
-                    style={{ marginTop: theme.spacing.xsm }}
-                    onPress={() => openSheet('record_purchase')}
-                  />
-                </Box>
-              </Row>
-            </Card>
-          )}
-          refreshing={isRefetching}
-          onRefresh={refetchPurchases}
-        />
-      </>
-    );
-  }
-
-  return null;
+  return (
+    <ScreenList
+      header={header}
+      data={suppliers}
+      keyExtractor={(row) => row.id}
+      placeholder={
+        loadingSuppliers ? (
+          <LoadingState message="Loading suppliers..." />
+        ) : suppliers.length === 0 ? (
+          <EmptyState
+            title="No suppliers yet"
+            description="Add the vendors you buy raw materials and packaging from."
+            actionLabel="+ Add Supplier"
+            onAction={() => openSheet('create_supplier')}
+          />
+        ) : null
+      }
+      renderItem={({ item: supplier }) => (
+        <Card
+          variant="elevated"
+          padding="compact"
+          onPress={() => openSheet('supplier_detail', { supplierId: supplier.id })}
+        >
+          <Row gap="sm" align="center">
+            <IconTile icon="business-outline" tone="primary" size={32} />
+            <Box flex={1}>
+              <Typography variant="title" color="primary" numberOfLines={1}>
+                {supplier.name}
+              </Typography>
+              <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                {supplier.phone}
+              </Typography>
+            </Box>
+            {supplier.balanceDue > 0 ? (
+              <Typography variant="dataMedium" color="warning" tabular>
+                {money(supplier.balanceDue)}
+              </Typography>
+            ) : (
+              <Typography variant="bodySmall" color="success">
+                Settled
+              </Typography>
+            )}
+            <Icon name="chevron-forward" size={18} color="subtle" />
+          </Row>
+        </Card>
+      )}
+    />
+  );
 };
 
 export default ProcureScreen;

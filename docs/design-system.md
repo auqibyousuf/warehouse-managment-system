@@ -78,21 +78,37 @@ Use `<Typography variant="…">`. Money and quantities use `tabular` so digits a
 
 Inline `padding`, `margin`, `gap` and `fontSize` must use these tokens.
 
-## Components
+## Components (measured from the Stitch markup)
 
-| Component | Notes |
+| Component | Spec |
 | --- | --- |
-| `AppTopBar` | BatchIQ, business name chip, page subtitle, gear to Manage, avatar to Settings. |
-| `StackScreen` | Back-arrow header wrapper for Manage screens. |
-| `TabBar` | Home, Stock, Invoices. Active = brand color, filled icon. |
-| `Button` | `primary` filled brand; `secondary` surface with border; `subtle`; `ghost`; `danger`; `success`. |
-| `ChipPicker` | Segmented control on a tinted track. Selected = brand fill. Wraps on narrow screens. |
-| `Card` | Surface, 1px border, radius 8. Variants: `elevated`, `flat`, `accent`, `outlined`. |
-| `InsetStats` | Caps label over mono figure, in a tinted box. Use for quantity/value pairs. |
-| `ProgressBar` | One fill or colored segments. Used for stock level, settlement, formulation. |
-| `Badge` | Mono caps, radius 4, status colors. |
-| `Modal` | Bottom sheet, radius 16 top. Multi-step forms use `StepIndicator`. |
-| `ScreenList` | Virtualized lists with the screen header as list header. |
+| `Card` | White, **no border**, radius 12, `shadows.card` (1px, 5%). Dark mode adds a hairline. `tone` = tinted alert card (no border). |
+| `Button` | Primary: brand fill, 44 (48 large, 40 small), radius 8, soft shadow. `secondary`: white, shadow, no border. `subtle`: tonal fill, brand text. `tonalWarning`: tonal fill, amber text. `warning`: solid amber. `ghost`: text only. |
+| `ChipPicker` | `pills` (default): separate rounded chips, mono label, scroll sideways; selected = brand fill. `segmented`: equal-width tabs in a tinted track; selected = white tab. |
+| `Badge` | Mono caps, tinted. Sharp (2px) for status, `soft` (12px) for health labels like In stock. |
+| `IconTile` | 28, 32 or 40px tinted rounded square holding one icon. |
+| `AppTopBar` | 64px, flat with a soft shadow. BatchIQ + business chip, page subtitle, gear (Manage), 32px avatar (Settings). |
+| `TabBar` | 64px, flat, soft shadow. Three 80x44 targets, 22px icons, 12px labels. |
+| `SearchField` | Tinted, borderless, soft shadow, 22px icon. |
+| `InsetStats`, `ProgressBar`, `StepIndicator`, `ScreenList`, `StackScreen`, `Modal` | As before. |
+
+Type in use: key figures on cards are mono 18 (`dataLarge`); stock quantities and billed totals are
+28 bold (`h1`); card titles 16/600 (`title`); secondary text 12 (`bodySmall`).
+
+## Show less, open for more
+
+Every list row shows only what you need to recognise it and act on it. Everything else lives in a
+detail sheet that opens on tap, with the full picture and the less common actions.
+
+| Row | Shows | Opens |
+| --- | --- | --- |
+| Stock item | name, status, quantity, Add / Use | `stock_detail`: value, safety level, cost, recent movements, count, edit |
+| Invoice | customer, number, date, item line, total, one or two actions | `invoice_detail` |
+| Batch | number, product, units, date, status | `batch_detail`: cost breakdown, ingredients used, reversal |
+| Recipe | name, product, cost per unit, status | `recipe_detail`: formulation, cost, instructions, pause/start |
+| Supplier | name, phone, what you owe | `supplier_detail`: contact, bills, edit |
+| Customer | name, phone, what they owe | `customer_detail` |
+| Profit card | one figure | `profit_detail`: the breakdown |
 
 ## Information architecture
 

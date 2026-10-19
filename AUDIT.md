@@ -98,3 +98,10 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Sheets:** invoice sheet shows the customer's balance against their credit limit; batch step 3 shows a stock check (needed vs on hand).
 - **Removed baked-in defaults:** forms no longer fall back to customer `cust-1`, product `prod-1`, price 500, pack size 20 or threshold 100.
 - **Dependencies:** updated to SDK 58 latest; deprecated transitive packages removed with overrides; install scripts approved via `allowScripts`. ESLint stays on 9.39.5 until eslint-plugin-react supports 10. Remaining audit findings are in build tooling with no patched release.
+
+## 10. Fidelity pass and progressive disclosure (latest)
+
+- **Why it looked unchanged:** colors and fonts matched, but card anatomy did not. Measured from the Stitch markup: cards are borderless with a soft shadow and 12px radius, status chips 2px, key figures mono 18 (28 bold for quantities), tonal fill buttons, separate pill filters, flat 64px bars. All applied through shared components, so every screen inherits them.
+- **Rebuilt to the Stitch markup:** Home, Stock, Invoices. Manage lists (recipes, batches, suppliers, bills, customers, payments, expenses) use the same compact rows.
+- **Progressive disclosure:** rows show only the essentials; five new detail sheets (batch, profit, stock item, recipe, supplier) hold the rest. See `docs/design-system.md`.
+- **Still open:** sheets are bottom sheets, whereas Stitch shows some flows (batch run, invoice generation) as full pages with a step bar; goal bars and hero imagery are skipped because the app has no such data.
