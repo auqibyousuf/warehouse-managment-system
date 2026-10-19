@@ -1,3 +1,4 @@
+import { useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme, useColors } from '../../../theme';
 import React, { useState } from 'react';
 import { useUpdateIngredient, useDeleteIngredient } from '../../../hooks/api/useInventory';
@@ -27,6 +28,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   item,
   onClose,
 }) => {
+  const symbol = useCurrencySymbol();
   const colors = useColors();
   const updateMutation = useUpdateIngredient();
   const deleteMutation = useDeleteIngredient();
@@ -204,7 +206,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           <Row gap="md">
             <Box flex={1}>
               <TextInput
-                label={`Standard Cost (₹ / ${unit})`}
+                label={`Standard Cost (${symbol} / ${unit})`}
                 placeholder="0"
                 keyboardType="numeric"
                 value={unitCost}

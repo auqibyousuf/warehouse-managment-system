@@ -1,24 +1,19 @@
+import { useCurrencySymbol } from '../../../hooks/useMoney';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { customerSchema, CustomerFormData, CustomerFormInput } from '../../../validation/schemas';
 import { useCreateCustomer } from '../../../hooks/api/useCustomers';
 import { useAppStore } from '../../../stores/useAppStore';
-import {
-  Modal,
-  Stack,
-  TextInput,
-} from '../../../components';
+import { Modal, Stack, TextInput } from '../../../components';
 
 export interface CreateCustomerModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
-  visible,
-  onClose,
-}) => {
+export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({ visible, onClose }) => {
+  const symbol = useCurrencySymbol();
   const createCustomerMutation = useCreateCustomer();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
@@ -152,7 +147,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
           name="creditLimit"
           render={({ field: { onChange, value } }) => (
             <TextInput
-              label="Approved Credit Limit (₹)"
+              label={`Approved Credit Limit (${symbol})`}
               placeholder="e.g. 50000"
               value={value ? String(value) : ''}
               onChangeText={(text) => onChange(text ? Number(text) : undefined)}

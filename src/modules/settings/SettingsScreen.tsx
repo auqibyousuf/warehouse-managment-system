@@ -1,3 +1,4 @@
+import { useCurrencySymbol } from '../../hooks/useMoney';
 import React, { useState } from 'react';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,6 +20,7 @@ import {
 
 /** Business profile, backup and sample data. Opened from the avatar in the top bar. */
 export const SettingsScreen: React.FC = () => {
+  const symbol = useCurrencySymbol();
   const { data: settings } = useFactorySettings();
 
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -148,7 +150,7 @@ export const SettingsScreen: React.FC = () => {
                   Accounting Currency:
                 </Typography>
                 <Typography variant="bodySmall" weight="semibold" color="primary">
-                  ₹ INR (Indian Rupee)
+                  {symbol} (editable in the business profile)
                 </Typography>
               </Row>
               <Row justify="space-between">

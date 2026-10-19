@@ -1,18 +1,10 @@
+import { useMoney } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
 import { theme } from '../../../theme';
 import React from 'react';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useSalesInvoices, useCustomerPayments } from '../../../hooks/api/useSales';
-import {
-  Modal,
-  Stack,
-  Row,
-  Box,
-  Typography,
-  Card,
-  Badge,
-  Button,
-} from '../../../components';
+import { Modal, Stack, Row, Box, Typography, Card, Badge, Button } from '../../../components';
 
 export interface CustomerDetailModalProps {
   visible: boolean;
@@ -25,6 +17,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
   onClose,
   customerId,
 }) => {
+  const money = useMoney();
   const { data: customers = [] } = useCustomers();
   const { data: invoices = [] } = useSalesInvoices();
   const { data: payments = [] } = useCustomerPayments();
@@ -70,7 +63,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 weight="bold"
                 color={customer.outstandingBalance > 0 ? 'warning' : 'success'}
               >
-                ₹{customer.outstandingBalance.toLocaleString('en-IN')}
+                {money(customer.outstandingBalance)}
               </Typography>
             </Box>
             <Button
@@ -78,7 +71,9 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
               variant="subtle"
               size="sm"
               leftIcon="create-outline"
-              onPress={() => openSheet('edit_customer', { customerId: customer.id }, { replace: true })}
+              onPress={() =>
+                openSheet('edit_customer', { customerId: customer.id }, { replace: true })
+              }
             />
             {customer.outstandingBalance > 0 && (
               <Button
@@ -94,7 +89,12 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
         {/* Customer Profile Details */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xsm }}>
+          <Typography
+            variant="title"
+            weight="bold"
+            color="primary"
+            style={{ marginBottom: theme.spacing.xsm }}
+          >
             Account Profile & Contact
           </Typography>
           <Stack gap="xs">
@@ -135,7 +135,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   Credit Limit:
                 </Typography>
                 <Typography variant="caption" weight="semibold" color="primary">
-                  ₹{customer.creditLimit.toLocaleString('en-IN')}
+                  {money(customer.creditLimit)}
                 </Typography>
               </Row>
             ) : null}
@@ -164,7 +164,12 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
         {/* Financial Summary */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xsm }}>
+          <Typography
+            variant="title"
+            weight="bold"
+            color="primary"
+            style={{ marginBottom: theme.spacing.xsm }}
+          >
             Lifetime Statistics
           </Typography>
           <Row justify="space-between">
@@ -173,7 +178,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 Total Invoiced
               </Typography>
               <Typography variant="bodyMedium" weight="bold" color="primary">
-                ₹{customer.totalPurchases.toLocaleString('en-IN')}
+                {money(customer.totalPurchases)}
               </Typography>
             </Box>
             <Box>
@@ -181,22 +186,31 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 Total Collected
               </Typography>
               <Typography variant="bodyMedium" weight="bold" color="success">
-                ₹{customer.totalPaid.toLocaleString('en-IN')}
+                {money(customer.totalPaid)}
               </Typography>
             </Box>
             <Box>
               <Typography variant="caption" color="muted">
                 Current Dues
               </Typography>
-              <Typography variant="bodyMedium" weight="bold" color={customer.outstandingBalance > 0 ? 'warning' : 'success'}>
-                ₹{customer.outstandingBalance.toLocaleString('en-IN')}
+              <Typography
+                variant="bodyMedium"
+                weight="bold"
+                color={customer.outstandingBalance > 0 ? 'warning' : 'success'}
+              >
+                {money(customer.outstandingBalance)}
               </Typography>
             </Box>
           </Row>
         </Card>
 
         {/* Linked Invoices */}
-        <Typography variant="title" weight="bold" color="primary" style={{ marginTop: theme.spacing.xs }}>
+        <Typography
+          variant="title"
+          weight="bold"
+          color="primary"
+          style={{ marginTop: theme.spacing.xs }}
+        >
           Linked Invoices ({customerInvoices.length})
         </Typography>
         {customerInvoices.length === 0 ? (
@@ -223,8 +237,8 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                         inv.paymentStatus === 'paid'
                           ? 'success'
                           : inv.paymentStatus === 'partial'
-                          ? 'warning'
-                          : 'danger'
+                            ? 'warning'
+                            : 'danger'
                       }
                       size="sm"
                     />
@@ -235,11 +249,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 </Box>
                 <Box align="flex-end">
                   <Typography variant="bodySmall" weight="bold" color="brandDeep">
-                    ₹{inv.totalAmount.toLocaleString('en-IN')}
+                    {money(inv.totalAmount)}
                   </Typography>
                   {inv.balanceDue > 0 && (
                     <Typography variant="caption" color="warning" weight="semibold">
-                      Due: ₹{inv.balanceDue.toLocaleString('en-IN')}
+                      Due: {money(inv.balanceDue)}
                     </Typography>
                   )}
                 </Box>
@@ -249,7 +263,12 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         )}
 
         {/* Linked Receipts */}
-        <Typography variant="title" weight="bold" color="primary" style={{ marginTop: theme.spacing.xs }}>
+        <Typography
+          variant="title"
+          weight="bold"
+          color="primary"
+          style={{ marginTop: theme.spacing.xs }}
+        >
           Payment Receipts ({customerPayments.length})
         </Typography>
         {customerPayments.length === 0 ? (
@@ -269,7 +288,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                   </Typography>
                 </Box>
                 <Typography variant="bodySmall" weight="bold" color="success">
-                  ₹{p.amount.toLocaleString('en-IN')}
+                  {money(p.amount)}
                 </Typography>
               </Row>
             </Card>

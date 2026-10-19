@@ -1,3 +1,4 @@
+import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
 import { theme } from '../../../theme';
 import React, { useEffect, useState } from 'react';
@@ -51,6 +52,8 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
   onClose,
   preselectedSetupId,
 }) => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
   const createBatchMutation = useCreateProductionBatch();
@@ -434,7 +437,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
                           suffix={recipeItem.unit}
                           hint={
                             currentIng
-                              ? `Unit cost snapshot: ₹${currentIng.unitCost}/${recipeItem.unit}`
+                              ? `Unit cost snapshot: ${symbol}${currentIng.unitCost}/${recipeItem.unit}`
                               : undefined
                           }
                         />
@@ -457,15 +460,16 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
                       Raw Ingredients Cost:
                     </Typography>
                     <Typography variant="bodySmall" weight="bold" color="primary">
-                      ₹{ingredientCost.toLocaleString('en-IN')}
+                      {money(ingredientCost)}
                     </Typography>
                   </Row>
                   <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
                     <Typography variant="bodySmall" color="secondary">
-                      Packaging Cost ({watchedUnits} {watchedOutputUnit} @ ₹{packagingUnitCost}):
+                      Packaging Cost ({watchedUnits} {watchedOutputUnit} @{' '}
+                      {money(packagingUnitCost)}):
                     </Typography>
                     <Typography variant="bodySmall" weight="bold" color="primary">
-                      ₹{packagingCost.toLocaleString('en-IN')}
+                      {money(packagingCost)}
                     </Typography>
                   </Row>
                   <Divider variant="brand" spacing="xxs" />
@@ -474,17 +478,17 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
                       Total Direct Batch Cost:
                     </Typography>
                     <Typography variant="bodyMedium" weight="bold" color="brandDeep">
-                      ₹{estimatedBatchCost.toLocaleString('en-IN')}
+                      {money(estimatedBatchCost)}
                     </Typography>
                   </Row>
                   <Row justify="space-between" style={{ marginTop: theme.spacing.xs }}>
                     <Badge
-                      label={`₹${estimatedCostPerUnit.toFixed(2)} / ${watchedOutputUnit}`}
+                      label={`${symbol}${estimatedCostPerUnit.toFixed(2)} / ${watchedOutputUnit}`}
                       variant="forest"
                       size="md"
                     />
                     <Badge
-                      label={`₹${estimatedCostPerBaseUnit.toFixed(2)} / ${watchedBaseUnit}`}
+                      label={`${symbol}${estimatedCostPerBaseUnit.toFixed(2)} / ${watchedBaseUnit}`}
                       variant="neutral"
                       size="md"
                     />

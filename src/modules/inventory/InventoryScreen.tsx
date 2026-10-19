@@ -1,3 +1,4 @@
+import { useMoney } from '../../hooks/useMoney';
 import React, { useMemo, useState } from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { theme, useColors } from '../../theme';
@@ -31,9 +32,8 @@ const CATEGORY_LABEL: Record<UnifiedStockItem['type'], string> = {
   finished_feed: 'FINISHED GOODS',
 };
 
-const money = (value: number) => `₹${Math.round(value).toLocaleString('en-IN')}`;
-
 export const InventoryScreen: React.FC = () => {
+  const money = useMoney();
   const colors = useColors();
   const [activeTab, setActiveTab] = useState<InventoryTab>('stock');
   const [category, setCategory] = useState<CategoryFilter>('all');
@@ -272,7 +272,7 @@ export const InventoryScreen: React.FC = () => {
                         Safety min: {item.minThreshold.toLocaleString('en-IN')} {item.unit}
                       </Typography>
                       <Typography variant="caption" color="muted">
-                        {isFinished ? 'Price' : 'Cost'}: ₹{item.unitCostOrPrice} / {item.unit}
+                        {isFinished ? 'Price' : 'Cost'}: {money(item.unitCostOrPrice)} / {item.unit}
                       </Typography>
                     </Row>
                   </Box>

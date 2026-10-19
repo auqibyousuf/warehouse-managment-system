@@ -1,3 +1,4 @@
+import { DEFAULT_CURRENCY_SYMBOL, formatMoney } from './money';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { SaleInvoice, FactorySettings, Purchase } from '../types';
@@ -9,20 +10,25 @@ import { SaleInvoice, FactorySettings, Purchase } from '../types';
 
 export const generateInvoicePDF = async (
   invoice: SaleInvoice,
-  settings?: FactorySettings | null
+  settings?: FactorySettings | null,
 ): Promise<string> => {
   const companyName = settings?.factoryName?.trim() || 'Your Business';
-  const tagline = settings?.tagline || 'Process & Batch Manufacturing';
-  const address = settings?.address || '';
-  const phone = settings?.phone || '+91 98765 43210';
-  const email = settings?.email || 'billing@batchiq.com';
-  const gstin = settings?.gstin || '27AABCB1234F1Z5';
-  const bankName = settings?.bankName || 'HDFC Bank Ltd';
-  const accountNumber = settings?.accountNumber || '50200098765432';
-  const ifscCode = settings?.ifscCode || 'HDFC0001234';
-  const terms =
-    settings?.termsAndConditions ||
-    '1. Payment is due within 15 days of invoice date.\n2. Interest @ 18% p.a. charged on overdue accounts.\n3. Goods once sold are subject to standard factory dispatch terms.';
+  const tagline = settings?.tagline?.trim() || '';
+  const address = settings?.address?.trim() || '';
+  const phone = settings?.phone?.trim() || '';
+  const email = settings?.email?.trim() || '';
+  const gstin = settings?.gstin?.trim() || '';
+  const bankName = settings?.bankName?.trim() || '';
+  const accountNumber = settings?.accountNumber?.trim() || '';
+  const ifscCode = settings?.ifscCode?.trim() || '';
+  const terms = settings?.termsAndConditions?.trim() || '';
+  const symbol = settings?.currencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL;
+  const money = (value: number) => formatMoney(value, symbol);
+  // Only print what the business actually entered; never invent contact or bank details.
+  const contactLine = [phone && `Phone: ${phone}`, email && `Email: ${email}`]
+    .filter(Boolean)
+    .join(' | ');
+  const hasBank = Boolean(bankName || accountNumber || ifscCode);
 
   const isPaid = invoice.paymentStatus === 'paid';
   const isPartial = invoice.paymentStatus === 'partial';
@@ -130,10 +136,10 @@ export const generateInvoicePDF = async (
           <tr>
             <td>
               <div class="company-title">${companyName}</div>
-              <div class="company-tagline">${tagline}</div>
-              <div class="company-meta">${address}</div>
-              <div class="company-meta">Phone: ${phone} | Email: ${email}</div>
-              <div class="company-meta"><b>GSTIN:</b> ${gstin}</div>
+              ${tagline ? `<div class="company-tagline">${tagline}</div>` : ''}
+              ${address ? `<div class="company-meta">${address}</div>` : ''}
+              ${contactLine ? `<div class="company-meta">${contactLine}</div>` : ''}
+              ${gstin ? `<div class="company-meta"><b>GSTIN:</b> ${gstin}</div>` : ''}
             </td>
             <td class="invoice-badge-box">
               <div class="invoice-title">TAX INVOICE</div>
@@ -170,8 +176,8 @@ export const generateInvoicePDF = async (
               <th style="width: 46%;">Item & Description</th>
               <th class="text-center" style="width: 14%;">Unit</th>
               <th class="text-right" style="width: 14%;">Quantity</th>
-              <th class="text-right" style="width: 18%;">Rate (₹)</th>
-              <th class="text-right" style="width: 20%;">Amount (₹)</th>
+              <th class="text-right" style="width: 18%;">Rate (${symbol})</th>
+              <th class="text-right" style="width: 20%;">Amount (${symbol})</th>
             </tr>
           </thead>
           <tbody>
@@ -183,8 +189,8 @@ export const generateInvoicePDF = async (
               </td>
               <td class="text-center">${invoice.outputUnit || 'units'}</td>
               <td class="text-right">${(invoice.quantity || invoice.bagQuantity || 1).toLocaleString('en-IN')}</td>
-              <td class="text-right">₹${invoice.unitPrice.toLocaleString('en-IN')}</td>
-              <td class="text-right"><b>₹${invoice.subtotal.toLocaleString('en-IN')}</b></td>
+              <td class="text-right">${money(invoice.unitPrice)}</td>
+              <td class="text-right"><b>${money(invoice.subtotal)}</b></td>
             </tr>
           </tbody>
         </table>
@@ -193,40 +199,48 @@ export const generateInvoicePDF = async (
         <table class="summary-table">
           <tr>
             <td class="terms-col">
-              <div class="bank-box">
+              ${
+                hasBank
+                  ? `<div class="bank-box">
                 <b>BANK ACCOUNT DETAILS FOR REMITTANCE:</b><br />
-                Bank Name: ${bankName}<br />
-                A/C No: ${accountNumber}<br />
-                IFSC Code: ${ifscCode}
-              </div>
-              <div class="section-label">TERMS & CONDITIONS:</div>
-              <div style="font-size: 11px; color: #64748b; white-space: pre-line;">${terms}</div>
+                ${bankName ? `Bank Name: ${bankName}<br />` : ''}
+                ${accountNumber ? `A/C No: ${accountNumber}<br />` : ''}
+                ${ifscCode ? `IFSC Code: ${ifscCode}` : ''}
+              </div>`
+                  : ''
+              }
+              ${
+                terms
+                  ? `<div class="section-label">TERMS & CONDITIONS:</div>
+              <div style="font-size: 11px; color: #64748b; white-space: pre-line;">${terms}</div>`
+                  : ''
+              }
             </td>
             <td class="totals-col">
               <table class="calc-table">
                 <tr>
                   <td>Subtotal:</td>
-                  <td class="text-right">₹${invoice.subtotal.toLocaleString('en-IN')}</td>
+                  <td class="text-right">${money(invoice.subtotal)}</td>
                 </tr>
                 ${
                   invoice.discount > 0
                     ? `<tr>
                         <td style="color: #059669;">Special Discount:</td>
-                        <td class="text-right" style="color: #059669;">- ₹${invoice.discount.toLocaleString('en-IN')}</td>
+                        <td class="text-right" style="color: #059669;">- ${money(invoice.discount)}</td>
                       </tr>`
                     : ''
                 }
                 <tr class="grand-total-row">
                   <td><b>Total Invoice Value:</b></td>
-                  <td class="text-right"><b>₹${invoice.totalAmount.toLocaleString('en-IN')}</b></td>
+                  <td class="text-right"><b>${money(invoice.totalAmount)}</b></td>
                 </tr>
                 <tr>
                   <td>Amount Paid:</td>
-                  <td class="text-right" style="color: #15803d; font-weight: 600;">₹${invoice.amountPaid.toLocaleString('en-IN')}</td>
+                  <td class="text-right" style="color: #15803d; font-weight: 600;">${money(invoice.amountPaid)}</td>
                 </tr>
                 <tr class="balance-row">
                   <td><b>Balance Due:</b></td>
-                  <td class="text-right"><b>₹${invoice.balanceDue.toLocaleString('en-IN')}</b></td>
+                  <td class="text-right"><b>${money(invoice.balanceDue)}</b></td>
                 </tr>
               </table>
             </td>
@@ -265,8 +279,10 @@ export const generateInvoicePDF = async (
 
 export const generatePurchaseBillPDF = async (
   purchase: Purchase,
-  settings?: FactorySettings | null
+  settings?: FactorySettings | null,
 ): Promise<string> => {
+  const symbol = settings?.currencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL;
+  const money = (value: number) => formatMoney(value, symbol);
   const companyName = settings?.factoryName?.trim() || 'Your Business';
 
   const html = `
@@ -291,28 +307,28 @@ export const generatePurchaseBillPDF = async (
           <div>INWARD PURCHASE VOUCHER / BILL</div>
           <div style="margin-top: 6px;"><b>Voucher #:</b> ${purchase.purchaseNumber} | <b>Date:</b> ${purchase.date}</div>
         </div>
-        <p><b>Supplier:</b> ${purchase.supplierName} (${purchase.supplierPhone || 'N/A'})</p>
+        <p><b>Supplier:</b> ${purchase.supplierName} (${purchase.supplierPhone || '-'})</p>
         <table>
           <thead>
             <tr>
               <th>Material / Item</th>
               <th>Quantity</th>
-              <th class="text-right">Unit Rate (₹)</th>
-              <th class="text-right">Total Amount (₹)</th>
+              <th class="text-right">Unit Rate (${symbol})</th>
+              <th class="text-right">Total Amount (${symbol})</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>${purchase.itemName}</td>
               <td>${purchase.quantity} ${purchase.unit}</td>
-              <td class="text-right">₹${purchase.unitPrice}</td>
-              <td class="text-right">₹${purchase.totalAmount.toLocaleString('en-IN')}</td>
+              <td class="text-right">${money(purchase.unitPrice)}</td>
+              <td class="text-right">${money(purchase.totalAmount)}</td>
             </tr>
           </tbody>
         </table>
         <div style="margin-top: 24px; text-align: right;">
-          <p><b>Paid:</b> ₹${purchase.amountPaid.toLocaleString('en-IN')}</p>
-          <p style="color: #b91c1c;"><b>Balance Due:</b> ₹${purchase.balanceDue.toLocaleString('en-IN')}</p>
+          <p><b>Paid:</b> ${money(purchase.amountPaid)}</p>
+          <p style="color: #b91c1c;"><b>Balance Due:</b> ${money(purchase.balanceDue)}</p>
         </div>
       </body>
     </html>

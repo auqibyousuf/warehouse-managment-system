@@ -1,3 +1,4 @@
+import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -6,15 +7,7 @@ import { expenseSchema, ExpenseFormData, ExpenseFormInput } from '../../../valid
 import { useCreateExpense } from '../../../hooks/api/useExpenses';
 import { useAppStore } from '../../../stores/useAppStore';
 import { ExpenseCategory } from '../../../types';
-import {
-  Modal,
-  Box,
-  Stack,
-  Row,
-  Typography,
-  TextInput,
-  Button,
-} from '../../../components';
+import { Modal, Box, Stack, Row, Typography, TextInput, Button } from '../../../components';
 
 export interface RecordExpenseModalProps {
   visible: boolean;
@@ -30,10 +23,9 @@ const CATEGORIES: { id: ExpenseCategory; label: string }[] = [
   { id: 'other', label: 'Other Operating' },
 ];
 
-export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
-  visible,
-  onClose,
-}) => {
+export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({ visible, onClose }) => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const createExpenseMutation = useCreateExpense();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
@@ -69,7 +61,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
 
       setBannerAlert({
         title: 'Expense Recorded',
-        message: `Logged ₹${data.amount.toLocaleString('en-IN')} under ${data.category}. Included in period profit calculations.`,
+        message: `Logged ${money(data.amount)} under ${data.category}. Included in period profit calculations.`,
         variant: 'success',
       });
       reset();
@@ -146,7 +138,7 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
               value={value !== undefined ? String(value) : ''}
               onChangeText={(val) => onChange(parseFloat(val) || 0)}
               keyboardType="numeric"
-              prefix="₹"
+              prefix={symbol}
               error={errors.amount?.message}
             />
           )}

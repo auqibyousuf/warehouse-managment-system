@@ -1,19 +1,11 @@
+import { useMoney } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { usePurchases } from '../../../hooks/api/useInventory';
 import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import { generatePurchaseBillPDF } from '../../../utils/pdfGenerator';
-import {
-  Modal,
-  Stack,
-  Row,
-  Box,
-  Typography,
-  Card,
-  Badge,
-  Divider,
-} from '../../../components';
+import { Modal, Stack, Row, Box, Typography, Card, Badge, Divider } from '../../../components';
 
 export interface PurchaseDetailModalProps {
   visible: boolean;
@@ -26,6 +18,7 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
   onClose,
   purchaseId,
 }) => {
+  const money = useMoney();
   const [downloading, setDownloading] = useState(false);
   const { data: purchases = [] } = usePurchases();
   const { data: settings } = useFactorySettings();
@@ -61,8 +54,8 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
     purchase.paymentStatus === 'paid'
       ? 'success'
       : purchase.paymentStatus === 'partial'
-      ? 'warning'
-      : 'danger';
+        ? 'warning'
+        : 'danger';
 
   return (
     <Modal
@@ -99,7 +92,7 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                 TOTAL BILL
               </Typography>
               <Typography variant="h2" weight="bold" color="brandDeep">
-                ₹{purchase.totalAmount.toLocaleString('en-IN')}
+                {money(purchase.totalAmount)}
               </Typography>
             </Box>
           </Row>
@@ -107,7 +100,12 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
 
         {/* Supplier Details */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xs }}>
+          <Typography
+            variant="title"
+            weight="bold"
+            color="primary"
+            style={{ marginBottom: theme.spacing.xs }}
+          >
             Supplier Information
           </Typography>
           <Typography variant="bodyMedium" weight="semibold" color="secondary">
@@ -119,7 +117,12 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
             </Typography>
           )}
           {purchase.billNumber && (
-            <Typography variant="caption" weight="semibold" color="primary" style={{ marginTop: theme.spacing.xxs }}>
+            <Typography
+              variant="caption"
+              weight="semibold"
+              color="primary"
+              style={{ marginTop: theme.spacing.xxs }}
+            >
               Supplier Invoice / Challan: #{purchase.billNumber}
             </Typography>
           )}
@@ -127,7 +130,12 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
 
         {/* Item Inward Details */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.sm }}>
+          <Typography
+            variant="title"
+            weight="bold"
+            color="primary"
+            style={{ marginBottom: theme.spacing.sm }}
+          >
             Material Inward Summary
           </Typography>
 
@@ -137,7 +145,7 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                 {purchase.itemName}
               </Typography>
               <Typography variant="caption" color="muted">
-                Unit Rate: ₹{purchase.unitPrice} per {purchase.unit}
+                Unit Rate: {money(purchase.unitPrice)} per {purchase.unit}
               </Typography>
             </Box>
             <Box align="flex-end">
@@ -145,7 +153,7 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                 {purchase.quantity.toLocaleString('en-IN')} {purchase.unit}
               </Typography>
               <Typography variant="bodySmall" weight="bold" color="brandDeep">
-                ₹{purchase.totalAmount.toLocaleString('en-IN')}
+                {money(purchase.totalAmount)}
               </Typography>
             </Box>
           </Row>
@@ -159,7 +167,7 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                 Amount Paid to Supplier:
               </Typography>
               <Typography variant="caption" weight="bold" color="success">
-                ₹{purchase.amountPaid.toLocaleString('en-IN')}
+                {money(purchase.amountPaid)}
               </Typography>
             </Row>
 
@@ -173,8 +181,8 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
                 color={purchase.balanceDue > 0 ? 'warning' : 'success'}
               >
                 {purchase.balanceDue > 0
-                  ? `₹${purchase.balanceDue.toLocaleString('en-IN')}`
-                  : 'Fully Paid (₹0)'}
+                  ? `${money(purchase.balanceDue)}`
+                  : `Fully Paid (${money(0)})`}
               </Typography>
             </Row>
           </Stack>
@@ -186,7 +194,11 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
             <Typography variant="caption" weight="bold" color="muted">
               DELIVERY & QUALITY NOTES
             </Typography>
-            <Typography variant="caption" color="secondary" style={{ marginTop: theme.spacing.xxs }}>
+            <Typography
+              variant="caption"
+              color="secondary"
+              style={{ marginTop: theme.spacing.xxs }}
+            >
               {purchase.notes}
             </Typography>
           </Card>

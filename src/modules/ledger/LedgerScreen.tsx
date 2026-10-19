@@ -1,3 +1,4 @@
+import { useMoney } from '../../hooks/useMoney';
 import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
 import { theme } from '../../theme';
@@ -27,6 +28,7 @@ import { SaleInvoice, Customer } from '../../types';
 type LedgerTab = 'invoices' | 'payments' | 'customers' | 'expenses';
 
 export const LedgerScreen: React.FC = () => {
+  const money = useMoney();
   const [activeTab, setActiveTab] = useState<LedgerTab>('invoices');
   const [invoiceToCancel, setInvoiceToCancel] = useState<SaleInvoice | null>(null);
 
@@ -115,15 +117,15 @@ export const LedgerScreen: React.FC = () => {
 
       <InsetStats
         stats={[
-          { label: 'Invoiced', value: `₹${totalRevenue.toLocaleString('en-IN')}` },
+          { label: 'Invoiced', value: `${money(totalRevenue)}` },
           {
             label: 'Collected',
-            value: `₹${totalCollected.toLocaleString('en-IN')}`,
+            value: `${money(totalCollected)}`,
             valueColor: 'success',
           },
           {
             label: 'Dues',
-            value: `₹${totalDues.toLocaleString('en-IN')}`,
+            value: `${money(totalDues)}`,
             valueColor: 'warning',
           },
         ]}
@@ -230,11 +232,11 @@ export const LedgerScreen: React.FC = () => {
                 {/* Total Invoiced Amount */}
                 <Box align="flex-end" style={{ minWidth: 90, flexShrink: 0 }}>
                   <Typography variant="bodyLarge" weight="bold" color="brandDeep">
-                    ₹{inv.totalAmount.toLocaleString('en-IN')}
+                    {money(inv.totalAmount)}
                   </Typography>
                   {inv.balanceDue > 0 && (
                     <Typography variant="caption" weight="semibold" color="warning">
-                      Due: ₹{inv.balanceDue.toLocaleString('en-IN')}
+                      Due: {money(inv.balanceDue)}
                     </Typography>
                   )}
                 </Box>
@@ -245,16 +247,14 @@ export const LedgerScreen: React.FC = () => {
               {/* Payment Progress */}
               <Row justify="space-between" align="center">
                 <Typography variant="caption" color="secondary">
-                  Paid: ₹{inv.amountPaid.toLocaleString('en-IN')}
+                  Paid: {money(inv.amountPaid)}
                 </Typography>
                 <Typography
                   variant="caption"
                   weight="bold"
                   color={inv.balanceDue > 0 ? 'warning' : 'success'}
                 >
-                  {inv.balanceDue > 0
-                    ? `Outstanding: ₹${inv.balanceDue.toLocaleString('en-IN')}`
-                    : 'Fully Settled'}
+                  {inv.balanceDue > 0 ? `Outstanding: ${money(inv.balanceDue)}` : 'Fully Settled'}
                 </Typography>
               </Row>
 
@@ -365,7 +365,7 @@ export const LedgerScreen: React.FC = () => {
                     weight="bold"
                     color={c.outstandingBalance > 0 ? 'warning' : 'success'}
                   >
-                    ₹{c.outstandingBalance.toLocaleString('en-IN')}
+                    {money(c.outstandingBalance)}
                   </Typography>
                   <Badge
                     label={c.outstandingBalance > 0 ? 'DUES PENDING' : 'ALL CLEAR'}
@@ -451,7 +451,7 @@ export const LedgerScreen: React.FC = () => {
                 title={e.description}
                 subtitle={`Category: ${e.category.toUpperCase()} • Voucher #${e.expenseNumber}`}
                 meta={`Date: ${e.date}`}
-                value={`₹${e.amount.toLocaleString('en-IN')}`}
+                value={`${money(e.amount)}`}
                 valueColor="error"
                 badge={{
                   label: e.category.toUpperCase(),
@@ -507,7 +507,7 @@ export const LedgerScreen: React.FC = () => {
                 title={p.customerName}
                 subtitle={`Receipt #${p.paymentNumber} • Mode: ${p.paymentMethod.toUpperCase()}`}
                 meta={`${p.date} • ${p.notes || 'Payment credited'}`}
-                value={`₹${p.amount.toLocaleString('en-IN')}`}
+                value={`${money(p.amount)}`}
                 valueColor="success"
                 badge={{
                   label: p.paymentMethod.toUpperCase(),

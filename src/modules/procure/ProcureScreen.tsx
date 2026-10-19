@@ -1,3 +1,4 @@
+import { useMoney } from '../../hooks/useMoney';
 import React from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
@@ -22,6 +23,7 @@ import { Purchase } from '../../types';
 type ProcureTab = 'bills' | 'suppliers';
 
 export const ProcureScreen: React.FC = () => {
+  const money = useMoney();
   const [activeTab, setActiveTab] = React.useState<ProcureTab>('bills');
 
   const {
@@ -59,7 +61,7 @@ export const ProcureScreen: React.FC = () => {
         stats={[
           {
             label: 'Payables',
-            value: `₹${totalPayable.toLocaleString('en-IN')}`,
+            value: `${money(totalPayable)}`,
             valueColor: totalPayable > 0 ? 'warning' : 'primary',
           },
           { label: 'Suppliers', value: String(suppliers.length) },
@@ -162,11 +164,11 @@ export const ProcureScreen: React.FC = () => {
 
                 <Box align="flex-end" style={{ minWidth: 90, flexShrink: 0 }}>
                   <Typography variant="bodyLarge" weight="bold" color="brandDeep">
-                    ₹{pur.totalAmount.toLocaleString('en-IN')}
+                    {money(pur.totalAmount)}
                   </Typography>
                   {pur.balanceDue > 0 && (
                     <Typography variant="caption" weight="semibold" color="warning">
-                      Payable: ₹{pur.balanceDue.toLocaleString('en-IN')}
+                      Payable: {money(pur.balanceDue)}
                     </Typography>
                   )}
                 </Box>
@@ -176,7 +178,7 @@ export const ProcureScreen: React.FC = () => {
 
               <Row justify="space-between" align="center">
                 <Typography variant="caption" color="secondary">
-                  Paid: ₹{pur.amountPaid.toLocaleString('en-IN')}
+                  Paid: {money(pur.amountPaid)}
                 </Typography>
                 <Button
                   label="View Voucher & PDF"
@@ -253,7 +255,7 @@ export const ProcureScreen: React.FC = () => {
                     weight="bold"
                     color={sup.balanceDue > 0 ? 'warning' : 'success'}
                   >
-                    ₹{(sup.balanceDue || 0).toLocaleString('en-IN')}
+                    {money(sup.balanceDue || 0)}
                   </Typography>
                   <Button
                     label="Edit"

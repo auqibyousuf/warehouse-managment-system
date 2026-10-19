@@ -1,3 +1,4 @@
+import { useMoney } from '../../hooks/useMoney';
 import React, { useMemo } from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { goToTab } from '../../navigation/routes';
@@ -31,8 +32,6 @@ const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
   { value: 'all_time', label: 'All Time' },
 ];
 
-const money = (value: number) => `₹${Math.round(value).toLocaleString('en-IN')}`;
-
 interface LedgerEntry {
   id: string;
   date: string;
@@ -43,6 +42,7 @@ interface LedgerEntry {
 }
 
 export const DashboardScreen: React.FC = () => {
+  const money = useMoney();
   const colors = useColors();
   const { selectedPeriod, setSelectedPeriod } = useAppStore();
   const { data: metrics, isLoading, refetch, isRefetching } = useDashboardMetrics(selectedPeriod);

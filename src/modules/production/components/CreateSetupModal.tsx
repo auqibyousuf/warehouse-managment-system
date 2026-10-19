@@ -1,3 +1,4 @@
+import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -46,6 +47,8 @@ const STEP_FIELDS: (keyof SetupFormInput)[][] = [
 ];
 
 export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onClose }) => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const { data: products = [] } = useProducts();
   const { data: ingredients = [] } = useIngredients();
   const createSetupMutation = useCreateProductionSetup();
@@ -513,11 +516,11 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
                             render={({ field: { onChange, value } }) => (
                               <TextInput
                                 label="Cost / Unit"
-                                placeholder="₹"
+                                placeholder={symbol}
                                 value={value !== undefined ? String(value) : ''}
                                 onChangeText={(val) => onChange(parseFloat(val) || 0)}
                                 keyboardType="numeric"
-                                prefix="₹"
+                                prefix={symbol}
                               />
                             )}
                           />
@@ -556,7 +559,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
                   Estimated Ingredient Batch Cost:
                 </Typography>
                 <Typography variant="bodySmall" weight="bold" color="brandDeep">
-                  ₹{estimatedIngredientCost.toLocaleString('en-IN')}
+                  {money(estimatedIngredientCost)}
                 </Typography>
               </Row>
             </Card>

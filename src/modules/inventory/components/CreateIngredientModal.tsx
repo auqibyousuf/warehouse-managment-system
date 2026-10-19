@@ -1,16 +1,9 @@
+import { useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useCreateIngredient } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
-import {
-  Modal,
-  Box,
-  Stack,
-  Row,
-  Typography,
-  TextInput,
-  Button,
-} from '../../../components';
+import { Modal, Box, Stack, Row, Typography, TextInput, Button } from '../../../components';
 
 export interface CreateIngredientModalProps {
   visible: boolean;
@@ -25,6 +18,7 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const symbol = useCurrencySymbol();
   const createIngredientMutation = useCreateIngredient();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
@@ -105,7 +99,8 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
     >
       <Stack gap="md">
         <Typography variant="caption" color="muted">
-          Define the raw material, base unit of measurement, and initial stock level before using it in production recipes or batches.
+          Define the raw material, base unit of measurement, and initial stock level before using it
+          in production recipes or batches.
         </Typography>
 
         {/* Category Toggle */}
@@ -173,7 +168,7 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
               value={unitCost}
               onChangeText={setUnitCost}
               keyboardType="numeric"
-              prefix="₹"
+              prefix={symbol}
             />
           </Box>
           <Box flex={1}>

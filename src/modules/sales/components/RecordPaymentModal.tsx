@@ -1,21 +1,17 @@
+import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { customerPaymentSchema, CustomerPaymentFormData, CustomerPaymentFormInput } from '../../../validation/schemas';
+import {
+  customerPaymentSchema,
+  CustomerPaymentFormData,
+  CustomerPaymentFormInput,
+} from '../../../validation/schemas';
 import { useRecordPayment, useSalesInvoices } from '../../../hooks/api/useSales';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useAppStore } from '../../../stores/useAppStore';
-import {
-  Modal,
-  Box,
-  Stack,
-  Row,
-  Typography,
-  TextInput,
-  Button,
-  Card,
-} from '../../../components';
+import { Modal, Box, Stack, Row, Typography, TextInput, Button, Card } from '../../../components';
 
 export interface RecordPaymentModalProps {
   visible: boolean;
@@ -30,6 +26,8 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   preselectedCustomerId,
   preselectedInvoiceId,
 }) => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const { data: customers = [] } = useCustomers();
   const { data: invoices = [] } = useSalesInvoices();
   const recordPaymentMutation = useRecordPayment();
@@ -64,7 +62,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const watchedPaymentMethod = watch('paymentMethod');
 
   const customerInvoices = invoices.filter(
-    (inv) => inv.customerId === selectedCustomerId && inv.balanceDue > 0
+    (inv) => inv.customerId === selectedCustomerId && inv.balanceDue > 0,
   );
 
   const onSubmit = async (data: CustomerPaymentFormData) => {
@@ -80,7 +78,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
       setBannerAlert({
         title: 'Payment Received',
-        message: `Successfully collected ₹${data.amount.toLocaleString('en-IN')} from ${selectedCustomer?.name}. Customer dues updated.`,
+        message: `Successfully collected ${money(data.amount)} from ${selectedCustomer?.name}. Customer dues updated.`,
         variant: 'success',
       });
       reset();
@@ -123,7 +121,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               return (
                 <Button
                   key={c.id}
-                  label={`${c.name} (Dues: ₹${c.outstandingBalance})`}
+                  label={`${c.name} (Dues: ${symbol}${c.outstandingBalance})`}
                   variant={isSelected ? 'primary' : 'subtle'}
                   size="sm"
                   onPress={() => {
@@ -144,7 +142,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 Total Customer Outstanding Dues:
               </Typography>
               <Typography variant="bodyMedium" weight="bold" color="warning">
-                ₹{selectedCustomer.outstandingBalance.toLocaleString('en-IN')}
+                {money(selectedCustomer.outstandingBalance)}
               </Typography>
             </Row>
           </Card>
@@ -153,7 +151,11 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         {/* Invoice Allocation if any unpaid invoices exist */}
         {customerInvoices.length > 0 && (
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
+            <Typography
+              variant="label"
+              color="secondary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Allocate to Specific Unpaid Invoice (Optional)
             </Typography>
             <Row gap="xs" wrap>
@@ -162,7 +164,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
                 return (
                   <Button
                     key={inv.id}
-                    label={`${inv.invoiceNumber} (Due: ₹${inv.balanceDue})`}
+                    label={`${inv.invoiceNumber} (Due: ${symbol}${inv.balanceDue})`}
                     variant={isSelected ? 'secondary' : 'subtle'}
                     size="sm"
                     onPress={() => {
@@ -205,7 +207,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               value={value !== undefined ? String(value) : ''}
               onChangeText={(val) => onChange(parseFloat(val) || 0)}
               keyboardType="numeric"
-              prefix="₹"
+              prefix={symbol}
               error={errors.amount?.message}
             />
           )}

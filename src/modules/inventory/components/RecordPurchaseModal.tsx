@@ -1,3 +1,4 @@
+import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -24,10 +25,9 @@ export interface RecordPurchaseModalProps {
   onClose: () => void;
 }
 
-export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
-  visible,
-  onClose,
-}) => {
+export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({ visible, onClose }) => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const { data: ingredients = [] } = useIngredients();
   const { data: suppliers = [] } = useSuppliers();
   const recordPurchaseMutation = useRecordPurchase();
@@ -57,7 +57,6 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
     },
   });
 
-
   const selectedSupplierId = watch('supplierId');
   const selectedItemId = watch('itemId');
   const watchedQty = watch('quantity') || 0;
@@ -84,7 +83,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
 
       setBannerAlert({
         title: 'Purchase Recorded',
-        message: `Added ${data.quantity} ${selectedItem?.unit || 'units'} to stock. Balance due: ₹${balanceDue.toLocaleString('en-IN')}`,
+        message: `Added ${data.quantity} ${selectedItem?.unit || 'units'} to stock. Balance due: ${money(balanceDue)}`,
         variant: 'success',
       });
       reset();
@@ -234,7 +233,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
                   value={value ? String(value) : ''}
                   onChangeText={(val) => onChange(parseFloat(val) || 0)}
                   keyboardType="numeric"
-                  prefix="₹"
+                  prefix={symbol}
                   suffix={`/${selectedItem?.unit || 'kg'}`}
                   error={errors.unitPrice?.message}
                 />
@@ -253,7 +252,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
               value={value !== undefined ? String(value) : ''}
               onChangeText={(val) => onChange(parseFloat(val) || 0)}
               keyboardType="numeric"
-              prefix="₹"
+              prefix={symbol}
               hint="Remaining balance will be added to supplier balance"
               error={errors.amountPaid?.message}
             />
@@ -267,7 +266,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
               Total Purchase Bill:
             </Typography>
             <Typography variant="bodySmall" weight="bold" color="primary">
-              ₹{totalBill.toLocaleString('en-IN')}
+              {money(totalBill)}
             </Typography>
           </Row>
           <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
@@ -275,7 +274,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
               Amount Paid Now:
             </Typography>
             <Typography variant="bodySmall" weight="bold" color="success">
-              ₹{watchedAmountPaid.toLocaleString('en-IN')}
+              {money(watchedAmountPaid)}
             </Typography>
           </Row>
           <Divider variant="brand" spacing="xxs" />
@@ -288,7 +287,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
               weight="bold"
               color={balanceDue > 0 ? 'warning' : 'primary'}
             >
-              ₹{balanceDue.toLocaleString('en-IN')}
+              {money(balanceDue)}
             </Typography>
           </Row>
         </Card>
@@ -344,4 +343,3 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
 };
 
 export default RecordPurchaseModal;
-

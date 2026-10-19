@@ -1,3 +1,4 @@
+import { useMoney, useCurrencySymbol } from '../../hooks/useMoney';
 import { openSheet } from '../../navigation/sheets';
 import { theme, useColors } from '../../theme';
 import React, { useState } from 'react';
@@ -32,6 +33,8 @@ import { ProductionSetup, ProductionBatch } from '../../types';
 type ProductionTab = 'setups' | 'batches';
 
 export const ProductionScreen: React.FC = () => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const colors = useColors();
   const { data: ingredients = [] } = useIngredients();
   const seriesColors = [
@@ -213,11 +216,11 @@ export const ProductionScreen: React.FC = () => {
                       stats={[
                         {
                           label: 'Standard batch cost',
-                          value: `₹${Math.round(batchCost).toLocaleString('en-IN')}`,
+                          value: `${money(Math.round(batchCost))}`,
                         },
                         {
                           label: 'Cost per unit',
-                          value: units > 0 ? `₹${(batchCost / units).toFixed(2)}` : '—',
+                          value: units > 0 ? `${symbol}${(batchCost / units).toFixed(2)}` : '—',
                         },
                       ]}
                     />
@@ -367,7 +370,8 @@ export const ProductionScreen: React.FC = () => {
                 {/* Unit Cost Highlights */}
                 <Box align="flex-end" style={{ minWidth: 85, flexShrink: 0 }}>
                   <Typography variant="bodyLarge" weight="bold" color="brandDeep">
-                    ₹{(batch.directCostPerUnit || batch.directCostPerBag || 0).toFixed(1)}
+                    {symbol}
+                    {(batch.directCostPerUnit || batch.directCostPerBag || 0).toFixed(1)}
                   </Typography>
                   <Typography variant="caption" color="muted">
                     cost / {batch.outputUnit || 'unit'}
@@ -394,7 +398,7 @@ export const ProductionScreen: React.FC = () => {
                   Direct Batch Cost:
                 </Typography>
                 <Typography variant="bodySmall" weight="bold" color="primary">
-                  ₹{batch.directBatchCost.toLocaleString('en-IN')} (₹
+                  {money(batch.directBatchCost)} ({symbol}
                   {(batch.directCostPerBaseUnit || batch.directCostPerKg || 0).toFixed(2)}/
                   {batch.baseUnit || 'kg'})
                 </Typography>
@@ -415,7 +419,7 @@ export const ProductionScreen: React.FC = () => {
                       • {item.ingredientName}:
                     </Typography>
                     <Typography variant="caption" weight="semibold" color="primary">
-                      {item.actualQuantity} {item.unit} (₹{item.lineCost.toLocaleString('en-IN')})
+                      {item.actualQuantity} {item.unit} ({money(item.lineCost)})
                     </Typography>
                   </Row>
                 ))}
@@ -425,7 +429,7 @@ export const ProductionScreen: React.FC = () => {
                   </Typography>
                   <Typography variant="caption" weight="semibold" color="primary">
                     {batch.packagingUsedUnits || batch.packagingUsedBags}{' '}
-                    {batch.outputUnit || 'pcs'} (₹{batch.packagingCost.toLocaleString('en-IN')})
+                    {batch.outputUnit || 'pcs'} ({money(batch.packagingCost)})
                   </Typography>
                 </Row>
               </Box>

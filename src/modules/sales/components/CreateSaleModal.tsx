@@ -1,8 +1,13 @@
+import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { saleInvoiceSchema, SaleInvoiceFormData, SaleInvoiceFormInput } from '../../../validation/schemas';
+import {
+  saleInvoiceSchema,
+  SaleInvoiceFormData,
+  SaleInvoiceFormInput,
+} from '../../../validation/schemas';
 import { useCreateSaleInvoice } from '../../../hooks/api/useSales';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useProducts } from '../../../hooks/api/useInventory';
@@ -25,6 +30,8 @@ export interface CreateSaleModalProps {
 }
 
 export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClose }) => {
+  const money = useMoney();
+  const symbol = useCurrencySymbol();
   const { data: customers = [] } = useCustomers();
   const { data: products = [] } = useProducts();
   const createSaleMutation = useCreateSaleInvoice();
@@ -46,7 +53,8 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
       productId: activeProducts[0]?.id || 'prod-1',
       quantity: 1,
       outputUnit: activeProducts[0]?.outputUnit || 'bags',
-      unitPrice: activeProducts[0]?.sellingPricePerUnit || activeProducts[0]?.sellingPricePerBag || 500,
+      unitPrice:
+        activeProducts[0]?.sellingPricePerUnit || activeProducts[0]?.sellingPricePerBag || 500,
       discount: 0,
       amountPaidNow: 0,
       paymentMethod: 'cash',
@@ -90,7 +98,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
 
       setBannerAlert({
         title: 'Sale Confirmed & Dispatched',
-        message: `Dispatched ${qty} ${currentOutputUnit} of ${selectedProduct?.name} to ${selectedCustomer?.name}. Invoice Total: ₹${totalAmount.toLocaleString('en-IN')}`,
+        message: `Dispatched ${qty} ${currentOutputUnit} of ${selectedProduct?.name} to ${selectedCustomer?.name}. Invoice Total: ${money(totalAmount)}`,
         variant: 'success',
       });
       reset();
@@ -132,7 +140,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               return (
                 <Button
                   key={c.id}
-                  label={`${c.name} (Dues: ₹${c.outstandingBalance})`}
+                  label={`${c.name} (Dues: ${symbol}${c.outstandingBalance})`}
                   variant={isSelected ? 'primary' : 'subtle'}
                   size="sm"
                   onPress={() => setValue('customerId', c.id)}
@@ -151,7 +159,8 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
             {activeProducts.map((p) => {
               const isSelected = p.id === selectedProductId;
               const u = p.outputUnit || 'units';
-              const stock = p.currentStockUnits !== undefined ? p.currentStockUnits : (p.currentStockBags || 0);
+              const stock =
+                p.currentStockUnits !== undefined ? p.currentStockUnits : p.currentStockBags || 0;
               const price = p.sellingPricePerUnit || p.sellingPricePerBag || 500;
               return (
                 <Button
@@ -219,7 +228,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
                   value={value ? String(value) : ''}
                   onChangeText={(val) => onChange(parseFloat(val) || 0)}
                   keyboardType="numeric"
-                  prefix="₹"
+                  prefix={symbol}
                   suffix={`/${currentOutputUnit}`}
                   error={errors.unitPrice?.message}
                 />
@@ -238,7 +247,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               value={value !== undefined ? String(value) : '0'}
               onChangeText={(val) => onChange(parseFloat(val) || 0)}
               keyboardType="numeric"
-              prefix="₹"
+              prefix={symbol}
             />
           )}
         />
@@ -253,7 +262,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               value={value !== undefined ? String(value) : '0'}
               onChangeText={(val) => onChange(parseFloat(val) || 0)}
               keyboardType="numeric"
-              prefix="₹"
+              prefix={symbol}
               hint="Enter full amount for cash sale, partial for advance, or 0 for credit sale"
             />
           )}
@@ -262,7 +271,11 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
         {/* Payment Method Selector if payment > 0 */}
         {watchedAmountPaidNow > 0 && (
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
+            <Typography
+              variant="label"
+              color="secondary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Payment Mode Received
             </Typography>
             <Row gap="xs" wrap>
@@ -286,10 +299,10 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
         <Card variant="accent" padding="compact">
           <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
-              Subtotal ({watchedQuantity} {currentOutputUnit} × ₹{watchedUnitPrice}):
+              Subtotal ({watchedQuantity} {currentOutputUnit} × {money(watchedUnitPrice)}):
             </Typography>
             <Typography variant="bodySmall" weight="bold" color="primary">
-              ₹{subtotal.toLocaleString('en-IN')}
+              {money(subtotal)}
             </Typography>
           </Row>
           {watchedDiscount > 0 && (
@@ -298,7 +311,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
                 Discount Deducted:
               </Typography>
               <Typography variant="bodySmall" weight="bold" color="error">
-                -₹{watchedDiscount.toLocaleString('en-IN')}
+                -{money(watchedDiscount)}
               </Typography>
             </Row>
           )}
@@ -307,7 +320,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               Total Invoice Amount:
             </Typography>
             <Typography variant="bodySmall" weight="bold" color="brandDeep">
-              ₹{totalAmount.toLocaleString('en-IN')}
+              {money(totalAmount)}
             </Typography>
           </Row>
           <Divider variant="brand" spacing="xxs" />
@@ -316,7 +329,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               Cash Collected Now:
             </Typography>
             <Typography variant="bodySmall" weight="bold" color="success">
-              ₹{watchedAmountPaidNow.toLocaleString('en-IN')}
+              {money(watchedAmountPaidNow)}
             </Typography>
           </Row>
           <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
@@ -328,7 +341,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               weight="bold"
               color={balanceDue > 0 ? 'warning' : 'primary'}
             >
-              ₹{balanceDue.toLocaleString('en-IN')}
+              {money(balanceDue)}
             </Typography>
           </Row>
         </Card>
