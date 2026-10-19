@@ -2,6 +2,7 @@ import React from 'react';
 import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
 import { useProductionBatches } from '../../hooks/api/useProduction';
 import { useSalesInvoices } from '../../hooks/api/useSales';
+import { goToTab } from '../../navigation/routes';
 import { useAppStore, FilterPeriod } from '../../stores/useAppStore';
 import {
   ScreenContainer,
@@ -28,7 +29,7 @@ const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
 ];
 
 export const DashboardScreen: React.FC = () => {
-  const { selectedPeriod, setSelectedPeriod, openModal, setActiveTab } = useAppStore();
+  const { selectedPeriod, setSelectedPeriod, openModal } = useAppStore();
   const { data: metrics, isLoading, refetch, isRefetching } = useDashboardMetrics(selectedPeriod);
   const { data: settings } = useFactorySettings();
   const { data: batches = [] } = useProductionBatches();
@@ -76,7 +77,7 @@ export const DashboardScreen: React.FC = () => {
             variant="warning"
             title="Low Inventory Warning"
             message={`${metrics.inventory.lowStockCount} raw material or feed items are currently below minimum safety stock levels.`}
-            onPress={() => setActiveTab('inventory')}
+            onPress={() => goToTab('inventory')}
           />
         )}
 
@@ -130,7 +131,7 @@ export const DashboardScreen: React.FC = () => {
                 subtitle={`${metrics?.production.totalBaseQuantity || metrics?.production.totalWeightKg || 0} ${metrics?.production.baseUnit || 'kg'} output`}
                 icon="cube-outline"
                 variant="forest"
-                onPress={() => setActiveTab('production')}
+                onPress={() => goToTab('production')}
               />
             </Box>
             <Box flex={1}>
@@ -140,7 +141,7 @@ export const DashboardScreen: React.FC = () => {
                 subtitle="Dispatched to buyers"
                 icon="cart-outline"
                 variant="default"
-                onPress={() => setActiveTab('sales')}
+                onPress={() => goToTab('sales')}
               />
             </Box>
           </Row>
@@ -176,7 +177,7 @@ export const DashboardScreen: React.FC = () => {
               subtitle="Receivables pending"
               icon="alert-circle-outline"
               variant={metrics && metrics.sales.outstandingDues > 0 ? 'warning' : 'default'}
-              onPress={() => setActiveTab('more')}
+              onPress={() => goToTab('more')}
             />
           </Box>
           <Box flex={1}>
@@ -186,7 +187,7 @@ export const DashboardScreen: React.FC = () => {
               subtitle="Available in warehouse"
               icon="layers-outline"
               variant="default"
-              onPress={() => setActiveTab('inventory')}
+              onPress={() => goToTab('inventory')}
             />
           </Box>
         </Row>
@@ -255,7 +256,7 @@ export const DashboardScreen: React.FC = () => {
               label="View All"
               variant="ghost"
               size="sm"
-              onPress={() => setActiveTab('production')}
+              onPress={() => goToTab('production')}
             />
           </Row>
 
@@ -288,7 +289,7 @@ export const DashboardScreen: React.FC = () => {
               label="View All"
               variant="ghost"
               size="sm"
-              onPress={() => setActiveTab('sales')}
+              onPress={() => goToTab('sales')}
             />
           </Row>
 

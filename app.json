@@ -23,7 +23,9 @@
     },
     "plugins": [
       "expo-font",
-      "expo-sharing"
-    ]
+      "expo-sharing",
+      "expo-router"
+    ],
+    "scheme": "batchiq"
   }
 }

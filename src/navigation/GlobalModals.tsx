@@ -1,16 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../stores/useAppStore';
-import { theme } from '../theme';
-import { TabBar, FeedbackBanner, Box } from '../components';
-
-// Module Screens
-import { DashboardScreen } from '../modules/dashboard/DashboardScreen';
-import { ProductionScreen } from '../modules/production/ProductionScreen';
-import { InventoryScreen } from '../modules/inventory/InventoryScreen';
-import { SalesScreen } from '../modules/sales/SalesScreen';
-import { MoreScreen } from '../modules/more/MoreScreen';
 
 // Global Modals
 import { StartRunModal } from '../modules/production/components/StartRunModal';
@@ -26,58 +15,22 @@ import { CompanyProfileModal } from '../modules/more/components/CompanyProfileMo
 import { CustomerDetailModal } from '../modules/customers/components/CustomerDetailModal';
 import { PurchaseDetailModal } from '../modules/inventory/components/PurchaseDetailModal';
 
-export const AppNavigator: React.FC = () => {
-  const insets = useSafeAreaInsets();
+/**
+ * Store-driven sheets that can be opened from any route.
+ * Phase 2 of the router migration turns these into route-based sheets.
+ */
+export const GlobalModals: React.FC = () => {
   const {
-    activeTab,
-    setActiveTab,
     activeModal,
     closeModal,
     selectedSetupId,
     selectedCustomerId,
     selectedInvoiceId,
     selectedPurchaseId,
-    bannerAlert,
-    setBannerAlert,
   } = useAppStore();
 
-  const renderActiveScreen = () => {
-    switch (activeTab) {
-      case 'production':
-        return <ProductionScreen />;
-      case 'inventory':
-        return <InventoryScreen />;
-      case 'sales':
-        return <SalesScreen />;
-      case 'more':
-        return <MoreScreen />;
-      case 'dashboard':
-      default:
-        return <DashboardScreen />;
-    }
-  };
-
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
-      {/* Global Alert Notification Banner */}
-      {bannerAlert && (
-        <Box paddingHorizontal="base" paddingTop="xs">
-          <FeedbackBanner
-            title={bannerAlert.title}
-            message={bannerAlert.message}
-            variant={bannerAlert.variant}
-            onClose={() => setBannerAlert(null)}
-          />
-        </Box>
-      )}
-
-      {/* Main Screen View */}
-      <View style={styles.screenContainer}>{renderActiveScreen()}</View>
-
-      {/* Bottom Navigation Tab Bar */}
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
-
-      {/* Global Modals for Fast Operations */}
+    <>
       <StartRunModal
         visible={activeModal === 'start_batch'}
         onClose={closeModal}
@@ -143,18 +96,6 @@ export const AppNavigator: React.FC = () => {
         onClose={closeModal}
         purchaseId={selectedPurchaseId}
       />
-    </View>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: theme.colors.background.canvas,
-  },
-  screenContainer: {
-    flex: 1,
-  },
-});
-
-export default AppNavigator;

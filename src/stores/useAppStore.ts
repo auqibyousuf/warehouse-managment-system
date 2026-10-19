@@ -4,7 +4,6 @@
  */
 
 import { create } from 'zustand';
-import { NavTabId } from '../components/composite/TabBar';
 
 export type ActiveModal =
   | null
@@ -34,9 +33,6 @@ export interface BannerAlert {
 }
 
 interface AppState {
-  activeTab: NavTabId;
-  setActiveTab: (tab: NavTabId) => void;
-
   selectedPeriod: FilterPeriod;
   setSelectedPeriod: (period: FilterPeriod) => void;
 
@@ -61,9 +57,6 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  activeTab: 'dashboard',
-  setActiveTab: (tab) => set({ activeTab: tab }),
-
   selectedPeriod: 'this_month',
   setSelectedPeriod: (period) => set({ selectedPeriod: period }),
 
