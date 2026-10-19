@@ -18,7 +18,7 @@ import { useFonts } from 'expo-font';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PanelUIProvider } from 'panelui-native';
-import { ThemeProvider, theme, useColors, ColorTokens } from '../theme';
+import { ThemeProvider, useColors, ColorTokens } from '../theme';
 import { useAppStore } from '../stores/useAppStore';
 import { FeedbackBanner, Box } from '../components';
 

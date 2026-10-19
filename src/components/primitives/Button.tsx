@@ -80,9 +80,9 @@ export const Button: React.FC<ButtonProps> = ({
     switch (variant) {
       case 'secondary':
         return {
-          bg: colors.brand.deep,
-          text: colors.text.onBrand,
-          border: colors.brand.deep,
+          bg: colors.background.surface,
+          text: colors.text.primary,
+          border: colors.border.default,
         };
       case 'outline':
         return {
@@ -144,7 +144,7 @@ export const Button: React.FC<ButtonProps> = ({
           backgroundColor: disabled ? colors.background.surfaceTertiary : variantColors.bg,
           borderColor: disabled ? colors.border.default : variantColors.border,
           borderWidth: variant === 'ghost' ? 0 : 1,
-          borderRadius: theme.radii.lg,
+          borderRadius: theme.radii.md,
           width: fullWidth ? '100%' : 'auto',
           minHeight: theme.spacing.layout.touchTargetMin,
         },

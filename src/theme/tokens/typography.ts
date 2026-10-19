@@ -47,7 +47,7 @@ export const displayVariants = new Set([
 ]);
 
 /** Variants set in the monospace data face (labels, figures, codes). */
-export const dataVariants = new Set(['label', 'badgeText', 'dataLarge', 'dataMedium', 'caption']);
+export const dataVariants = new Set(['label', 'badgeText', 'dataLarge', 'dataMedium']);
 
 export const fontWeights: Record<string, TextStyle['fontWeight']> = {
   regular: '400',
@@ -151,7 +151,7 @@ export const textVariants: Record<string, TextStyle> = {
     fontWeight: fontWeights.regular,
   },
   caption: {
-    // body-sm, medium weight, data face
+    // body-sm, medium weight
     fontSize: 12,
     lineHeight: 16,
     fontWeight: fontWeights.medium,

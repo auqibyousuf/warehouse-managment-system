@@ -43,3 +43,7 @@ export {
 
 export * from './composite/ScreenList';
 export * from './composite/StepIndicator';
+export * from './composite/AppTopBar';
+export * from './composite/ProgressBar';
+export * from './composite/InsetStats';
+export * from './composite/SearchField';

@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   iconWrapper: {
     width: 32,
     height: 32,
-    borderRadius: theme.radii.full,
+    borderRadius: theme.radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: theme.spacing.xs,

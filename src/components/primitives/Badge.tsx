@@ -94,7 +94,7 @@ export const Badge: React.FC<BadgeProps> = ({
           borderColor: variantStyles.border,
           height: isSm ? theme.spacing.layout.badgeHeightSm : theme.spacing.layout.badgeHeightMd,
           paddingHorizontal: isSm ? theme.spacing.xs : theme.spacing.sm,
-          borderRadius: theme.radii.full,
+          borderRadius: theme.radii.sm,
         },
         style,
       ]}

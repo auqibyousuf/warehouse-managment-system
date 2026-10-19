@@ -1,5 +1,5 @@
 import { openSheet } from '../../navigation/sheets';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import React, { useState } from 'react';
 import {
   useProductionSetups,
@@ -7,6 +7,7 @@ import {
   useSetSetupStatus,
   useReverseProductionBatch,
 } from '../../hooks/api/useProduction';
+import { useIngredients } from '../../hooks/api/useInventory';
 import { useAppStore } from '../../stores/useAppStore';
 import {
   ScreenContainer,
@@ -23,12 +24,23 @@ import {
   EmptyState,
   LoadingState,
   ScreenList,
+  ProgressBar,
+  InsetStats,
 } from '../../components';
 import { ProductionSetup, ProductionBatch } from '../../types';
 
 type ProductionTab = 'setups' | 'batches';
 
 export const ProductionScreen: React.FC = () => {
+  const colors = useColors();
+  const { data: ingredients = [] } = useIngredients();
+  const seriesColors = [
+    colors.brand.primary,
+    colors.accent.warning,
+    colors.accent.success,
+    colors.accent.info,
+    colors.accent.error,
+  ];
   const [activeTab, setActiveTab] = useState<ProductionTab>('setups');
   const [batchToReverse, setBatchToReverse] = useState<ProductionBatch | null>(null);
 
@@ -85,28 +97,21 @@ export const ProductionScreen: React.FC = () => {
 
   const header = (
     <>
-      {/* Module Header */}
-      <Box>
-        <Row justify="space-between" align="center" wrap gap="sm">
-          <Box>
-            <Typography variant="caption" color="muted">
-              MANUFACTURING & RUNS
-            </Typography>
-            <Typography variant="h1" weight="bold" color="brandDeep">
-              Production Control
-            </Typography>
-          </Box>
-          <Button
-            label="+ Start Batch"
-            variant="primary"
-            size="sm"
-            leftIcon="construct-outline"
-            onPress={() => openSheet('start_batch')}
-          />
-        </Row>
-      </Box>
+      <Row gap="sm" wrap>
+        <Button
+          label="Start Batch"
+          variant="primary"
+          leftIcon="play-circle-outline"
+          onPress={() => openSheet('start_batch')}
+        />
+        <Button
+          label="New Recipe"
+          variant="secondary"
+          leftIcon="add-circle-outline"
+          onPress={() => openSheet('create_setup')}
+        />
+      </Row>
 
-      {/* Sub Navigation Switcher */}
       <ChipPicker
         options={[
           { value: 'setups', label: 'Recipes', count: setups.length },
@@ -142,20 +147,6 @@ export const ProductionScreen: React.FC = () => {
           header={
             <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
               {header}
-              <Stack gap="md">
-                {' '}
-                <Row justify="space-between" align="center">
-                  <Typography variant="bodySmall" color="secondary">
-                    Persistent setups preserve stable recipe targets across daily runs.
-                  </Typography>
-                  <Button
-                    label="+ New Recipe"
-                    variant="subtle"
-                    size="sm"
-                    onPress={() => openSheet('create_setup')}
-                  />
-                </Row>
-              </Stack>
             </Stack>
           }
           data={setups}
@@ -209,26 +200,69 @@ export const ProductionScreen: React.FC = () => {
 
               <Divider variant="subtle" spacing="sm" />
 
-              {/* Standard Recipe Targets */}
-              <Typography
-                variant="label"
-                color="secondary"
-                style={{ marginBottom: theme.spacing.xs }}
-              >
-                STANDARD RECIPE FORMULATION
-              </Typography>
-              <Stack gap="xxs">
-                {setup.recipeItems.map((item) => (
-                  <Row key={item.ingredientId} justify="space-between">
-                    <Typography variant="bodySmall" color="secondary">
-                      • {item.ingredientName}:
-                    </Typography>
-                    <Typography variant="bodySmall" weight="semibold" color="primary">
-                      {item.targetQuantity} {item.unit}
-                    </Typography>
-                  </Row>
-                ))}
-              </Stack>
+              {(() => {
+                const lines = setup.recipeItems.map((item, index) => {
+                  const cost = ingredients.find((i) => i.id === item.ingredientId)?.unitCost ?? 0;
+                  return { item, index, cost: item.targetQuantity * cost };
+                });
+                const batchCost = lines.reduce((sum, line) => sum + line.cost, 0);
+                const units = setup.targetUnits || setup.targetBags || 0;
+                return (
+                  <Stack gap="md">
+                    <InsetStats
+                      stats={[
+                        {
+                          label: 'Standard batch cost',
+                          value: `₹${Math.round(batchCost).toLocaleString('en-IN')}`,
+                        },
+                        {
+                          label: 'Cost per unit',
+                          value: units > 0 ? `₹${(batchCost / units).toFixed(2)}` : '—',
+                        },
+                      ]}
+                    />
+                    <Box>
+                      <Typography
+                        variant="label"
+                        color="muted"
+                        style={{ marginBottom: theme.spacing.xs }}
+                      >
+                        Formulation
+                      </Typography>
+                      <ProgressBar
+                        height={8}
+                        accessibilityLabel="Formulation distribution by quantity"
+                        segments={lines.map((line) => ({
+                          value: line.item.targetQuantity,
+                          color: seriesColors[line.index % seriesColors.length],
+                        }))}
+                      />
+                      <Stack gap="xxs" style={{ marginTop: theme.spacing.sm }}>
+                        {lines.map((line) => (
+                          <Row key={line.item.ingredientId ?? line.index} justify="space-between">
+                            <Row gap="xs" align="center">
+                              <Box
+                                style={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: theme.radii.full,
+                                  backgroundColor: seriesColors[line.index % seriesColors.length],
+                                }}
+                              />
+                              <Typography variant="bodySmall" color="secondary">
+                                {line.item.ingredientName}
+                              </Typography>
+                            </Row>
+                            <Typography variant="dataMedium" color="primary" tabular>
+                              {line.item.targetQuantity} {line.item.unit}
+                            </Typography>
+                          </Row>
+                        ))}
+                      </Stack>
+                    </Box>
+                  </Stack>
+                );
+              })()}
 
               {setup.notes && (
                 <Typography

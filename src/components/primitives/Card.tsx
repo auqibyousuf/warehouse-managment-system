@@ -75,7 +75,7 @@ export const CardComponent: React.FC<CardProps> = ({
   };
 
   const baseCardStyle: ViewStyle = {
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.md,
     padding: getPadding(),
     overflow: 'hidden',
     ...getVariantStyles(),

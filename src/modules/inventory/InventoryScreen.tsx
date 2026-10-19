@@ -1,13 +1,8 @@
+import React, { useMemo, useState } from 'react';
 import { openSheet } from '../../navigation/sheets';
-import React, { useState } from 'react';
 import { theme, useColors } from '../../theme';
+import { useInventoryItems, useInventoryMovements } from '../../hooks/api/useInventory';
 import {
-  useInventoryItems,
-  useInventoryMovements,
-  useSuppliers,
-} from '../../hooks/api/useInventory';
-import {
-  ScreenContainer,
   Box,
   Stack,
   Row,
@@ -16,22 +11,35 @@ import {
   Button,
   Badge,
   ListItem,
-  Divider,
   ChipPicker,
   LoadingState,
   EmptyState,
   ScreenList,
+  ProgressBar,
+  InsetStats,
+  SearchField,
 } from '../../components';
 import { UnifiedStockItem } from '../../services/api/inventoryService';
 import { EditIngredientModal } from './components/EditIngredientModal';
 
-type InventoryTab = 'stock' | 'movements' | 'suppliers';
-type StockCategoryFilter = 'all' | 'raw_material' | 'packaging' | 'finished_feed';
+type InventoryTab = 'stock' | 'movements';
+type CategoryFilter = 'all' | 'raw_material' | 'packaging' | 'finished_feed';
+
+const CATEGORY_LABEL: Record<UnifiedStockItem['type'], string> = {
+  raw_material: 'RAW MATERIAL',
+  packaging: 'PACKAGING',
+  finished_feed: 'FINISHED GOODS',
+};
+
+const money = (value: number) => `₹${Math.round(value).toLocaleString('en-IN')}`;
 
 export const InventoryScreen: React.FC = () => {
   const colors = useColors();
   const [activeTab, setActiveTab] = useState<InventoryTab>('stock');
-  const [categoryFilter, setCategoryFilter] = useState<StockCategoryFilter>('all');
+  const [category, setCategory] = useState<CategoryFilter>('all');
+  const [query, setQuery] = useState('');
+  const [lowOnly, setLowOnly] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<UnifiedStockItem | null>(null);
 
   const {
     data: stockItems = [],
@@ -40,68 +48,123 @@ export const InventoryScreen: React.FC = () => {
     isRefetching,
   } = useInventoryItems();
   const { data: movements = [], isLoading: loadingMovements } = useInventoryMovements();
-  const { data: suppliers = [], isLoading: loadingSuppliers } = useSuppliers();
 
-  const [itemToEdit, setItemToEdit] = useState<UnifiedStockItem | null>(null);
+  const summary = useMemo(() => {
+    const valueOf = (type: UnifiedStockItem['type']) =>
+      stockItems
+        .filter((i) => i.type === type)
+        .reduce((sum, i) => sum + i.currentStock * i.unitCostOrPrice, 0);
+    const raw = valueOf('raw_material');
+    const packaging = valueOf('packaging');
+    const finished = valueOf('finished_feed');
+    return {
+      raw,
+      packaging,
+      finished,
+      atCost: raw + packaging,
+      lowCount: stockItems.filter((i) => i.isLowStock).length,
+    };
+  }, [stockItems]);
 
-  const filteredItems = stockItems.filter((item) => {
-    if (categoryFilter === 'all') return true;
-    return item.type === categoryFilter;
-  });
+  const counts = useMemo(
+    () => ({
+      all: stockItems.length,
+      raw_material: stockItems.filter((i) => i.type === 'raw_material').length,
+      packaging: stockItems.filter((i) => i.type === 'packaging').length,
+      finished_feed: stockItems.filter((i) => i.type === 'finished_feed').length,
+    }),
+    [stockItems],
+  );
 
-  const lowStockCount = stockItems.filter((i) => i.isLowStock).length;
+  const visibleItems = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return stockItems.filter(
+      (item) =>
+        (category === 'all' || item.type === category) &&
+        (!lowOnly || item.isLowStock) &&
+        (!needle || item.name.toLowerCase().includes(needle)),
+    );
+  }, [stockItems, category, lowOnly, query]);
 
   const header = (
     <>
-      {/* Module Header */}
-      <Box>
-        <Row justify="space-between" align="center" wrap gap="sm">
-          <Box>
-            <Typography variant="caption" color="muted">
-              WAREHOUSE & STOCK LEDGER
+      <Card variant="elevated" padding="normal">
+        <Row justify="space-between" align="flex-start">
+          <Box flex={1}>
+            <Typography variant="label" color="muted">
+              Stock value at cost
             </Typography>
-            <Typography variant="h1" weight="bold" color="brandDeep">
-              Inventory & Stock
+            <Typography variant="h1" color="primary" tabular>
+              {money(summary.atCost)}
             </Typography>
           </Box>
-          <Row gap="xs" wrap style={{ width: '100%', marginTop: theme.spacing.sm }}>
-            <Button
-              label="+ Raw Material"
-              variant="primary"
-              size="sm"
-              leftIcon="add-outline"
-              onPress={() => openSheet('create_ingredient')}
-            />
-            <Button
-              label="+ Supplier"
-              variant="subtle"
-              size="sm"
-              leftIcon="business-outline"
-              onPress={() => openSheet('create_supplier')}
-            />
-            <Button
-              label="+ Inward Stock"
-              variant="subtle"
-              size="sm"
-              leftIcon="cart-outline"
-              onPress={() => openSheet('record_purchase')}
-            />
-            <Button
-              label="Adjust"
-              variant="subtle"
-              size="sm"
-              onPress={() => openSheet('adjust_stock')}
-            />
-          </Row>
+          {summary.lowCount > 0 && (
+            <Badge label={`${summary.lowCount} below safety`} variant="danger" icon="warning" />
+          )}
         </Row>
-      </Box>
 
-      {/* View Switcher: Stock Levels vs Movements Audit */}
+        <Box marginTop="md">
+          <ProgressBar
+            height={8}
+            accessibilityLabel="Stock value by category"
+            segments={[
+              { value: summary.raw, color: colors.brand.primary },
+              { value: summary.packaging, color: colors.accent.warning },
+              { value: summary.finished, color: colors.accent.success },
+            ]}
+          />
+          <Row gap="md" wrap style={{ marginTop: theme.spacing.sm }}>
+            {[
+              ['Raw', summary.raw, colors.brand.primary],
+              ['Packaging', summary.packaging, colors.accent.warning],
+              ['Finished', summary.finished, colors.accent.success],
+            ].map(([label, value, color]) => (
+              <Row key={label as string} gap="xs" align="center">
+                <Box
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: theme.radii.full,
+                    backgroundColor: color as string,
+                  }}
+                />
+                <Typography variant="caption" color="secondary">
+                  {label as string} {money(value as number)}
+                </Typography>
+              </Row>
+            ))}
+          </Row>
+          <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xs }}>
+            Finished goods are valued at selling price.
+          </Typography>
+        </Box>
+      </Card>
+
+      <Row gap="sm" wrap>
+        <Button
+          label="Stock In"
+          variant="primary"
+          leftIcon="add-circle-outline"
+          onPress={() => openSheet('record_purchase')}
+        />
+        <Button
+          label="New Item"
+          variant="secondary"
+          leftIcon="cube-outline"
+          onPress={() => openSheet('create_ingredient')}
+        />
+        <Button
+          label="Adjust"
+          variant="secondary"
+          leftIcon="swap-vertical-outline"
+          onPress={() => openSheet('adjust_stock')}
+        />
+      </Row>
+
       <ChipPicker
         options={[
-          { value: 'stock', label: 'Current Balances', count: stockItems.length },
+          { value: 'stock', label: 'Balances', count: stockItems.length },
           { value: 'movements', label: 'Movement Ledger', count: movements.length },
-          { value: 'suppliers', label: 'Suppliers & Vendors', count: suppliers.length },
         ]}
         selected={activeTab}
         onSelect={(tab) => setActiveTab(tab as InventoryTab)}
@@ -110,13 +173,11 @@ export const InventoryScreen: React.FC = () => {
   );
 
   const overlays = (
-    <>
-      <EditIngredientModal
-        visible={itemToEdit !== null}
-        item={itemToEdit}
-        onClose={() => setItemToEdit(null)}
-      />
-    </>
+    <EditIngredientModal
+      visible={itemToEdit !== null}
+      item={itemToEdit}
+      onClose={() => setItemToEdit(null)}
+    />
   );
 
   if (activeTab === 'stock') {
@@ -126,197 +187,125 @@ export const InventoryScreen: React.FC = () => {
           header={
             <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
               {header}
-              <Stack gap="md">
-                {' '}
-                {/* Category Filter Pills */}
-                <ChipPicker
-                  options={[
-                    { value: 'all', label: 'All Items' },
-                    { value: 'raw_material', label: 'Raw Materials' },
-                    { value: 'packaging', label: 'Packaging' },
-                    { value: 'finished_feed', label: 'Finished Feed' },
-                  ]}
-                  selected={categoryFilter}
-                  onSelect={(cat) => setCategoryFilter(cat as StockCategoryFilter)}
-                />
-                {lowStockCount > 0 && (
-                  <Box bg="amberWash" padding="compact" borderRadius="md">
-                    <Row gap="xs" align="center">
-                      <Badge label="Warning" variant="warning" dot size="sm" />
-                      <Typography variant="bodySmall" weight="semibold" color="warning">
-                        {lowStockCount} items below safe operating thresholds
-                      </Typography>
-                    </Row>
-                  </Box>
-                )}
-              </Stack>
+              <ChipPicker
+                options={[
+                  { value: 'all', label: 'All', count: counts.all },
+                  { value: 'raw_material', label: 'Raw', count: counts.raw_material },
+                  { value: 'packaging', label: 'Packaging', count: counts.packaging },
+                  { value: 'finished_feed', label: 'Finished', count: counts.finished_feed },
+                ]}
+                selected={category}
+                onSelect={(value) => setCategory(value as CategoryFilter)}
+              />
+              <SearchField value={query} onChangeText={setQuery} placeholder="Search items" />
+              {summary.lowCount > 0 && (
+                <Row>
+                  <Button
+                    label={`Low stock (${summary.lowCount})`}
+                    variant={lowOnly ? 'danger' : 'subtle'}
+                    size="sm"
+                    leftIcon="alert-circle-outline"
+                    onPress={() => setLowOnly((value) => !value)}
+                  />
+                </Row>
+              )}
             </Stack>
           }
-          data={filteredItems}
+          data={visibleItems}
           keyExtractor={(row) => row.id}
           placeholder={
             loadingStock ? (
-              <LoadingState message="Fetching warehouse stock levels..." />
-            ) : filteredItems.length === 0 ? (
+              <LoadingState message="Loading stock..." />
+            ) : visibleItems.length === 0 ? (
               <EmptyState
                 title="No Items Found"
-                description="No stock items match this category filter."
+                description="No stock items match this search or filter."
               />
             ) : null
           }
-          renderItem={({ item: item }) => (
-            <Card
-              key={item.id}
-              variant={item.isLowStock ? 'accent' : 'elevated'}
-              padding="normal"
-              style={
-                item.isLowStock
-                  ? {
-                      backgroundColor: colors.status.warning.bg,
-                      borderColor: colors.status.warning.border,
-                    }
-                  : undefined
-              }
-            >
-              <Row justify="space-between" align="flex-start" gap="sm">
-                <Box flex={1} style={{ marginRight: theme.spacing.sm }}>
-                  <Badge
-                    label={
-                      item.type === 'raw_material'
-                        ? 'RAW MATERIAL'
-                        : item.type === 'packaging'
-                          ? 'PACKAGING'
-                          : 'FINISHED GOODS'
-                    }
-                    variant={item.type === 'finished_feed' ? 'forest' : 'neutral'}
-                    size="sm"
-                    style={{ marginBottom: theme.spacing.xsm, alignSelf: 'flex-start' }}
-                  />
-                  <Typography variant="title" weight="bold" color="primary" numberOfLines={2}>
+          renderItem={({ item }) => {
+            const isFinished = item.type === 'finished_feed';
+            const fill = item.minThreshold > 0 ? item.currentStock / (item.minThreshold * 2) : 1;
+            return (
+              <Card variant={item.isLowStock ? 'accent' : 'elevated'} padding="normal">
+                <Stack gap="md">
+                  <Row justify="space-between" align="center">
+                    <Badge
+                      label={CATEGORY_LABEL[item.type]}
+                      variant={isFinished ? 'forest' : 'neutral'}
+                      size="sm"
+                    />
+                    <Badge
+                      label={item.isLowStock ? 'Low stock' : 'In stock'}
+                      variant={item.isLowStock ? 'danger' : 'success'}
+                      size="sm"
+                      dot
+                    />
+                  </Row>
+
+                  <Typography variant="title" color="primary" numberOfLines={2}>
                     {item.name}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    color="muted"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    {item.type === 'finished_feed'
-                      ? `Selling Baseline: ₹${item.unitCostOrPrice} / ${item.unit}`
-                      : `Current Cost: ₹${item.unitCostOrPrice} / ${item.unit}`}
-                  </Typography>
-                </Box>
 
-                {/* Stock Value Badge */}
-                <Box align="flex-end" style={{ minWidth: 95, flexShrink: 0 }}>
-                  <Typography
-                    variant="h3"
-                    weight="bold"
-                    color={item.isLowStock ? 'warning' : 'brandDeep'}
-                    tabular
-                  >
-                    {item.currentStock.toLocaleString('en-IN')} {item.unit}
-                  </Typography>
-                  <Badge
-                    label={item.isLowStock ? 'LOW STOCK' : 'IN STOCK'}
-                    variant={item.isLowStock ? 'warning' : 'success'}
-                    size="sm"
-                    style={{ marginTop: theme.spacing.xs }}
+                  <InsetStats
+                    stats={[
+                      {
+                        label: 'Current quantity',
+                        value: `${item.currentStock.toLocaleString('en-IN')} ${item.unit}`,
+                        valueColor: item.isLowStock ? 'error' : 'primary',
+                      },
+                      {
+                        label: isFinished ? 'Retail value' : 'Stock value',
+                        value: money(item.currentStock * item.unitCostOrPrice),
+                      },
+                    ]}
                   />
-                </Box>
-              </Row>
 
-              <Divider variant="subtle" spacing="sm" />
+                  <Box>
+                    <ProgressBar
+                      value={fill}
+                      color={item.isLowStock ? colors.accent.error : colors.brand.primary}
+                      accessibilityLabel={`${item.name} stock level`}
+                    />
+                    <Row justify="space-between" style={{ marginTop: theme.spacing.xs }}>
+                      <Typography variant="caption" color="muted">
+                        Safety min: {item.minThreshold.toLocaleString('en-IN')} {item.unit}
+                      </Typography>
+                      <Typography variant="caption" color="muted">
+                        {isFinished ? 'Price' : 'Cost'}: ₹{item.unitCostOrPrice} / {item.unit}
+                      </Typography>
+                    </Row>
+                  </Box>
 
-              <Row justify="space-between" align="center">
-                <Typography variant="caption" color="muted">
-                  Safety Threshold: {item.minThreshold} {item.unit}
-                </Typography>
-
-                <Row gap="xs" align="center">
-                  {item.type !== 'finished_feed' ? (
+                  <Row gap="sm" wrap>
+                    {!isFinished && (
+                      <Button
+                        label="Stock In"
+                        variant="primary"
+                        size="sm"
+                        leftIcon="add"
+                        onPress={() => openSheet('record_purchase')}
+                      />
+                    )}
                     <Button
-                      label="Edit / Delete"
-                      variant="ghost"
+                      label="Adjust"
+                      variant="secondary"
+                      size="sm"
+                      onPress={() => openSheet('adjust_stock')}
+                    />
+                    <Button
+                      label="Edit"
+                      variant="secondary"
                       size="sm"
                       leftIcon="create-outline"
-                      onPress={() => setItemToEdit(item)}
+                      onPress={() =>
+                        isFinished
+                          ? openSheet('edit_product', { productId: item.id })
+                          : setItemToEdit(item)
+                      }
                     />
-                  ) : (
-                    <Button
-                      label="Edit Product"
-                      variant="ghost"
-                      size="sm"
-                      leftIcon="create-outline"
-                      onPress={() => openSheet('edit_product', { productId: item.id })}
-                    />
-                  )}
-                  <Button
-                    label="Reconcile Count"
-                    variant="ghost"
-                    size="sm"
-                    onPress={() => openSheet('adjust_stock')}
-                  />
-                </Row>
-              </Row>
-            </Card>
-          )}
-          refreshing={isRefetching}
-          onRefresh={refetch}
-        />
-        {overlays}
-      </>
-    );
-  }
-
-  if (activeTab === 'movements') {
-    return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-              <Stack gap="md">
-                {' '}
-                <Typography variant="bodySmall" color="secondary">
-                  Authoritative stock ledger: every movement references its source transaction.
-                </Typography>
-              </Stack>
-            </Stack>
-          }
-          data={movements}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingMovements ? (
-              <LoadingState message="Loading inventory ledger movements..." />
-            ) : movements.length === 0 ? (
-              <EmptyState
-                title="No Ledger Movements"
-                description="Transaction movements will appear here once purchases, production runs, or dispatches occur."
-              />
-            ) : null
-          }
-          renderItem={({ item: mov }) => {
-            const isIn = mov.direction === 'in';
-
-            return (
-              <Card variant="elevated" padding="compact">
-                <ListItem
-                  key={mov.id}
-                  title={`${mov.itemName}`}
-                  subtitle={`Ref: ${mov.referenceType.toUpperCase()} #${mov.referenceId}`}
-                  meta={`${mov.date} • ${mov.notes || ''}`}
-                  value={`${isIn ? '+' : '-'}${mov.quantity} ${mov.unit}`}
-                  valueColor={isIn ? 'success' : 'primary'}
-                  badge={{
-                    label: mov.movementType.replace('_', ' ').toUpperCase(),
-                    variant:
-                      mov.movementType === 'purchase' || mov.movementType === 'finished_production'
-                        ? 'success'
-                        : mov.movementType === 'reversal'
-                          ? 'danger'
-                          : 'neutral',
-                  }}
-                />
+                  </Row>
+                </Stack>
               </Card>
             );
           }}
@@ -328,98 +317,57 @@ export const InventoryScreen: React.FC = () => {
     );
   }
 
-  if (activeTab === 'suppliers') {
-    return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-            </Stack>
-          }
-          data={suppliers}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingSuppliers ? (
-              <LoadingState message="Loading suppliers..." />
-            ) : suppliers.length === 0 ? (
-              <EmptyState
-                title="No Suppliers Registered"
-                description="Register raw material and packaging vendors to record incoming stock shipments."
-                actionLabel="+ Add First Supplier"
-                onAction={() => openSheet('create_supplier')}
-              />
-            ) : null
-          }
-          renderItem={({ item: sup }) => (
-            <Card key={sup.id} variant="elevated" padding="normal">
-              <Row justify="space-between" align="center">
-                <Box flex={1}>
-                  <Typography variant="bodyLarge" weight="bold" color="primary">
-                    {sup.name}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="secondary"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    Phone: {sup.phone}
-                  </Typography>
-                  {sup.gstNumber && (
-                    <Typography variant="caption" color="muted">
-                      GST: {sup.gstNumber}
-                    </Typography>
-                  )}
-                  {sup.address && (
-                    <Typography variant="caption" color="muted">
-                      {sup.address}
-                    </Typography>
-                  )}
-                </Box>
-
-                <Box align="flex-end">
-                  <Typography variant="caption" color="muted">
-                    Payables Outstanding
-                  </Typography>
-                  <Typography
-                    variant="bodyLarge"
-                    weight="bold"
-                    color={sup.balanceDue > 0 ? 'warning' : 'success'}
-                  >
-                    ₹{(sup.balanceDue || 0).toLocaleString('en-IN')}
-                  </Typography>
-                  <Button
-                    label="Edit"
-                    variant="ghost"
-                    size="sm"
-                    leftIcon="create-outline"
-                    onPress={() => openSheet('edit_supplier', { supplierId: sup.id })}
-                  />
-                  <Button
-                    label="+ Record Bill"
-                    variant="subtle"
-                    size="sm"
-                    leftIcon="cart-outline"
-                    style={{ marginTop: theme.spacing.xsm }}
-                    onPress={() => openSheet('record_purchase')}
-                  />
-                </Box>
-              </Row>
-            </Card>
-          )}
-          refreshing={isRefetching}
-          onRefresh={refetch}
-        />
-        {overlays}
-      </>
-    );
-  }
-
   return (
-    <ScreenContainer refreshing={isRefetching} onRefresh={refetch}>
-      <Stack gap="lg">{header}</Stack>
+    <>
+      <ScreenList
+        header={
+          <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
+            {header}
+            <Typography variant="bodySmall" color="secondary">
+              Every movement references the transaction that caused it.
+            </Typography>
+          </Stack>
+        }
+        data={movements}
+        keyExtractor={(row) => row.id}
+        placeholder={
+          loadingMovements ? (
+            <LoadingState message="Loading movements..." />
+          ) : movements.length === 0 ? (
+            <EmptyState
+              title="No Movements Yet"
+              description="Movements appear here once purchases, batches or dispatches happen."
+            />
+          ) : null
+        }
+        renderItem={({ item: mov }) => {
+          const isIn = mov.direction === 'in';
+          return (
+            <Card variant="elevated" padding="compact">
+              <ListItem
+                title={mov.itemName}
+                subtitle={`Ref: ${mov.referenceType.toUpperCase()} #${mov.referenceId}`}
+                meta={`${mov.date} • ${mov.notes || ''}`}
+                value={`${isIn ? '+' : '-'}${mov.quantity} ${mov.unit}`}
+                valueColor={isIn ? 'success' : 'primary'}
+                badge={{
+                  label: mov.movementType.replace('_', ' ').toUpperCase(),
+                  variant:
+                    mov.movementType === 'purchase' || mov.movementType === 'finished_production'
+                      ? 'success'
+                      : mov.movementType === 'reversal'
+                        ? 'danger'
+                        : 'neutral',
+                }}
+              />
+            </Card>
+          );
+        }}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+      />
       {overlays}
-    </ScreenContainer>
+    </>
   );
 };
 

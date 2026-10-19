@@ -27,7 +27,13 @@ export const ChipPicker = <T extends string | number>({
 }: ChipPickerProps<T>) => {
   const colors = useColors();
   const renderChips = () => (
-    <View style={[styles.container, style]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.background.surfaceSecondary, borderColor: colors.border.subtle },
+        style,
+      ]}
+    >
       {options.map((opt) => {
         const isSelected = opt.value === selected;
 
@@ -46,8 +52,8 @@ export const ChipPicker = <T extends string | number>({
             style={[
               styles.chip,
               {
-                backgroundColor: isSelected ? colors.brand.primary : colors.background.surface,
-                borderColor: isSelected ? colors.brand.primary : colors.border.default,
+                backgroundColor: isSelected ? colors.brand.primary : 'transparent',
+                borderColor: isSelected ? colors.brand.primary : 'transparent',
               },
             ]}
           >
@@ -110,7 +116,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
+    padding: theme.spacing.xs,
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.layout.screenPaddingHorizontal,
@@ -120,14 +129,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radii.full,
+    borderRadius: theme.radii.md,
     borderWidth: 1,
-    minHeight: 40,
+    minHeight: 36,
   },
   countBadge: {
     paddingHorizontal: theme.spacing.xs,
     paddingVertical: theme.spacing.hairline,
-    borderRadius: theme.radii.full,
+    borderRadius: theme.radii.sm,
     marginLeft: theme.spacing.xs,
   },
 });

@@ -7,7 +7,7 @@ import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Ionicons } from '@expo/vector-icons';
 
-export type NavTabId = 'dashboard' | 'production' | 'inventory' | 'sales' | 'business';
+export type NavTabId = 'dashboard' | 'production' | 'inventory' | 'procure' | 'ledger';
 
 export interface TabItem {
   id: NavTabId;
@@ -25,9 +25,9 @@ export interface TabBarProps {
 export const defaultTabs: TabItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline' },
   { id: 'production', label: 'Production', icon: 'construct-outline' },
-  { id: 'inventory', label: 'Stock', icon: 'cube-outline' },
-  { id: 'sales', label: 'Sales', icon: 'receipt-outline' },
-  { id: 'business', label: 'Business', icon: 'briefcase-outline' },
+  { id: 'inventory', label: 'Inventory', icon: 'cube-outline' },
+  { id: 'procure', label: 'Procure', icon: 'cart-outline' },
+  { id: 'ledger', label: 'Ledger', icon: 'receipt-outline' },
 ];
 
 export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = defaultTabs }) => {
@@ -61,7 +61,7 @@ export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = d
               accessibilityLabel={tab.label}
               accessibilityState={{ selected: isActive }}
             >
-              <View style={[styles.iconContainer, isActive && styles.iconContainerActive]}>
+              <View style={styles.iconContainer}>
                 <Icon
                   name={isActive ? (tab.icon.replace('-outline', '') as typeof tab.icon) : tab.icon}
                   size="md"
@@ -100,8 +100,6 @@ const createStyles = (colors: ColorTokens) =>
       backgroundColor: colors.background.surface,
       borderTopWidth: 1,
       borderTopColor: colors.border.subtle,
-      borderTopLeftRadius: theme.radii.xl,
-      borderTopRightRadius: theme.radii.xl,
       ...theme.shadows.card,
     },
     tabsRow: {
@@ -121,12 +119,8 @@ const createStyles = (colors: ColorTokens) =>
       position: 'relative',
       alignItems: 'center',
       justifyContent: 'center',
-      width: 56,
-      height: 30,
-      borderRadius: theme.radii.full,
-    },
-    iconContainerActive: {
-      backgroundColor: colors.brand.wash,
+      width: 40,
+      height: 28,
     },
     badge: {
       position: 'absolute',

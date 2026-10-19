@@ -1,11 +1,11 @@
+import React, { useMemo } from 'react';
 import { openSheet } from '../../navigation/sheets';
-import { theme } from '../../theme';
-import { Pressable } from 'react-native';
-import React from 'react';
-import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
-import { useProductionBatches } from '../../hooks/api/useProduction';
-import { useSalesInvoices } from '../../hooks/api/useSales';
 import { goToTab } from '../../navigation/routes';
+import { theme, useColors } from '../../theme';
+import { useDashboardMetrics } from '../../hooks/api/useDashboard';
+import { useProductionBatches } from '../../hooks/api/useProduction';
+import { useSalesInvoices, useCustomerPayments } from '../../hooks/api/useSales';
+import { useInventoryItems, usePurchases } from '../../hooks/api/useInventory';
 import { useAppStore, FilterPeriod } from '../../stores/useAppStore';
 import {
   ScreenContainer,
@@ -13,16 +13,15 @@ import {
   Stack,
   Row,
   Typography,
-  StatCard,
   Card,
   Button,
   Badge,
   ListItem,
   Divider,
-  FeedbackBanner,
   LoadingState,
   ChipPicker,
-  Icon,
+  ProgressBar,
+  InsetStats,
 } from '../../components';
 
 const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
@@ -32,306 +31,373 @@ const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
   { value: 'all_time', label: 'All Time' },
 ];
 
+const money = (value: number) => `₹${Math.round(value).toLocaleString('en-IN')}`;
+
+interface LedgerEntry {
+  id: string;
+  date: string;
+  kind: 'SALE' | 'PAYMENT' | 'PURCHASE';
+  party: string;
+  reference: string;
+  amount: number;
+}
+
 export const DashboardScreen: React.FC = () => {
+  const colors = useColors();
   const { selectedPeriod, setSelectedPeriod } = useAppStore();
   const { data: metrics, isLoading, refetch, isRefetching } = useDashboardMetrics(selectedPeriod);
-  const { data: settings } = useFactorySettings();
   const { data: batches = [] } = useProductionBatches();
   const { data: invoices = [] } = useSalesInvoices();
+  const { data: payments = [] } = useCustomerPayments();
+  const { data: purchases = [] } = usePurchases();
+  const { data: stock = [] } = useInventoryItems();
+
+  const lowStock = useMemo(() => stock.filter((item) => item.isLowStock), [stock]);
+  const healthyShare = stock.length > 0 ? (stock.length - lowStock.length) / stock.length : 1;
+
+  const ledgerFeed = useMemo<LedgerEntry[]>(() => {
+    const entries: LedgerEntry[] = [
+      ...invoices
+        .filter((i) => i.paymentStatus !== 'cancelled')
+        .map((i) => ({
+          id: i.id,
+          date: i.date,
+          kind: 'SALE' as const,
+          party: i.customerName,
+          reference: i.invoiceNumber,
+          amount: i.totalAmount,
+        })),
+      ...payments.map((p) => ({
+        id: p.id,
+        date: p.date,
+        kind: 'PAYMENT' as const,
+        party: p.customerName,
+        reference: p.paymentNumber,
+        amount: p.amount,
+      })),
+      ...purchases.map((p) => ({
+        id: p.id,
+        date: p.date,
+        kind: 'PURCHASE' as const,
+        party: p.supplierName,
+        reference: p.purchaseNumber,
+        amount: p.totalAmount,
+      })),
+    ];
+    return entries.sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
+  }, [invoices, payments, purchases]);
 
   if (isLoading && !metrics) {
     return (
       <ScreenContainer>
-        <LoadingState message="Loading factory operations dashboard..." />
+        <LoadingState message="Loading dashboard..." />
       </ScreenContainer>
     );
   }
 
+  const revenue = metrics?.sales.salesRevenue ?? 0;
+  const collected = metrics?.sales.cashCollected ?? 0;
+  const settledShare = revenue > 0 ? Math.min(1, collected / revenue) : 0;
+  const unitName = metrics?.production.defaultUnitName || 'units';
+  const finance = metrics?.financial;
   const recentBatches = batches.slice(0, 3);
-  const recentInvoices = invoices.slice(0, 3);
 
   return (
     <ScreenContainer refreshing={isRefetching} onRefresh={refetch}>
       <Stack gap="lg">
-        {/* Factory Header Banner */}
-        <Box>
-          <Row justify="space-between" align="center">
-            <Pressable
-              style={{ flex: 1, marginRight: theme.spacing.sm }}
-              onPress={() => openSheet('company_profile')}
-              accessibilityRole="button"
-              accessibilityLabel="Edit business profile"
-            >
-              <Typography variant="caption" color="muted">
-                OPERATIONAL DASHBOARD
-              </Typography>
-              <Row gap="xs" align="center">
-                <Typography variant="h1" weight="bold" color="brandDeep" style={{ flexShrink: 1 }}>
-                  {settings?.factoryName?.trim() || 'Set your business name'}
-                </Typography>
-                <Icon name="create-outline" size="sm" color="muted" />
-              </Row>
-            </Pressable>
-            <Badge label="Active" variant="success" dot />
-          </Row>
-        </Box>
-
-        {/* Date Filter Chips */}
         <ChipPicker
           options={PERIOD_OPTIONS}
           selected={selectedPeriod}
-          onSelect={(period) => setSelectedPeriod(period)}
+          onSelect={(value) => setSelectedPeriod(value as FilterPeriod)}
         />
 
-        {/* Low Stock Warning Alert if any item below threshold */}
-        {metrics && metrics.inventory.lowStockCount > 0 && (
-          <FeedbackBanner
-            variant="warning"
-            title="Low Inventory Warning"
-            message={`${metrics.inventory.lowStockCount} raw material or feed items are currently below minimum safety stock levels.`}
-            onPress={() => goToTab('inventory')}
-          />
-        )}
+        {/* KPI grid */}
+        <Stack gap="sm">
+          <Row gap="sm" align="stretch">
+            <Card variant="elevated" padding="compact" style={{ flex: 1 }}>
+              <Typography variant="label" color="muted">
+                Batches
+              </Typography>
+              <Typography variant="metric" color="primary" tabular style={styles.kpiValue}>
+                {metrics?.production.totalBatches ?? 0}
+              </Typography>
+              <Typography variant="caption" color="secondary">
+                {(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')} {unitName}{' '}
+                produced
+              </Typography>
+            </Card>
+            <Card variant="elevated" padding="compact" style={{ flex: 1 }}>
+              <Typography variant="label" color="muted">
+                Turnover
+              </Typography>
+              <Typography variant="metric" color="primary" tabular style={styles.kpiValue}>
+                {money(revenue)}
+              </Typography>
+              <Typography variant="caption" color="secondary">
+                {(metrics?.sales.totalUnitsSold ?? 0).toLocaleString('en-IN')} {unitName} sold
+              </Typography>
+            </Card>
+          </Row>
+          <Row gap="sm" align="stretch">
+            <Card variant="elevated" padding="compact" style={{ flex: 1 }}>
+              <Typography variant="label" color="muted">
+                Collections
+              </Typography>
+              <Typography variant="metric" color="primary" tabular style={styles.kpiValue}>
+                {money(collected)}
+              </Typography>
+              <ProgressBar value={settledShare} color={colors.accent.success} />
+              <Typography
+                variant="caption"
+                color="secondary"
+                style={{ marginTop: theme.spacing.xs }}
+              >
+                Settled {Math.round(settledShare * 100)}% • Due{' '}
+                {money(metrics?.sales.outstandingDues ?? 0)}
+              </Typography>
+            </Card>
+            <Card variant="elevated" padding="compact" style={{ flex: 1 }}>
+              <Row justify="space-between" align="center">
+                <Typography variant="label" color="muted">
+                  Stock safety
+                </Typography>
+                {lowStock.length > 0 && (
+                  <Badge label={`${lowStock.length} low`} variant="danger" size="sm" />
+                )}
+              </Row>
+              <Typography variant="metric" color="primary" tabular style={styles.kpiValue}>
+                {Math.round(healthyShare * 100)}%
+              </Typography>
+              <ProgressBar
+                value={healthyShare}
+                color={lowStock.length > 0 ? colors.accent.warning : colors.accent.success}
+              />
+              <Typography
+                variant="caption"
+                color="secondary"
+                style={{ marginTop: theme.spacing.xs }}
+              >
+                {lowStock.length === 0 ? 'All items above safety' : 'Items need reordering'}
+              </Typography>
+            </Card>
+          </Row>
+        </Stack>
 
-        {/* Quick Operational Actions Bar */}
-        <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.sm }}>
-            QUICK ACTIONS
+        {/* Command dispatches */}
+        <Stack gap="sm">
+          <Typography variant="label" color="muted">
+            Quick actions
           </Typography>
-          <Row gap="xs" wrap>
+          <Row gap="sm" wrap>
             <Button
-              label="+ Start Batch"
+              label="Start Batch"
               variant="primary"
-              size="sm"
-              leftIcon="construct-outline"
+              leftIcon="add-circle-outline"
               onPress={() => openSheet('start_batch')}
             />
             <Button
-              label="+ Record Sale"
+              label="Sales Invoice"
               variant="secondary"
-              size="sm"
               leftIcon="receipt-outline"
               onPress={() => openSheet('create_sale')}
             />
             <Button
-              label="+ Purchase"
-              variant="subtle"
-              size="sm"
+              label="Purchase Bill"
+              variant="secondary"
               leftIcon="cart-outline"
               onPress={() => openSheet('record_purchase')}
             />
             <Button
-              label="+ Payment"
-              variant="subtle"
-              size="sm"
+              label="Payment"
+              variant="secondary"
               leftIcon="cash-outline"
               onPress={() => openSheet('record_payment')}
             />
           </Row>
-        </Box>
-
-        {/* Primary Operational KPIs Grid */}
-        <Stack gap="sm">
-          <Typography variant="label" color="secondary">
-            PRODUCTION & SALES ({selectedPeriod.replace('_', ' ').toUpperCase()})
-          </Typography>
-          <Row gap="sm" align="stretch">
-            <Box flex={1}>
-              <StatCard
-                label="Units Produced"
-                value={`${metrics?.production.totalUnitsProduced || metrics?.production.totalBagsProduced || 0} ${metrics?.production.defaultUnitName || 'Units'}`}
-                subtitle={`${metrics?.production.totalBaseQuantity || metrics?.production.totalWeightKg || 0} ${metrics?.production.baseUnit || 'kg'} output`}
-                icon="cube-outline"
-                variant="forest"
-                onPress={() => goToTab('production')}
-              />
-            </Box>
-            <Box flex={1}>
-              <StatCard
-                label="Units Sold"
-                value={`${metrics?.sales.totalUnitsSold || metrics?.sales.totalBagsSold || 0} ${metrics?.sales.defaultUnitName || 'Units'}`}
-                subtitle="Dispatched to buyers"
-                icon="cart-outline"
-                variant="default"
-                onPress={() => goToTab('sales')}
-              />
-            </Box>
-          </Row>
-
-          <Row gap="sm" align="stretch">
-            <Box flex={1}>
-              <StatCard
-                label="Sales Revenue"
-                value={`₹${(metrics?.sales.salesRevenue || 0).toLocaleString('en-IN')}`}
-                subtitle="Invoiced value"
-                icon="trending-up-outline"
-                variant="default"
-              />
-            </Box>
-            <Box flex={1}>
-              <StatCard
-                label="Cash Collected"
-                value={`₹${(metrics?.sales.cashCollected || 0).toLocaleString('en-IN')}`}
-                subtitle="Payments received"
-                icon="wallet-outline"
-                variant="success"
-              />
-            </Box>
-          </Row>
         </Stack>
 
-        {/* Customer Dues & Finished Stock */}
-        <Row gap="sm" align="stretch">
-          <Box flex={1}>
-            <StatCard
-              label="Customer Dues"
-              value={`₹${(metrics?.sales.outstandingDues || 0).toLocaleString('en-IN')}`}
-              subtitle="Receivables pending"
-              icon="alert-circle-outline"
-              variant={metrics && metrics.sales.outstandingDues > 0 ? 'warning' : 'default'}
-              onPress={() => goToTab('business')}
-            />
-          </Box>
-          <Box flex={1}>
-            <StatCard
-              label="Finished Floor Stock"
-              value={`${metrics?.inventory.finishedUnitsCount || metrics?.inventory.finishedFeedBags || 0} ${metrics?.production.defaultUnitName || 'Units'}`}
-              subtitle="Available in warehouse"
-              icon="layers-outline"
-              variant="default"
-              onPress={() => goToTab('inventory')}
-            />
-          </Box>
-        </Row>
-
-        {/* Authoritative Financial & Estimated Profit Card (PRD Section 3.4 & 5.4) */}
-        <Card variant="accent" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.sm }}>
-            <Typography variant="label" color="brandDeep">
-              ESTIMATED OPERATING PROFIT
-            </Typography>
-            <Badge label="Authoritative Estimate" variant="forest" size="sm" />
-          </Row>
-
-          <Typography
-            variant="display"
-            weight="bold"
-            color={(metrics?.financial.estimatedOperatingProfit || 0) >= 0 ? 'brandDeep' : 'error'}
-            style={{ marginBottom: theme.spacing.md }}
-          >
-            ₹{(metrics?.financial.estimatedOperatingProfit || 0).toLocaleString('en-IN')}
-          </Typography>
-
-          <Stack gap="xs">
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                (+) Sales Revenue:
+        {/* Low-stock alerts */}
+        {lowStock.length > 0 && (
+          <Stack gap="sm">
+            <Row justify="space-between" align="center">
+              <Typography variant="h3" color="primary">
+                Stock alerts
               </Typography>
-              <Typography variant="bodySmall" weight="semibold" color="primary">
-                ₹{(metrics?.financial.salesRevenue || 0).toLocaleString('en-IN')}
-              </Typography>
+              <Badge label={`${lowStock.length} live`} variant="danger" size="sm" />
             </Row>
-
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                (-) Cost of Goods Sold (COGS):
-              </Typography>
-              <Typography variant="bodySmall" weight="semibold" color="error">
-                -₹{(metrics?.financial.costOfGoodsSold || 0).toLocaleString('en-IN')}
-              </Typography>
-            </Row>
-
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                (-) Operating Overheads (Wages, Power, Fuel):
-              </Typography>
-              <Typography variant="bodySmall" weight="semibold" color="error">
-                -₹{(metrics?.financial.operatingExpenses || 0).toLocaleString('en-IN')}
-              </Typography>
-            </Row>
-
-            <Divider variant="brand" spacing="xs" />
-
-            <Typography variant="caption" color="muted">
-              Note: Unsold finished stock is held as inventory and not counted as COGS. Production
-              cost for this period was ₹
-              {(metrics?.financial.productionCost || 0).toLocaleString('en-IN')}.
-            </Typography>
+            {lowStock.slice(0, 3).map((item) => (
+              <Card key={item.id} variant="elevated" padding="normal">
+                <Stack gap="md">
+                  <Row justify="space-between" align="center" gap="sm">
+                    <Box flex={1}>
+                      <Typography variant="label" color="error">
+                        Below safety level
+                      </Typography>
+                      <Typography variant="title" color="primary" numberOfLines={2}>
+                        {item.name}
+                      </Typography>
+                    </Box>
+                    <Button
+                      label="Reorder"
+                      variant="primary"
+                      size="sm"
+                      onPress={() => openSheet('record_purchase')}
+                    />
+                  </Row>
+                  <InsetStats
+                    stats={[
+                      {
+                        label: 'Remaining',
+                        value: `${item.currentStock.toLocaleString('en-IN')} ${item.unit}`,
+                        valueColor: 'error',
+                      },
+                      {
+                        label: 'Safety min',
+                        value: `${item.minThreshold.toLocaleString('en-IN')} ${item.unit}`,
+                      },
+                    ]}
+                  />
+                </Stack>
+              </Card>
+            ))}
           </Stack>
+        )}
+
+        {/* Operating profit */}
+        <Card variant="accent" padding="normal">
+          <Row justify="space-between" align="flex-start">
+            <Typography variant="label" color="brandDeep">
+              Estimated operating profit
+            </Typography>
+            <Badge label="Estimate" variant="forest" size="sm" />
+          </Row>
+          <Typography
+            variant="h1"
+            color={(finance?.estimatedOperatingProfit ?? 0) >= 0 ? 'brandDeep' : 'error'}
+            tabular
+            style={{ marginVertical: theme.spacing.sm }}
+          >
+            {money(finance?.estimatedOperatingProfit ?? 0)}
+          </Typography>
+          <Stack gap="xs">
+            {[
+              ['(+) Sales revenue', money(finance?.salesRevenue ?? 0), 'primary' as const],
+              [
+                '(−) Cost of goods sold',
+                `−${money(finance?.costOfGoodsSold ?? 0)}`,
+                'error' as const,
+              ],
+              [
+                '(−) Operating overheads',
+                `−${money(finance?.operatingExpenses ?? 0)}`,
+                'error' as const,
+              ],
+            ].map(([label, value, color]) => (
+              <Row key={label as string} justify="space-between">
+                <Typography variant="bodySmall" color="secondary">
+                  {label}
+                </Typography>
+                <Typography variant="dataMedium" color={color as 'primary' | 'error'} tabular>
+                  {value}
+                </Typography>
+              </Row>
+            ))}
+          </Stack>
+          <Divider variant="subtle" spacing="sm" />
+          <Typography variant="caption" color="muted">
+            Unsold finished stock is inventory, not cost of goods sold.
+          </Typography>
         </Card>
 
-        {/* Recent Production Batches */}
-        <Card variant="elevated" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.sm }}>
-            <Typography variant="title" weight="bold" color="primary">
-              Recent Production Batches
+        {/* Production */}
+        <Stack gap="sm">
+          <Row justify="space-between" align="center">
+            <Typography variant="h3" color="primary">
+              Production
             </Typography>
             <Button
-              label="View All"
+              label="Full feed"
               variant="ghost"
               size="sm"
+              rightIcon="arrow-forward"
               onPress={() => goToTab('production')}
             />
           </Row>
+          {recentBatches.length === 0 ? (
+            <Card variant="flat" padding="normal">
+              <Typography variant="bodySmall" color="secondary">
+                No batches yet. Start your first batch from the quick actions above.
+              </Typography>
+            </Card>
+          ) : (
+            recentBatches.map((batch) => (
+              <Card key={batch.id} variant="elevated" padding="compact">
+                <ListItem
+                  title={batch.productName}
+                  subtitle={`${batch.batchNumber} • ${batch.date}`}
+                  value={`${batch.unitsPacked} ${batch.outputUnit}`}
+                  valueSubtitle={money(batch.directBatchCost)}
+                  badge={{
+                    label: batch.status === 'reversed' ? 'REVERSED' : 'DONE',
+                    variant: batch.status === 'reversed' ? 'danger' : 'success',
+                  }}
+                />
+              </Card>
+            ))
+          )}
+        </Stack>
 
-          <Stack gap="xs">
-            {recentBatches.map((batch) => (
-              <ListItem
-                key={batch.id}
-                title={`${batch.batchNumber} • ${batch.productName}`}
-                subtitle={`Output: ${batch.unitsPacked || batch.bagsPacked} ${batch.outputUnit || 'units'} (${batch.actualFinishedQuantity || batch.actualFinishedWeightKg} ${batch.baseUnit || 'kg'})`}
-                meta={`Date: ${batch.date} • Batch Cost: ₹${batch.directBatchCost.toLocaleString('en-IN')}`}
-                value={`₹${(batch.directCostPerUnit || batch.directCostPerBag || 0).toFixed(1)}/${batch.outputUnit || 'unit'}`}
-                valueColor="brandPrimary"
-                badge={{
-                  label: batch.status.toUpperCase(),
-                  variant: batch.status === 'confirmed' ? 'success' : 'danger',
-                }}
-                showDivider
-              />
-            ))}
-          </Stack>
-        </Card>
-
-        {/* Recent Sales Dispatches */}
-        <Card variant="elevated" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.sm }}>
-            <Typography variant="title" weight="bold" color="primary">
-              Recent Invoices & Dispatches
+        {/* Ledger movement */}
+        <Stack gap="sm">
+          <Row justify="space-between" align="center">
+            <Typography variant="h3" color="primary">
+              Ledger movement
             </Typography>
-            <Button label="View All" variant="ghost" size="sm" onPress={() => goToTab('sales')} />
+            <Button
+              label="Open ledger"
+              variant="ghost"
+              size="sm"
+              rightIcon="arrow-forward"
+              onPress={() => goToTab('ledger')}
+            />
           </Row>
-
-          <Stack gap="xs">
-            {recentInvoices.map((inv) => (
-              <ListItem
-                key={inv.id}
-                title={`${inv.invoiceNumber} • ${inv.customerName}`}
-                subtitle={`${inv.quantity || inv.bagQuantity} ${inv.outputUnit || 'units'} ${inv.productName}`}
-                meta={`Total: ₹${inv.totalAmount.toLocaleString('en-IN')} • Paid: ₹${inv.amountPaid.toLocaleString('en-IN')}`}
-                value={
-                  inv.balanceDue > 0 ? `Due: ₹${inv.balanceDue.toLocaleString('en-IN')}` : 'PAID'
-                }
-                valueColor={inv.balanceDue > 0 ? 'warning' : 'success'}
-                badge={{
-                  label: inv.paymentStatus.toUpperCase(),
-                  variant:
-                    inv.paymentStatus === 'paid'
-                      ? 'success'
-                      : inv.paymentStatus === 'partial'
-                        ? 'warning'
-                        : inv.paymentStatus === 'cancelled'
-                          ? 'danger'
-                          : 'neutral',
-                }}
-                showDivider
-              />
-            ))}
-          </Stack>
-        </Card>
+          {ledgerFeed.length === 0 ? (
+            <Card variant="flat" padding="normal">
+              <Typography variant="bodySmall" color="secondary">
+                Sales, payments and purchases will appear here.
+              </Typography>
+            </Card>
+          ) : (
+            <Card variant="elevated" padding="compact">
+              {ledgerFeed.map((entry, index) => (
+                <ListItem
+                  key={`${entry.kind}-${entry.id}`}
+                  title={entry.party}
+                  subtitle={`${entry.reference} • ${entry.date}`}
+                  value={`${entry.kind === 'PURCHASE' ? '−' : '+'}${money(entry.amount)}`}
+                  valueColor={entry.kind === 'PURCHASE' ? 'error' : 'success'}
+                  badge={{
+                    label: entry.kind,
+                    variant:
+                      entry.kind === 'PURCHASE'
+                        ? 'danger'
+                        : entry.kind === 'SALE'
+                          ? 'info'
+                          : 'success',
+                  }}
+                  showDivider={index < ledgerFeed.length - 1}
+                />
+              ))}
+            </Card>
+          )}
+        </Stack>
       </Stack>
     </ScreenContainer>
   );
+};
+
+const styles = {
+  kpiValue: { marginVertical: theme.spacing.xs },
 };
 
 export default DashboardScreen;
