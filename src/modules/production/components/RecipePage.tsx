@@ -185,9 +185,10 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
               placeholder="e.g. Cattle feed standard mix"
             />
           </FlowSection>
-          <FlowSection label="Product it makes">
+          <FlowSection label="Finished product" hint="What this recipe produces">
             <TextInput
-              label="Product"
+              label="Product name"
+              hint="The finished product, not the raw materials. You pick those from stock in step 3."
               value={productName}
               onChangeText={setProductName}
               placeholder="e.g. High-yield feed 20kg"
