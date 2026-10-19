@@ -2,26 +2,21 @@ import { theme } from '../../../theme';
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { companyProfileSchema, CompanyProfileFormData, CompanyProfileFormInput } from '../../../validation/schemas';
+import {
+  companyProfileSchema,
+  CompanyProfileFormData,
+  CompanyProfileFormInput,
+} from '../../../validation/schemas';
 import { useFactorySettings, useUpdateFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
-import {
-  Modal,
-  Stack,
-  TextInput,
-  Typography,
-  Card,
-} from '../../../components';
+import { Modal, Stack, TextInput, Typography, Card } from '../../../components';
 
 export interface CompanyProfileModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
-  visible,
-  onClose,
-}) => {
+export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visible, onClose }) => {
   const { data: settings } = useFactorySettings();
   const updateSettingsMutation = useUpdateFactorySettings();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -44,6 +39,11 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
       accountNumber: '',
       ifscCode: '',
       termsAndConditions: '',
+      currencySymbol: '₹',
+      defaultUnitName: 'units',
+      defaultBaseUnit: 'kg',
+      defaultUnitSize: '1',
+      lowUnitsThreshold: '0',
     },
   });
 
@@ -60,6 +60,11 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
         accountNumber: settings.accountNumber || '',
         ifscCode: settings.ifscCode || '',
         termsAndConditions: settings.termsAndConditions || '',
+        currencySymbol: settings.currencySymbol || '₹',
+        defaultUnitName: settings.defaultUnitName || 'units',
+        defaultBaseUnit: settings.defaultBaseUnit || 'kg',
+        defaultUnitSize: String(settings.defaultUnitSize ?? 1),
+        lowUnitsThreshold: String(settings.lowUnitsThreshold ?? 0),
       });
     }
   }, [settings, visible, reset]);
@@ -77,11 +82,17 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
         accountNumber: data.accountNumber,
         ifscCode: data.ifscCode,
         termsAndConditions: data.termsAndConditions,
+        currencySymbol: data.currencySymbol,
+        defaultUnitName: data.defaultUnitName,
+        defaultBaseUnit: data.defaultBaseUnit,
+        defaultUnitSize: Number(data.defaultUnitSize),
+        lowUnitsThreshold: Number(data.lowUnitsThreshold),
       });
 
       setBannerAlert({
         title: 'Company Profile Updated',
-        message: 'Business information and billing terms saved. All generated invoices & bills will reflect these details.',
+        message:
+          'Business information and billing terms saved. All generated invoices & bills will reflect these details.',
         variant: 'success',
       });
       onClose();
@@ -113,7 +124,8 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
       <Stack gap="md">
         <Card variant="accent" padding="compact">
           <Typography variant="caption" color="secondary">
-            Note: These details appear directly in headers and footers when generating or printing official PDF invoices for customers and suppliers.
+            Note: These details appear directly in headers and footers when generating or printing
+            official PDF invoices for customers and suppliers.
           </Typography>
         </Card>
 
@@ -215,7 +227,12 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
         />
 
         {/* Bank & Remittance Information */}
-        <Typography variant="bodyMedium" weight="bold" color="primary" style={{ marginTop: theme.spacing.sm }}>
+        <Typography
+          variant="bodyMedium"
+          weight="bold"
+          color="primary"
+          style={{ marginTop: theme.spacing.sm }}
+        >
           Bank & Remittance Details (For Invoice Remittance)
         </Typography>
 
@@ -265,8 +282,52 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
           )}
         />
 
+        {/* Preferences */}
+        <Typography
+          variant="bodyMedium"
+          weight="bold"
+          color="primary"
+          style={{ marginTop: theme.spacing.sm }}
+        >
+          Preferences
+        </Typography>
+        <Typography variant="caption" color="muted">
+          Used across the app: money formatting, new recipes and the finished-goods stock alert.
+        </Typography>
+
+        {(
+          [
+            ['currencySymbol', 'Currency Symbol', 'e.g. ₹, $, AED', 'default'],
+            ['defaultUnitName', 'Default Product Unit', 'e.g. bags, bottles, drums', 'default'],
+            ['defaultBaseUnit', 'Default Measure', 'e.g. kg, L', 'default'],
+            ['defaultUnitSize', 'Default Pack Size', 'e.g. 20', 'numeric'],
+            ['lowUnitsThreshold', 'Low Stock Alert (finished goods)', 'e.g. 50', 'numeric'],
+          ] as const
+        ).map(([name, label, placeholder, keyboard]) => (
+          <Controller
+            key={name}
+            control={control}
+            name={name}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label={label}
+                placeholder={placeholder}
+                value={value}
+                onChangeText={onChange}
+                keyboardType={keyboard}
+                error={errors[name]?.message}
+              />
+            )}
+          />
+        ))}
+
         {/* Invoice Terms */}
-        <Typography variant="bodyMedium" weight="bold" color="primary" style={{ marginTop: theme.spacing.sm }}>
+        <Typography
+          variant="bodyMedium"
+          weight="bold"
+          color="primary"
+          style={{ marginTop: theme.spacing.sm }}
+        >
           Standard Terms & Conditions
         </Typography>
 

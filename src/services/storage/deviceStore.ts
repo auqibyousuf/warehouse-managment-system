@@ -1,8 +1,7 @@
 import Storage from 'expo-sqlite/kv-store';
 import { createSnapshotStore, KeyValueStore } from './snapshotStore';
+import { DB_SCHEMA_VERSION } from './schemaVersion';
 
-/** Bump when the stored database shape changes incompatibly; old snapshots are then ignored. */
-export const DB_SCHEMA_VERSION = 1;
-
+/** Native build: SQLite-backed key-value store. The web build uses deviceStore.web.ts. */
 export const createDeviceSnapshotStore = <T>() =>
   createSnapshotStore<T>(Storage as unknown as KeyValueStore, 'batchiq.db', DB_SCHEMA_VERSION);

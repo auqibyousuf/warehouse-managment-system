@@ -2,6 +2,7 @@ import { getDB, resetDB } from '../mockDatabase';
 import { salesService } from '../salesService';
 import { inventoryService } from '../inventoryService';
 import { customerService } from '../customerService';
+import { dashboardService } from '../dashboardService';
 import { productionService } from '../productionService';
 
 const today = new Date().toISOString().split('T')[0];
@@ -175,5 +176,20 @@ describe('editing master data', () => {
     await expect(
       inventoryService.updateProduct('nope', { name: 'x', sellingPricePerUnit: 1 }),
     ).rejects.toThrow(/not found/);
+  });
+});
+
+describe('business settings', () => {
+  it('saves currency and unit preferences without touching other settings', async () => {
+    const before = { ...getDB().settings };
+    await dashboardService.updateFactorySettings({
+      currencySymbol: '$',
+      defaultUnitName: 'drums',
+      lowUnitsThreshold: 12,
+    });
+    expect(getDB().settings.currencySymbol).toBe('$');
+    expect(getDB().settings.defaultUnitName).toBe('drums');
+    expect(getDB().settings.lowUnitsThreshold).toBe(12);
+    expect(getDB().settings.factoryName).toBe(before.factoryName);
   });
 });

@@ -131,7 +131,7 @@ export const SettingsScreen: React.FC = () => {
               color="primary"
               style={{ marginBottom: theme.spacing.sm }}
             >
-              Production Standards
+              Preferences
             </Typography>
 
             <Stack gap="xs">
@@ -140,25 +140,24 @@ export const SettingsScreen: React.FC = () => {
                   Default Output Unit:
                 </Typography>
                 <Typography variant="bodySmall" weight="semibold" color="primary">
-                  {settings?.defaultUnitName || 'bags'} (
-                  {settings?.defaultUnitSize || settings?.defaultBagWeightKg || 20}{' '}
+                  {settings?.defaultUnitName || 'units'} ({settings?.defaultUnitSize ?? 1}{' '}
                   {settings?.defaultBaseUnit || 'kg'})
                 </Typography>
               </Row>
               <Row justify="space-between">
                 <Typography variant="bodySmall" color="secondary">
-                  Accounting Currency:
+                  Currency:
                 </Typography>
                 <Typography variant="bodySmall" weight="semibold" color="primary">
-                  {symbol} (editable in the business profile)
+                  {symbol}
                 </Typography>
               </Row>
               <Row justify="space-between">
                 <Typography variant="bodySmall" color="secondary">
-                  Raw Material Safety Alert:
+                  Finished Goods Low-Stock Alert:
                 </Typography>
                 <Typography variant="bodySmall" weight="semibold" color="warning">
-                  Below {settings?.lowStockThresholdKg || 400} kg
+                  Below {settings?.lowUnitsThreshold ?? 0} {settings?.defaultUnitName || 'units'}
                 </Typography>
               </Row>
             </Stack>

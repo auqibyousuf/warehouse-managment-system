@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { setupSchema, SetupFormData, SetupFormInput } from '../../../validation/schemas';
 import { useCreateProductionSetup } from '../../../hooks/api/useProduction';
 import { useProducts, useIngredients } from '../../../hooks/api/useInventory';
+import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
   Modal,
@@ -51,6 +52,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
   const symbol = useCurrencySymbol();
   const { data: products = [] } = useProducts();
   const { data: ingredients = [] } = useIngredients();
+  const { data: settings } = useFactorySettings();
   const createSetupMutation = useCreateProductionSetup();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
   const [showAddIngredientModal, setShowAddIngredientModal] = useState(false);
@@ -72,10 +74,10 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
       name: '',
       productName: initialProd?.name || '',
       productId: initialProd?.id || '',
-      outputUnit: initialProd?.outputUnit || 'units',
+      outputUnit: initialProd?.outputUnit || settings?.defaultUnitName || 'units',
       targetUnits: 50,
-      unitSize: initialProd?.unitSize || 20,
-      baseUnit: initialProd?.baseUnit || 'kg',
+      unitSize: initialProd?.unitSize || settings?.defaultUnitSize || 1,
+      baseUnit: initialProd?.baseUnit || settings?.defaultBaseUnit || 'kg',
       recipeItems: [
         {
           ingredientName: ingredients[0]?.name || 'Raw Material 1',

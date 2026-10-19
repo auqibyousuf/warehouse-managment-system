@@ -81,3 +81,10 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Information architecture (Information Architect):** Dashboard, Production, Inventory, Procure, Ledger. Procure holds purchase bills and suppliers; Ledger holds invoices, payments, customers and expenses. The Business tab became **Settings** (avatar). The duplicate "Items Data Table" report was dropped.
 - **Real data only (Product Manager):** the Stitch screens for equipment, shifts, storage bins, live telemetry, QA gates and plant data-flow need data BatchIQ does not collect. They are not built and no placeholder numbers are shown.
 - **Still open:** currency symbol, default units and thresholds are shown in Settings but not yet editable (the rupee sign is used directly on screens); sheet forms use the new tokens but have not been re-laid-out screen by screen; PDF invoices keep their own print palette.
+
+## 8. Editable preferences and web persistence (latest)
+
+- **Preferences are real settings:** Profile > Preferences edits the currency symbol, default product unit, default measure, default pack size and the finished-goods low-stock level. Money formatting (`useMoney`), new-recipe defaults, the dashboard unit names and PDF documents all read them. Address and phone are now optional, so a name-only edit saves.
+- **PDFs never invent details:** invoices and bills print only what the business entered; empty sections are hidden.
+- **Web persistence fixed:** the SQLite key-value store has no synchronous API in the browser, so saves silently failed there. Web now uses `localStorage` (`deviceStore.web.ts`); phones keep SQLite. Verified by reloading after a save.
+- **Still open:** the sheets (create and edit forms) have not been re-laid-out against Stitch one by one; `lowStockThresholdKg` remains in the type but is unused.
