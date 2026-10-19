@@ -1,3 +1,4 @@
+import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
 import React from 'react';
 import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
@@ -30,7 +31,7 @@ const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
 ];
 
 export const DashboardScreen: React.FC = () => {
-  const { selectedPeriod, setSelectedPeriod, openModal } = useAppStore();
+  const { selectedPeriod, setSelectedPeriod } = useAppStore();
   const { data: metrics, isLoading, refetch, isRefetching } = useDashboardMetrics(selectedPeriod);
   const { data: settings } = useFactorySettings();
   const { data: batches = [] } = useProductionBatches();
@@ -93,28 +94,28 @@ export const DashboardScreen: React.FC = () => {
               variant="primary"
               size="sm"
               leftIcon="construct-outline"
-              onPress={() => openModal('start_batch')}
+              onPress={() => openSheet('start_batch')}
             />
             <Button
               label="+ Record Sale"
               variant="secondary"
               size="sm"
               leftIcon="receipt-outline"
-              onPress={() => openModal('create_sale')}
+              onPress={() => openSheet('create_sale')}
             />
             <Button
               label="+ Purchase"
               variant="subtle"
               size="sm"
               leftIcon="cart-outline"
-              onPress={() => openModal('record_purchase')}
+              onPress={() => openSheet('record_purchase')}
             />
             <Button
               label="+ Payment"
               variant="subtle"
               size="sm"
               leftIcon="cash-outline"
-              onPress={() => openModal('record_payment')}
+              onPress={() => openSheet('record_payment')}
             />
           </Row>
         </Box>

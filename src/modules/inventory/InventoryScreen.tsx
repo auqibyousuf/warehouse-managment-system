@@ -1,3 +1,4 @@
+import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
 import { theme } from '../../theme';
 import {
@@ -5,7 +6,6 @@ import {
   useInventoryMovements,
   useSuppliers,
 } from '../../hooks/api/useInventory';
-import { useAppStore } from '../../stores/useAppStore';
 import {
   ScreenContainer,
   Box,
@@ -23,8 +23,6 @@ import {
   ScreenList,
 } from '../../components';
 import { UnifiedStockItem } from '../../services/api/inventoryService';
-import { CreateIngredientModal } from './components/CreateIngredientModal';
-import { CreateSupplierModal } from './components/CreateSupplierModal';
 import { EditIngredientModal } from './components/EditIngredientModal';
 
 type InventoryTab = 'stock' | 'movements' | 'suppliers';
@@ -42,7 +40,6 @@ export const InventoryScreen: React.FC = () => {
   } = useInventoryItems();
   const { data: movements = [], isLoading: loadingMovements } = useInventoryMovements();
   const { data: suppliers = [], isLoading: loadingSuppliers } = useSuppliers();
-  const { activeModal, openModal, closeModal } = useAppStore();
 
   const [itemToEdit, setItemToEdit] = useState<UnifiedStockItem | null>(null);
 
@@ -72,27 +69,27 @@ export const InventoryScreen: React.FC = () => {
               variant="primary"
               size="sm"
               leftIcon="add-outline"
-              onPress={() => openModal('create_ingredient')}
+              onPress={() => openSheet('create_ingredient')}
             />
             <Button
               label="+ Supplier"
               variant="subtle"
               size="sm"
               leftIcon="business-outline"
-              onPress={() => openModal('create_supplier')}
+              onPress={() => openSheet('create_supplier')}
             />
             <Button
               label="+ Inward Stock"
               variant="subtle"
               size="sm"
               leftIcon="cart-outline"
-              onPress={() => openModal('record_purchase')}
+              onPress={() => openSheet('record_purchase')}
             />
             <Button
               label="Adjust"
               variant="subtle"
               size="sm"
-              onPress={() => openModal('adjust_stock')}
+              onPress={() => openSheet('adjust_stock')}
             />
           </Row>
         </Row>
@@ -113,10 +110,6 @@ export const InventoryScreen: React.FC = () => {
 
   const overlays = (
     <>
-      <CreateIngredientModal visible={activeModal === 'create_ingredient'} onClose={closeModal} />
-
-      <CreateSupplierModal visible={activeModal === 'create_supplier'} onClose={closeModal} />
-
       <EditIngredientModal
         visible={itemToEdit !== null}
         item={itemToEdit}
@@ -252,7 +245,7 @@ export const InventoryScreen: React.FC = () => {
                     label="Reconcile Count"
                     variant="ghost"
                     size="sm"
-                    onPress={() => openModal('adjust_stock')}
+                    onPress={() => openSheet('adjust_stock')}
                   />
                 </Row>
               </Row>
@@ -345,7 +338,7 @@ export const InventoryScreen: React.FC = () => {
                 title="No Suppliers Registered"
                 description="Register raw material and packaging vendors to record incoming stock shipments."
                 actionLabel="+ Add First Supplier"
-                onAction={() => openModal('create_supplier')}
+                onAction={() => openSheet('create_supplier')}
               />
             ) : null
           }
@@ -392,7 +385,7 @@ export const InventoryScreen: React.FC = () => {
                     size="sm"
                     leftIcon="cart-outline"
                     style={{ marginTop: theme.spacing.xsm }}
-                    onPress={() => openModal('record_purchase')}
+                    onPress={() => openSheet('record_purchase')}
                   />
                 </Box>
               </Row>

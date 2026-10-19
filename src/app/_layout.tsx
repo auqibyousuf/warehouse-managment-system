@@ -9,7 +9,6 @@ import { PanelUIProvider } from 'panelui-native';
 import { ThemeProvider, theme } from '../theme';
 import { useAppStore } from '../stores/useAppStore';
 import { FeedbackBanner, Box } from '../components';
-import { GlobalModals } from '../navigation/GlobalModals';
 
 // Zero-refetch-on-focus defaults for mobile stability
 const queryClient = new QueryClient({
@@ -41,10 +40,13 @@ const Shell: React.FC = () => {
       )}
 
       <View style={styles.screens}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen
+            name="sheets/[sheet]"
+            options={{ presentation: 'transparentModal', animation: 'none' }}
+          />
+        </Stack>
       </View>
-
-      <GlobalModals />
     </View>
   );
 };

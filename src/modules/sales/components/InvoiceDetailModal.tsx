@@ -1,3 +1,4 @@
+import { openSheet } from '../../../navigation/sheets';
 import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import {
@@ -37,7 +38,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   const { data: invoices = [] } = useSalesInvoices();
   const { data: settings } = useFactorySettings();
   const cancelInvoiceMutation = useCancelInvoice();
-  const { openModal, setSelectedInvoiceId, setSelectedCustomerId, setBannerAlert } = useAppStore();
+  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const invoice = invoices.find((inv) => inv.id === invoiceId);
 
@@ -66,10 +67,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   };
 
   const handleReceivePayment = () => {
-    setSelectedInvoiceId(invoice.id);
-    setSelectedCustomerId(invoice.customerId);
-    onClose();
-    openModal('record_payment');
+    openSheet(
+      'record_payment',
+      { invoiceId: invoice.id, customerId: invoice.customerId },
+      { replace: true }
+    );
   };
 
   const handleConfirmCancel = async () => {

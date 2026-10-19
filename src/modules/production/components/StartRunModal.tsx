@@ -1,3 +1,4 @@
+import { openSheet } from '../../../navigation/sheets';
 import { theme } from '../../../theme';
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -54,7 +55,6 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
   const { data: ingredients = [] } = useIngredients();
   const createBatchMutation = useCreateProductionBatch();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
-  const openModal = useAppStore((s) => s.openModal);
 
   const activeSetups = setups.filter((s) => s.status === 'active');
   const [step, setStep] = useState(0);
@@ -229,8 +229,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
                 variant="primary"
                 leftIcon="construct-outline"
                 onPress={() => {
-                  handleClose();
-                  openModal('create_setup');
+                  openSheet('create_setup', {}, { replace: true });
                 }}
               />
             </Stack>

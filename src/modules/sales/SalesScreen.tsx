@@ -1,3 +1,4 @@
+import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
 import { theme } from '../../theme';
 import { useSalesInvoices, useCustomerPayments, useCancelInvoice } from '../../hooks/api/useSales';
@@ -50,32 +51,22 @@ export const SalesScreen: React.FC = () => {
   } = useCustomerPayments();
 
   const cancelInvoiceMutation = useCancelInvoice();
-  const {
-    openModal,
-    setSelectedInvoiceId,
-    setSelectedPurchaseId,
-    setSelectedCustomerId,
-    setBannerAlert,
-  } = useAppStore();
+  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const handleRefresh = async () => {
     await Promise.all([refetchInvoices(), refetchPurchases(), refetchPayments()]);
   };
 
   const handleOpenInvoiceDetail = (invoice: SaleInvoice) => {
-    setSelectedInvoiceId(invoice.id);
-    openModal('invoice_detail');
+    openSheet('invoice_detail', { invoiceId: invoice.id });
   };
 
   const handleOpenPurchaseDetail = (purchase: Purchase) => {
-    setSelectedPurchaseId(purchase.id);
-    openModal('purchase_detail');
+    openSheet('purchase_detail', { purchaseId: purchase.id });
   };
 
   const handleRecordPayment = (invoice: SaleInvoice) => {
-    setSelectedInvoiceId(invoice.id);
-    setSelectedCustomerId(invoice.customerId);
-    openModal('record_payment');
+    openSheet('record_payment', { invoiceId: invoice.id, customerId: invoice.customerId });
   };
 
   const handleConfirmCancel = async () => {
@@ -127,14 +118,14 @@ export const SalesScreen: React.FC = () => {
             variant="primary"
             size="sm"
             leftIcon="receipt-outline"
-            onPress={() => openModal('create_sale')}
+            onPress={() => openSheet('create_sale')}
           />
           <Button
             label="+ Inward Bill"
             variant="subtle"
             size="sm"
             leftIcon="cart-outline"
-            onPress={() => openModal('record_purchase')}
+            onPress={() => openSheet('record_purchase')}
           />
         </Row>
       </Box>
@@ -219,7 +210,7 @@ export const SalesScreen: React.FC = () => {
                 title="No Invoices Yet"
                 description="Create a sales invoice to record finished feed dispatch to dairy farms or dealers."
                 actionLabel="+ Create Sale Invoice"
-                onAction={() => openModal('create_sale')}
+                onAction={() => openSheet('create_sale')}
               />
             ) : null
           }
@@ -351,7 +342,7 @@ export const SalesScreen: React.FC = () => {
                     variant="primary"
                     size="sm"
                     leftIcon="cart-outline"
-                    onPress={() => openModal('record_purchase')}
+                    onPress={() => openSheet('record_purchase')}
                   />
                 </Row>
               </Stack>
@@ -367,7 +358,7 @@ export const SalesScreen: React.FC = () => {
                 title="No Purchase Bills"
                 description="Log inward raw materials and packaging deliveries to maintain accurate inventory."
                 actionLabel="+ Record Purchase Bill"
-                onAction={() => openModal('record_purchase')}
+                onAction={() => openSheet('record_purchase')}
               />
             ) : null
           }
@@ -476,7 +467,7 @@ export const SalesScreen: React.FC = () => {
                 title="No Payments Recorded"
                 description="Payments received against invoices will appear here."
                 actionLabel="+ Receive Payment"
-                onAction={() => openModal('record_payment')}
+                onAction={() => openSheet('record_payment')}
               />
             ) : null
           }

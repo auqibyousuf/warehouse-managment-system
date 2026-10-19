@@ -1,3 +1,4 @@
+import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
 import React, { useState } from 'react';
 import {
@@ -36,11 +37,10 @@ export const ProductionScreen: React.FC = () => {
 
   const setStatusMutation = useSetSetupStatus();
   const reverseBatchMutation = useReverseProductionBatch();
-  const { openModal, setSelectedSetupId, setBannerAlert } = useAppStore();
+  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const handleStartRun = (setupId: string) => {
-    setSelectedSetupId(setupId);
-    openModal('start_batch');
+    openSheet('start_batch', { setupId });
   };
 
   const handleToggleSetupStatus = async (setup: ProductionSetup) => {
@@ -101,7 +101,7 @@ export const ProductionScreen: React.FC = () => {
             variant="primary"
             size="sm"
             leftIcon="construct-outline"
-            onPress={() => openModal('start_batch')}
+            onPress={() => openSheet('start_batch')}
           />
         </Row>
       </Box>
@@ -152,7 +152,7 @@ export const ProductionScreen: React.FC = () => {
                     label="+ New Recipe"
                     variant="subtle"
                     size="sm"
-                    onPress={() => openModal('create_setup')}
+                    onPress={() => openSheet('create_setup')}
                   />
                 </Row>
               </Stack>
@@ -168,7 +168,7 @@ export const ProductionScreen: React.FC = () => {
                 title="No Recipes Yet"
                 description="Create a recipe to prefill ingredients and quantities for daily batches."
                 actionLabel="+ Create First Setup"
-                onAction={() => openModal('create_setup')}
+                onAction={() => openSheet('create_setup')}
               />
             ) : null
           }
@@ -293,7 +293,7 @@ export const ProductionScreen: React.FC = () => {
                 title="No Production Batches Yet"
                 description="Start your first batch using an active recipe."
                 actionLabel="+ Start Batch"
-                onAction={() => openModal('start_batch')}
+                onAction={() => openSheet('start_batch')}
               />
             ) : null
           }

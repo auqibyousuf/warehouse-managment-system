@@ -1,3 +1,4 @@
+import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
 import React, { useState } from 'react';
 import { useCustomers } from '../../hooks/api/useCustomers';
@@ -31,11 +32,10 @@ export const BusinessScreen: React.FC = () => {
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
   const { data: settings } = useFactorySettings();
 
-  const { openModal, setSelectedCustomerId, setBannerAlert } = useAppStore();
+  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const handleCollectPayment = (customer: Customer) => {
-    setSelectedCustomerId(customer.id);
-    openModal('record_payment');
+    openSheet('record_payment', { customerId: customer.id });
   };
 
   const handleExportCSV = () => {
@@ -91,7 +91,7 @@ export const BusinessScreen: React.FC = () => {
                     variant="primary"
                     size="sm"
                     leftIcon="person-add-outline"
-                    onPress={() => openModal('create_customer')}
+                    onPress={() => openSheet('create_customer')}
                   />
                 </Row>
               </Stack>
@@ -107,7 +107,7 @@ export const BusinessScreen: React.FC = () => {
                 title="No Customers Yet"
                 description="Register buyers and dairy farms to track receivables."
                 actionLabel="+ Add Customer"
-                onAction={() => openModal('create_customer')}
+                onAction={() => openSheet('create_customer')}
               />
             ) : null
           }
@@ -117,8 +117,7 @@ export const BusinessScreen: React.FC = () => {
               variant="elevated"
               padding="normal"
               onPress={() => {
-                setSelectedCustomerId(c.id);
-                openModal('customer_detail');
+                openSheet('customer_detail', { customerId: c.id });
               }}
             >
               <Row justify="space-between" align="flex-start">
@@ -165,8 +164,7 @@ export const BusinessScreen: React.FC = () => {
                   size="sm"
                   leftIcon="person-outline"
                   onPress={() => {
-                    setSelectedCustomerId(c.id);
-                    openModal('customer_detail');
+                    openSheet('customer_detail', { customerId: c.id });
                   }}
                 />
 
@@ -206,7 +204,7 @@ export const BusinessScreen: React.FC = () => {
                     variant="primary"
                     size="sm"
                     leftIcon="add-circle-outline"
-                    onPress={() => openModal('create_expense')}
+                    onPress={() => openSheet('create_expense')}
                   />
                 </Row>
               </Stack>
@@ -222,7 +220,7 @@ export const BusinessScreen: React.FC = () => {
                 title="No Expenses Recorded"
                 description="Log operating costs to track realistic factory profitability."
                 actionLabel="+ Record Expense"
-                onAction={() => openModal('create_expense')}
+                onAction={() => openSheet('create_expense')}
               />
             ) : null
           }
@@ -276,7 +274,7 @@ export const BusinessScreen: React.FC = () => {
                   variant="primary"
                   size="sm"
                   leftIcon="create-outline"
-                  onPress={() => openModal('company_profile')}
+                  onPress={() => openSheet('company_profile')}
                 />
               </Row>
 

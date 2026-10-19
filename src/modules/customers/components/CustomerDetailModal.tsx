@@ -1,8 +1,8 @@
+import { openSheet } from '../../../navigation/sheets';
 import { theme } from '../../../theme';
 import React from 'react';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useSalesInvoices, useCustomerPayments } from '../../../hooks/api/useSales';
-import { useAppStore } from '../../../stores/useAppStore';
 import {
   Modal,
   Stack,
@@ -28,7 +28,6 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
   const { data: customers = [] } = useCustomers();
   const { data: invoices = [] } = useSalesInvoices();
   const { data: payments = [] } = useCustomerPayments();
-  const { openModal, setSelectedInvoiceId, setSelectedCustomerId } = useAppStore();
 
   const customer = customers.find((c) => c.id === customerId);
 
@@ -40,15 +39,11 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
   const customerPayments = payments.filter((p) => p.customerId === customer.id);
 
   const handleRecordPayment = () => {
-    setSelectedCustomerId(customer.id);
-    onClose();
-    openModal('record_payment');
+    openSheet('record_payment', { customerId: customer.id }, { replace: true });
   };
 
   const handleOpenInvoice = (invId: string) => {
-    setSelectedInvoiceId(invId);
-    onClose();
-    openModal('invoice_detail');
+    openSheet('invoice_detail', { invoiceId: invId }, { replace: true });
   };
 
   return (
