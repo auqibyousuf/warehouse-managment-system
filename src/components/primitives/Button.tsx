@@ -5,7 +5,7 @@ import {
   View,
 } from 'react-native';
 import { AnimatedPressable } from 'panelui-native';
-import * as Haptics from 'expo-haptics';
+import { tapLight } from '../../utils/haptics';
 import { theme } from '../../theme';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
@@ -51,11 +51,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   const handlePress = () => {
     if (disabled || loading) return;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      // Haptics optional on web / unsupported
-    }
+    tapLight();
     onPress();
   };
 
@@ -137,6 +133,9 @@ export const Button: React.FC<ButtonProps> = ({
     <AnimatedPressable
       onPress={handlePress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       pressScale={0.97}
       pressOpacity={variant === 'ghost' ? 0.7 : 1}
       className={`flex-row items-center justify-center rounded-md border ${fullWidth ? 'w-full' : ''} ${className || ''}`}

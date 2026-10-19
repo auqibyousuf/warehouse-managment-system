@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, ScrollView, Pressable, StyleSheet, ViewStyle } from 'react-native';
-import * as Haptics from 'expo-haptics';
+import { tapLight } from '../../utils/haptics';
 import { theme } from '../../theme';
 import { Typography } from '../primitives/Typography';
-import { Badge } from '../primitives/Badge';
 
 export interface ChipOption<T = string> {
   value: T;
@@ -36,12 +35,13 @@ export const ChipPicker = <T extends string | number>({
             key={String(opt.value)}
             onPress={() => {
               if (!isSelected) {
-                try {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                } catch {}
+                tapLight();
                 onSelect(opt.value);
               }
             }}
+            accessibilityRole="button"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ selected: isSelected }}
             style={[
               styles.chip,
               {

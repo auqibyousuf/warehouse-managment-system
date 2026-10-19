@@ -11,7 +11,6 @@ import {
   Card,
   Badge,
   Button,
-  Divider,
 } from '../../../components';
 
 export interface CustomerDetailModalProps {

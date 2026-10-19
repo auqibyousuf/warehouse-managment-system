@@ -268,7 +268,6 @@ export const generatePurchaseBillPDF = async (
   settings?: FactorySettings | null
 ): Promise<string> => {
   const companyName = settings?.factoryName || 'BatchIQ Manufacturing Works';
-  const address = settings?.address || 'Industrial Estate, Pune';
 
   const html = `
     <!DOCTYPE html>

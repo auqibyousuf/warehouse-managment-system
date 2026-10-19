@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { setupSchema, SetupFormData } from '../../../validation/schemas';
+import { setupSchema, SetupFormData, SetupFormInput } from '../../../validation/schemas';
 import { useCreateProductionSetup } from '../../../hooks/api/useProduction';
 import { useProducts, useIngredients } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
@@ -14,7 +14,6 @@ import {
   TextInput,
   Button,
   Card,
-  Badge,
   Divider,
 } from '../../../components';
 import { CreateIngredientModal } from '../../inventory/components/CreateIngredientModal';
@@ -55,8 +54,8 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
     watch,
     reset,
     formState: { errors },
-  } = useForm<SetupFormData>({
-    resolver: zodResolver(setupSchema) as any,
+  } = useForm<SetupFormInput, unknown, SetupFormData>({
+    resolver: zodResolver(setupSchema),
     defaultValues: {
       name: '',
       productName: initialProd?.name || '',

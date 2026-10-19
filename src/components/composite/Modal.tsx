@@ -7,6 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { theme } from '../../theme';
@@ -44,6 +45,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
 }) => {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
 
   return (
     <RNModal
@@ -54,10 +56,15 @@ export const Modal: React.FC<ModalProps> = ({
       statusBarTranslucent
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.backdrop}
       >
-        <Pressable style={styles.backdropPressable} onPress={onClose} />
+        <Pressable
+          style={styles.backdropPressable}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss"
+        />
 
         <View
           style={[
@@ -89,6 +96,8 @@ export const Modal: React.FC<ModalProps> = ({
               onPress={onClose}
               style={styles.closeButton}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Close ${title}`}
             >
               <Icon name="close" size="sm" color="muted" />
             </Pressable>
@@ -96,7 +105,7 @@ export const Modal: React.FC<ModalProps> = ({
 
           {/* Scrollable Body */}
           <ScrollView
-            style={styles.body}
+            style={[styles.body, { maxHeight: Math.max(240, windowHeight * 0.6) }]}
             contentContainerStyle={styles.bodyContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -166,16 +175,14 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border.subtle,
   },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: theme.radii.sm,
     backgroundColor: theme.colors.background.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  body: {
-    maxHeight: 460,
-  },
+  body: {},
   bodyContent: {
     padding: theme.spacing.base,
   },

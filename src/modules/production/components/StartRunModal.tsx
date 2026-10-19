@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { batchRunSchema, BatchRunFormData } from '../../../validation/schemas';
+import { batchRunSchema, BatchRunFormData, BatchRunFormInput } from '../../../validation/schemas';
 import {
   useProductionSetups,
   useCreateProductionBatch,
@@ -60,10 +60,9 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
     handleSubmit,
     setValue,
     watch,
-    reset,
     formState: { errors },
-  } = useForm<BatchRunFormData>({
-    resolver: zodResolver(batchRunSchema) as any,
+  } = useForm<BatchRunFormInput, unknown, BatchRunFormData>({
+    resolver: zodResolver(batchRunSchema),
     defaultValues: {
       setupId: '',
       date: new Date().toISOString().split('T')[0],

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { purchaseSchema, PurchaseFormData } from '../../../validation/schemas';
+import { purchaseSchema, PurchaseFormData, PurchaseFormInput } from '../../../validation/schemas';
 import { useRecordPurchase, useIngredients, useSuppliers } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -42,8 +42,8 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
     watch,
     reset,
     formState: { errors },
-  } = useForm<PurchaseFormData>({
-    resolver: zodResolver(purchaseSchema) as any,
+  } = useForm<PurchaseFormInput, unknown, PurchaseFormData>({
+    resolver: zodResolver(purchaseSchema),
     defaultValues: {
       supplierId: suppliers[0]?.id || 'sup-1',
       itemId: ingredients[0]?.id || 'ing-1',
@@ -130,7 +130,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
           </Row>
           {suppliers.length === 0 ? (
             <Typography variant="caption" color="muted">
-              No suppliers registered yet. Click "+ Add Supplier" above to create one.
+              No suppliers registered yet. Tap &quot;+ Add Supplier&quot; above to create one.
             </Typography>
           ) : (
             <Row gap="xs" wrap>
@@ -166,7 +166,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
           </Row>
           {ingredients.length === 0 ? (
             <Typography variant="caption" color="muted">
-              No items in inventory. Click "+ Add Material" above to define one first.
+              No items in inventory. Tap &quot;+ Add Material&quot; above to define one first.
             </Typography>
           ) : (
             <Row gap="xs" wrap>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { saleInvoiceSchema, SaleInvoiceFormData } from '../../../validation/schemas';
+import { saleInvoiceSchema, SaleInvoiceFormData, SaleInvoiceFormInput } from '../../../validation/schemas';
 import { useCreateSaleInvoice } from '../../../hooks/api/useSales';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useProducts } from '../../../hooks/api/useInventory';
@@ -38,12 +38,12 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
     watch,
     reset,
     formState: { errors },
-  } = useForm<SaleInvoiceFormData>({
-    resolver: zodResolver(saleInvoiceSchema) as any,
+  } = useForm<SaleInvoiceFormInput, unknown, SaleInvoiceFormData>({
+    resolver: zodResolver(saleInvoiceSchema),
     defaultValues: {
       customerId: customers[0]?.id || 'cust-1',
       productId: activeProducts[0]?.id || 'prod-1',
-      quantity: 20,
+      quantity: 1,
       outputUnit: activeProducts[0]?.outputUnit || 'bags',
       unitPrice: activeProducts[0]?.sellingPricePerUnit || activeProducts[0]?.sellingPricePerBag || 500,
       discount: 0,
@@ -72,7 +72,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
 
   const onSubmit = async (data: SaleInvoiceFormData) => {
     try {
-      const qty = data.quantity || (data as any).bagQuantity || 20;
+      const qty = data.quantity;
       await createSaleMutation.mutateAsync({
         customerId: data.customerId,
         productId: data.productId,

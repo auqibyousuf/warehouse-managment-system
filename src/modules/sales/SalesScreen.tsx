@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { theme } from '../../theme';
 import {
   useSalesInvoices,
   useCustomerPayments,
@@ -422,7 +423,7 @@ export const SalesScreen: React.FC = () => {
                       style={{
                         paddingVertical: 8,
                         paddingHorizontal: 8,
-                        backgroundColor: '#f1f5f9',
+                        backgroundColor: theme.colors.background.surfaceSecondary,
                         marginBottom: 4,
                       }}
                     >
@@ -450,7 +451,7 @@ export const SalesScreen: React.FC = () => {
                         style={{
                           marginVertical: 2,
                           borderBottomWidth: 1,
-                          borderColor: '#e2e8f0',
+                          borderColor: theme.colors.border.default,
                         }}
                       >
                         <Row justify="space-between" align="center">
@@ -526,7 +527,7 @@ export const SalesScreen: React.FC = () => {
                       style={{
                         paddingVertical: 8,
                         paddingHorizontal: 8,
-                        backgroundColor: '#f1f5f9',
+                        backgroundColor: theme.colors.background.surfaceSecondary,
                         marginBottom: 4,
                       }}
                     >
@@ -554,7 +555,7 @@ export const SalesScreen: React.FC = () => {
                         style={{
                           marginVertical: 2,
                           borderBottomWidth: 1,
-                          borderColor: '#e2e8f0',
+                          borderColor: theme.colors.border.default,
                         }}
                       >
                         <Row justify="space-between" align="center">

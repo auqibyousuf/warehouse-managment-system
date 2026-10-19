@@ -4,7 +4,7 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import {
   Ingredient,
   Product,
@@ -142,7 +142,7 @@ export const inventoryService = {
       supplier.balanceDue += balanceDue;
 
       const purchaseId = generateId('pur');
-      const purchaseNumber = `PUR-2026-${(db.purchases.length + 1).toString().padStart(3, '0')}`;
+      const purchaseNumber = nextDocumentNumber('PUR', db.purchases.map((p) => p.purchaseNumber));
 
       const newPurchase: Purchase = {
         id: purchaseId,

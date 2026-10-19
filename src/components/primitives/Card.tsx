@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import { Card as PanelCard, AnimatedPressable } from 'panelui-native';
-import * as Haptics from 'expo-haptics';
+import { tapLight } from '../../utils/haptics';
 import { theme } from '../../theme';
 
 export type CardVariant = 'elevated' | 'outlined' | 'flat' | 'accent' | 'interactive';
@@ -88,12 +88,11 @@ export const CardComponent: React.FC<CardProps> = ({
     return (
       <AnimatedPressable
         className={`rounded-lg overflow-hidden ${className || ''}`}
+        accessibilityRole="button"
         pressScale={0.98}
         pressOpacity={0.92}
         onPress={() => {
-          try {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          } catch {}
+          tapLight();
           if (onPress) onPress();
         }}
         style={combinedStyle}

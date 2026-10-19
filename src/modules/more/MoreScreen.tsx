@@ -25,8 +25,8 @@ type MoreSection = 'customers' | 'expenses' | 'settings';
 export const MoreScreen: React.FC = () => {
   const [section, setSection] = useState<MoreSection>('customers');
 
-  const { data: customers = [], isLoading: loadingCustomers, refetch: refetchCustomers } = useCustomers();
-  const { data: expenses = [], isLoading: loadingExpenses, refetch: refetchExpenses } = useExpenses();
+  const { data: customers = [], isLoading: loadingCustomers } = useCustomers();
+  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
   const { data: settings } = useFactorySettings();
 
   const { openModal, setSelectedCustomerId, setBannerAlert } = useAppStore();

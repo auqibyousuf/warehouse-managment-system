@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { customerSchema, CustomerFormData } from '../../../validation/schemas';
+import { customerSchema, CustomerFormData, CustomerFormInput } from '../../../validation/schemas';
 import { useCreateCustomer } from '../../../hooks/api/useCustomers';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -27,8 +27,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CustomerFormData>({
-    resolver: zodResolver(customerSchema) as any,
+  } = useForm<CustomerFormInput, unknown, CustomerFormData>({
+    resolver: zodResolver(customerSchema),
     defaultValues: {
       name: '',
       phone: '',

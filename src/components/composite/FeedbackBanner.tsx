@@ -101,7 +101,12 @@ export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
       </Row>
 
       {onClose && (
-        <Pressable onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss message"
+        >
           <Icon name="close" size="xs" color={currentTheme.iconColor} />
         </Pressable>
       )}
@@ -109,7 +114,11 @@ export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
   );
 
   if (onPress) {
-    return <Pressable onPress={onPress}>{content}</Pressable>;
+    return (
+      <Pressable onPress={onPress} accessibilityRole="button">
+        {content}
+      </Pressable>
+    );
   }
 
   return content;

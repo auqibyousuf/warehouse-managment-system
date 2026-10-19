@@ -4,7 +4,7 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import { SaleInvoice, CustomerPayment, InvoiceStatus } from '../../types';
 
 export interface CreateSaleInput {
@@ -102,7 +102,7 @@ export const salesService = {
       customer.outstandingBalance += balanceDue;
 
       const invoiceId = generateId('inv');
-      const invoiceNumber = `INV-2026-${(db.invoices.length + 1).toString().padStart(3, '0')}`;
+      const invoiceNumber = nextDocumentNumber('INV', db.invoices.map((i) => i.invoiceNumber));
 
       const newInvoice: SaleInvoice = {
         id: invoiceId,
@@ -147,7 +147,7 @@ export const salesService = {
       if (amountPaid > 0) {
         db.payments.unshift({
           id: generateId('pay'),
-          paymentNumber: `REC-2026-${(db.payments.length + 1).toString().padStart(3, '0')}`,
+          paymentNumber: nextDocumentNumber('REC', db.payments.map((p) => p.paymentNumber)),
           date: input.date,
           customerId: customer.id,
           customerName: customer.name,
@@ -185,7 +185,7 @@ export const salesService = {
       customer.outstandingBalance = Math.max(0, customer.outstandingBalance - input.amount);
 
       const paymentId = generateId('pay');
-      const paymentNumber = `REC-2026-${(db.payments.length + 1).toString().padStart(3, '0')}`;
+      const paymentNumber = nextDocumentNumber('REC', db.payments.map((p) => p.paymentNumber));
 
       const newPayment: CustomerPayment = {
         id: paymentId,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { customerPaymentSchema, CustomerPaymentFormData } from '../../../validation/schemas';
+import { customerPaymentSchema, CustomerPaymentFormData, CustomerPaymentFormInput } from '../../../validation/schemas';
 import { useRecordPayment, useSalesInvoices } from '../../../hooks/api/useSales';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useAppStore } from '../../../stores/useAppStore';
@@ -14,7 +14,6 @@ import {
   TextInput,
   Button,
   Card,
-  Badge,
 } from '../../../components';
 
 export interface RecordPaymentModalProps {
@@ -46,8 +45,8 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     watch,
     reset,
     formState: { errors },
-  } = useForm<CustomerPaymentFormData>({
-    resolver: zodResolver(customerPaymentSchema) as any,
+  } = useForm<CustomerPaymentFormInput, unknown, CustomerPaymentFormData>({
+    resolver: zodResolver(customerPaymentSchema),
     defaultValues: {
       customerId: defaultCustomer?.id || 'cust-1',
       invoiceId: preselectedInvoiceId || undefined,

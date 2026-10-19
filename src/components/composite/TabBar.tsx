@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { tapSelection } from '../../utils/haptics';
 import { theme } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
@@ -47,7 +47,7 @@ export const TabBar: React.FC<TabBarProps> = ({
         },
       ]}
     >
-      <View style={styles.tabsRow}>
+      <View style={styles.tabsRow} accessibilityRole="tablist">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
 
@@ -55,12 +55,13 @@ export const TabBar: React.FC<TabBarProps> = ({
             <Pressable
               key={tab.id}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
+                tapSelection();
                 onTabChange(tab.id);
               }}
               style={styles.tabButton}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: isActive }}
             >
               <View style={styles.iconContainer}>
                 <Icon
@@ -70,7 +71,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 />
                 {tab.badgeCount !== undefined && tab.badgeCount > 0 && (
                   <View style={styles.badge}>
-                    <Typography variant="badgeText" color="onBrand" style={{ fontSize: 9 }}>
+                    <Typography variant="badgeText" color="onBrand" style={styles.badgeText}>
                       {tab.badgeCount > 99 ? '99+' : tab.badgeCount}
                     </Typography>
                   </View>
@@ -132,6 +133,9 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.full,
     paddingHorizontal: 4,
     paddingVertical: 1,
+  },
+  badgeText: {
+    fontSize: 9,
   },
   activeIndicator: {
     position: 'absolute',

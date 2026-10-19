@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { companyProfileSchema, CompanyProfileFormData } from '../../../validation/schemas';
+import { companyProfileSchema, CompanyProfileFormData, CompanyProfileFormInput } from '../../../validation/schemas';
 import { useFactorySettings, useUpdateFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -30,8 +30,8 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CompanyProfileFormData>({
-    resolver: zodResolver(companyProfileSchema) as any,
+  } = useForm<CompanyProfileFormInput, unknown, CompanyProfileFormData>({
+    resolver: zodResolver(companyProfileSchema),
     defaultValues: {
       factoryName: '',
       tagline: '',

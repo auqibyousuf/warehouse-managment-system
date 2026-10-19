@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { theme } from '../../theme';
 import {
   useInventoryItems,
   useInventoryMovements,
@@ -148,8 +149,8 @@ export const InventoryScreen: React.FC = () => {
                   style={
                     item.isLowStock
                       ? {
-                          backgroundColor: '#FFFBF0',
-                          borderColor: '#FDE68A',
+                          backgroundColor: theme.colors.status.warning.bg,
+                          borderColor: theme.colors.status.warning.border,
                         }
                       : undefined
                   }

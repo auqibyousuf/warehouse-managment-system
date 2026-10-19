@@ -50,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
             <Pressable
               onPress={onBack}
               style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Icon name="arrow-back" size="md" color="primary" />
@@ -75,6 +77,8 @@ export const Header: React.FC<HeaderProps> = ({
           <Pressable
             onPress={rightAction.onPress}
             style={styles.actionButton}
+            accessibilityRole="button"
+            accessibilityLabel={rightAction.label ?? rightAction.icon}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Icon name={rightAction.icon} size="md" color="brandPrimary" />

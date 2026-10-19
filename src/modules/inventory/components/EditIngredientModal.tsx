@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { theme } from '../../../theme';
+import React, { useState } from 'react';
 import { useUpdateIngredient, useDeleteIngredient } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -39,7 +40,11 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   const [error, setError] = useState('');
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
-  useEffect(() => {
+  // Re-seed the form whenever the sheet opens for an item (state adjusted during render, not in an effect).
+  const syncKey = item ? `${item.id}:${visible}` : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
     if (item) {
       setName(item.name);
       setCategory(item.type === 'packaging' ? 'packaging' : 'raw_material');
@@ -49,7 +54,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       setMinThreshold(String(item.minThreshold ?? 100));
       setError('');
     }
-  }, [item, visible]);
+  }
 
   if (!item) return null;
 
@@ -223,7 +228,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
               marginTop: 12,
               paddingTop: 16,
               borderTopWidth: 1,
-              borderTopColor: '#F3F4F6',
+              borderTopColor: theme.colors.border.subtle,
             }}
           >
             <Row justify="space-between" align="center">

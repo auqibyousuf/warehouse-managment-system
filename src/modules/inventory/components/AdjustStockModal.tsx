@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { stockAdjustmentSchema, StockAdjustmentFormData } from '../../../validation/schemas';
+import { stockAdjustmentSchema, StockAdjustmentFormData, StockAdjustmentFormInput } from '../../../validation/schemas';
 import { useAdjustStock, useInventoryItems } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -40,8 +40,8 @@ export const AdjustStockModal: React.FC<AdjustStockModalProps> = ({
     watch,
     reset,
     formState: { errors },
-  } = useForm<StockAdjustmentFormData>({
-    resolver: zodResolver(stockAdjustmentSchema) as any,
+  } = useForm<StockAdjustmentFormInput, unknown, StockAdjustmentFormData>({
+    resolver: zodResolver(stockAdjustmentSchema),
     defaultValues: {
       itemId: defaultItem?.id || '',
       itemType: defaultItem?.type || 'raw_material',

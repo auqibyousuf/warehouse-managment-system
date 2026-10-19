@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import {
   useSalesInvoices,
@@ -175,7 +176,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               Itemized Breakdown
             </Typography>
 
-            <Row justify="space-between" style={{ paddingBottom: 6, borderBottomWidth: 1, borderColor: '#e2e8f0' }}>
+            <Row justify="space-between" style={{ paddingBottom: 6, borderBottomWidth: 1, borderColor: theme.colors.border.default }}>
               <Typography variant="caption" weight="bold" color="muted" style={{ flex: 2 }}>
                 ITEM DESCRIPTION
               </Typography>

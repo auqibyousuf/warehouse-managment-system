@@ -1,7 +1,7 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { expenseSchema, ExpenseFormData } from '../../../validation/schemas';
+import { expenseSchema, ExpenseFormData, ExpenseFormInput } from '../../../validation/schemas';
 import { useCreateExpense } from '../../../hooks/api/useExpenses';
 import { useAppStore } from '../../../stores/useAppStore';
 import { ExpenseCategory } from '../../../types';
@@ -43,8 +43,8 @@ export const RecordExpenseModal: React.FC<RecordExpenseModalProps> = ({
     watch,
     reset,
     formState: { errors },
-  } = useForm<ExpenseFormData>({
-    resolver: zodResolver(expenseSchema) as any,
+  } = useForm<ExpenseFormInput, unknown, ExpenseFormData>({
+    resolver: zodResolver(expenseSchema),
     defaultValues: {
       category: 'electricity',
       amount: 5000,

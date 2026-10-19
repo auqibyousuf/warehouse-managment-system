@@ -75,6 +75,7 @@ export const useAppStore = create<AppState>((set) => ({
       selectedSetupId: null,
       selectedInvoiceId: null,
       selectedPurchaseId: null,
+      selectedCustomerId: null,
     }),
 
   selectedSetupId: null,

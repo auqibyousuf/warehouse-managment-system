@@ -15,10 +15,14 @@ export const dashboardService = {
       const db = getDB();
 
       // Date filtering helper
-      const now = new Date('2026-10-18T12:00:00Z');
-      const startOfDay = '2026-10-18';
-      const startOfWeek = '2026-10-12';
-      const startOfMonth = '2026-10-01';
+      const now = new Date();
+      const toDateKey = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // week starts Monday
+      const startOfDay = toDateKey(now);
+      const startOfWeek = toDateKey(weekStart);
+      const startOfMonth = toDateKey(new Date(now.getFullYear(), now.getMonth(), 1));
 
       const isDateInPeriod = (dateStr: string): boolean => {
         if (period === 'all_time') return true;
@@ -42,8 +46,8 @@ export const dashboardService = {
         totalUnitsProduced > 0
           ? productionCost / totalUnitsProduced
           : db.batches.length > 0
-          ? (db.batches[0].directCostPerUnit || db.batches[0].directCostPerBag || 334)
-          : 334;
+          ? (db.batches[0].directCostPerUnit || db.batches[0].directCostPerBag || 0)
+          : 0;
 
       // 2. Sales metrics
       const periodInvoices = db.invoices.filter(

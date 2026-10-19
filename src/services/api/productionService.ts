@@ -4,14 +4,13 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import {
   Product,
   ProductionSetup,
   ProductionBatch,
   BatchIngredientConsumption,
   SetupStatus,
-  InventoryMovement,
 } from '../../types';
 
 export interface CreateBatchInput {
@@ -341,7 +340,7 @@ export const productionService = {
           : 0;
 
       const batchId = generateId('batch');
-      const batchNumber = `BAT-2026-${(db.batches.length + 1).toString().padStart(3, '0')}`;
+      const batchNumber = nextDocumentNumber('BAT', db.batches.map((b) => b.batchNumber));
 
       const newBatch: ProductionBatch = {
         id: batchId,
