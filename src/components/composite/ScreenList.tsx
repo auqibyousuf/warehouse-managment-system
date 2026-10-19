@@ -21,6 +21,8 @@ export interface ScreenListProps<T> {
   placeholder?: React.ReactElement | null;
   refreshing?: boolean;
   onRefresh?: () => void;
+  /** Shown after the last row (e.g. a download button). */
+  footer?: React.ReactElement;
   /** Wrap all rows in one visual group (e.g. a ledger inside a single card). */
   rowGap?: number;
 }
@@ -38,6 +40,7 @@ export const ScreenList = <T,>({
   refreshing = false,
   onRefresh,
   rowGap = theme.spacing.md,
+  footer,
 }: ScreenListProps<T>) => {
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -55,6 +58,7 @@ export const ScreenList = <T,>({
         keyExtractor={keyExtractor}
         ListHeaderComponent={header}
         ListEmptyComponent={placeholder ?? undefined}
+        ListFooterComponent={footer}
         ItemSeparatorComponent={() => <View style={{ height: rowGap }} />}
         contentContainerStyle={{
           paddingHorizontal: theme.spacing.layout.screenPaddingHorizontal,

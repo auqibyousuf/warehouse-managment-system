@@ -17,14 +17,27 @@ import { RecordExpenseModal } from '../../modules/expenses/components/RecordExpe
 import { EditSupplierModal } from '../../modules/inventory/components/EditSupplierModal';
 import { EditProductModal } from '../../modules/inventory/components/EditProductModal';
 import { EditCustomerModal } from '../../modules/customers/components/EditCustomerModal';
+import { UseStockModal } from '../../modules/inventory/components/UseStockModal';
 import { CompanyProfileModal } from '../../modules/business/components/CompanyProfileModal';
 
 const onClose = closeSheet;
 
 const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
-  start_batch: (p) => <StartRunModal visible onClose={onClose} preselectedSetupId={p.setupId ?? null} />,
+  start_batch: (p) => (
+    <StartRunModal visible onClose={onClose} preselectedSetupId={p.setupId ?? null} />
+  ),
   create_setup: () => <CreateSetupModal visible onClose={onClose} />,
-  record_purchase: () => <RecordPurchaseModal visible onClose={onClose} />,
+  record_purchase: (p) => (
+    <RecordPurchaseModal visible onClose={onClose} preselectedItemId={p.itemId ?? null} />
+  ),
+  use_stock: (p) => (
+    <UseStockModal
+      visible
+      onClose={onClose}
+      itemId={p.itemId ?? null}
+      kind={p.kind === 'waste' ? 'waste' : 'usage'}
+    />
+  ),
   adjust_stock: () => <AdjustStockModal visible onClose={onClose} />,
   create_ingredient: () => <CreateIngredientModal visible onClose={onClose} />,
   create_supplier: () => <CreateSupplierModal visible onClose={onClose} />,
@@ -61,7 +74,8 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
 };
 
 export default function SheetRoute() {
-  const { sheet, ...params } = useLocalSearchParams<Record<keyof SheetParams | 'sheet', string | undefined>>();
+  const { sheet, ...params } =
+    useLocalSearchParams<Record<keyof SheetParams | 'sheet', string | undefined>>();
   const render = SHEETS[sheet as SheetName];
   return render ? render(params) : null;
 }

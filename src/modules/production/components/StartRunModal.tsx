@@ -1,6 +1,6 @@
 import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
-import { theme } from '../../../theme';
+import { theme, useColors } from '../../../theme';
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +20,7 @@ import {
   Card,
   Divider,
   StepIndicator,
+  ProgressBar,
 } from '../../../components';
 
 export interface StartRunModalProps {
@@ -53,6 +54,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
   preselectedSetupId,
 }) => {
   const money = useMoney();
+  const colors = useColors();
   const symbol = useCurrencySymbol();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
@@ -100,7 +102,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
       const unit = setupToUse.outputUnit || 'bags';
       const bUnit = setupToUse.baseUnit || 'kg';
       const targetUnits = setupToUse.targetUnits || setupToUse.targetBags || 50;
-      const uSize = setupToUse.unitSize || setupToUse.bagWeightKg || 20;
+      const uSize = setupToUse.unitSize || setupToUse.bagWeightKg || 1;
 
       setValue('outputUnit', unit);
       setValue('baseUnit', bUnit);
@@ -267,7 +269,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
                             const unit = setup.outputUnit || 'bags';
                             const bUnit = setup.baseUnit || 'kg';
                             const targetUnits = setup.targetUnits || setup.targetBags || 50;
-                            const uSize = setup.unitSize || setup.bagWeightKg || 20;
+                            const uSize = setup.unitSize || setup.bagWeightKg || 1;
 
                             setValue('outputUnit', unit);
                             setValue('baseUnit', bUnit);
@@ -420,6 +422,73 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
                 <Typography variant="label" color="secondary">
                   Actual Raw Materials Consumed (Edit if differed from standard)
                 </Typography>
+
+                {/* Inventory pre-flight check: needed vs on hand, before the batch is confirmed */}
+                {(() => {
+                  const rows = (selectedSetup?.recipeItems ?? []).map((recipeItem, idx) => {
+                    const ing = ingredients.find((i) => i.id === recipeItem.ingredientId);
+                    const required = watchedItems[idx]?.actualQuantity ?? recipeItem.targetQuantity;
+                    const available = ing?.currentStock ?? 0;
+                    return { recipeItem, required, available, ok: available >= required };
+                  });
+                  const short = rows.filter((r) => !r.ok);
+                  return (
+                    <Card variant={short.length ? 'accent' : 'flat'} padding="normal">
+                      <Row justify="space-between" align="center">
+                        <Typography variant="title" color="primary">
+                          Stock check
+                        </Typography>
+                        <Badge
+                          label={`${rows.length - short.length} of ${rows.length} ready`}
+                          variant={short.length ? 'danger' : 'success'}
+                          size="sm"
+                        />
+                      </Row>
+                      <Typography
+                        variant="bodySmall"
+                        color={short.length ? 'error' : 'success'}
+                        style={{ marginVertical: theme.spacing.xs }}
+                      >
+                        {short.length
+                          ? `${short.length} ingredient${short.length === 1 ? ' is' : 's are'} short. Add stock first, or reduce the quantity.`
+                          : 'Everything needed is in stock.'}
+                      </Typography>
+                      <Stack gap="sm">
+                        {rows.map((r) => (
+                          <Box key={r.recipeItem.ingredientId}>
+                            <Row justify="space-between" align="center">
+                              <Typography variant="bodyMedium" color="primary">
+                                {r.recipeItem.ingredientName}
+                              </Typography>
+                              <Badge
+                                label={
+                                  r.ok
+                                    ? 'OK'
+                                    : `Short ${(r.required - r.available).toLocaleString('en-IN')}`
+                                }
+                                variant={r.ok ? 'success' : 'danger'}
+                                size="sm"
+                              />
+                            </Row>
+                            <ProgressBar
+                              value={r.available > 0 ? r.required / r.available : 1}
+                              color={r.ok ? colors.brand.primary : colors.accent.error}
+                              height={6}
+                            />
+                            <Row justify="space-between" style={{ marginTop: theme.spacing.xxs }}>
+                              <Typography variant="caption" color="muted">
+                                Needs {r.required.toLocaleString('en-IN')} {r.recipeItem.unit}
+                              </Typography>
+                              <Typography variant="caption" color="muted">
+                                Have {r.available.toLocaleString('en-IN')} {r.recipeItem.unit}
+                              </Typography>
+                            </Row>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Card>
+                  );
+                })()}
 
                 {selectedSetup?.recipeItems.map((recipeItem, idx) => {
                   const currentIng = ingredients.find((i) => i.id === recipeItem.ingredientId);

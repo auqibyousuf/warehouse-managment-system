@@ -47,7 +47,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   } = useForm<CustomerPaymentFormInput, unknown, CustomerPaymentFormData>({
     resolver: zodResolver(customerPaymentSchema),
     defaultValues: {
-      customerId: defaultCustomer?.id || 'cust-1',
+      customerId: defaultCustomer?.id ?? '',
       invoiceId: preselectedInvoiceId || undefined,
       amount: defaultCustomer?.outstandingBalance || 5000,
       paymentMethod: 'upi',

@@ -1,5 +1,6 @@
 import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
-import { theme } from '../../../theme';
+import { theme, useColors } from '../../../theme';
+import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +17,8 @@ import {
   Modal,
   Box,
   Stack,
+  InsetStats,
+  ProgressBar,
   Row,
   Typography,
   TextInput,
@@ -31,6 +34,8 @@ export interface CreateSaleModalProps {
 
 export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClose }) => {
   const money = useMoney();
+  const colors = useColors();
+  const { data: settings } = useFactorySettings();
   const symbol = useCurrencySymbol();
   const { data: customers = [] } = useCustomers();
   const { data: products = [] } = useProducts();
@@ -49,12 +54,12 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
   } = useForm<SaleInvoiceFormInput, unknown, SaleInvoiceFormData>({
     resolver: zodResolver(saleInvoiceSchema),
     defaultValues: {
-      customerId: customers[0]?.id || 'cust-1',
-      productId: activeProducts[0]?.id || 'prod-1',
+      customerId: customers[0]?.id ?? '',
+      productId: activeProducts[0]?.id ?? '',
       quantity: 1,
-      outputUnit: activeProducts[0]?.outputUnit || 'bags',
+      outputUnit: activeProducts[0]?.outputUnit || settings?.defaultUnitName || 'units',
       unitPrice:
-        activeProducts[0]?.sellingPricePerUnit || activeProducts[0]?.sellingPricePerBag || 500,
+        activeProducts[0]?.sellingPricePerUnit || activeProducts[0]?.sellingPricePerBag || 0,
       discount: 0,
       amountPaidNow: 0,
       paymentMethod: 'cash',
@@ -150,6 +155,45 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
           </Row>
         </Box>
 
+        {selectedCustomer && (
+          <Stack gap="xs">
+            <InsetStats
+              stats={[
+                {
+                  label: 'Outstanding',
+                  value: money(selectedCustomer.outstandingBalance),
+                  valueColor: selectedCustomer.outstandingBalance > 0 ? 'warning' : 'primary',
+                },
+                {
+                  label: 'Credit limit',
+                  value: selectedCustomer.creditLimit
+                    ? money(selectedCustomer.creditLimit)
+                    : 'None set',
+                },
+              ]}
+            />
+            {!!selectedCustomer.creditLimit && selectedCustomer.creditLimit > 0 && (
+              <ProgressBar
+                value={
+                  (selectedCustomer.outstandingBalance + balanceDue) / selectedCustomer.creditLimit
+                }
+                color={
+                  selectedCustomer.outstandingBalance + balanceDue > selectedCustomer.creditLimit
+                    ? colors.accent.error
+                    : colors.accent.warning
+                }
+                accessibilityLabel="Credit used including this invoice"
+              />
+            )}
+            {!!selectedCustomer.creditLimit &&
+              selectedCustomer.outstandingBalance + balanceDue > selectedCustomer.creditLimit && (
+                <Typography variant="caption" color="error">
+                  This invoice takes {selectedCustomer.name} over their credit limit.
+                </Typography>
+              )}
+          </Stack>
+        )}
+
         {/* Product Selector */}
         <Box>
           <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
@@ -161,7 +205,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               const u = p.outputUnit || 'units';
               const stock =
                 p.currentStockUnits !== undefined ? p.currentStockUnits : p.currentStockBags || 0;
-              const price = p.sellingPricePerUnit || p.sellingPricePerBag || 500;
+              const price = p.sellingPricePerUnit || p.sellingPricePerBag || 0;
               return (
                 <Button
                   key={p.id}

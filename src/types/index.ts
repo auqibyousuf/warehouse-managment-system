@@ -39,7 +39,9 @@ export type MovementType =
   | 'finished_production'
   | 'sale_dispatch'
   | 'adjustment'
-  | 'reversal';
+  | 'reversal'
+  | 'stock_usage'
+  | 'stock_waste';
 
 export interface FactorySettings {
   factoryName: string;
@@ -169,7 +171,7 @@ export interface InventoryMovement {
   quantity: number;
   unit: StockUnit;
   direction: 'in' | 'out';
-  referenceType: 'purchase' | 'batch' | 'sale' | 'adjustment' | 'reversal';
+  referenceType: 'purchase' | 'batch' | 'sale' | 'adjustment' | 'reversal' | 'usage';
   referenceId: string;
   notes?: string;
 }

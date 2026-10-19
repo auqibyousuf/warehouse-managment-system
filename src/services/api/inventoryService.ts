@@ -249,6 +249,45 @@ export const inventoryService = {
     });
   },
 
+  /**
+   * Take raw material or packaging out of stock outside a production batch
+   * (hand mixing, samples, spillage, damage). Recorded as an `out` movement.
+   */
+  recordUsage: async (input: {
+    itemId: string;
+    quantity: number;
+    kind: 'usage' | 'waste';
+    note?: string;
+  }): Promise<void> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const ing = db.ingredients.find((i) => i.id === input.itemId);
+      if (!ing) throw new Error('Only raw materials and packaging can be used this way.');
+      if (!(input.quantity > 0)) throw new Error('Enter a quantity above 0.');
+      if (input.quantity > ing.currentStock) {
+        throw new Error(
+          `Only ${ing.currentStock} ${ing.unit} of ${ing.name} in stock, cannot use ${input.quantity}.`,
+        );
+      }
+      ing.currentStock -= input.quantity;
+      db.movements.unshift({
+        id: generateId('mov'),
+        date: new Date().toISOString().split('T')[0],
+        itemId: ing.id,
+        itemName: ing.name,
+        itemType: ing.category,
+        movementType: input.kind === 'waste' ? 'stock_waste' : 'stock_usage',
+        quantity: input.quantity,
+        unit: ing.unit,
+        direction: 'out',
+        referenceType: 'usage',
+        referenceId: input.kind,
+        notes:
+          input.note?.trim() || (input.kind === 'waste' ? 'Waste / loss' : 'Used outside a batch'),
+      });
+    });
+  },
+
   // Adjust stock based on physical count or reconciliation
   adjustStock: async (input: AdjustStockInput): Promise<void> => {
     return simulateNetwork(() => {

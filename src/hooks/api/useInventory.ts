@@ -120,6 +120,22 @@ export const useSuppliers = () => {
   });
 };
 
+export const useRecordUsage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      itemId: string;
+      quantity: number;
+      kind: 'usage' | 'waste';
+      note?: string;
+    }) => inventoryService.recordUsage(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+
 export const useUpdateSupplier = () => {
   const queryClient = useQueryClient();
   return useMutation({

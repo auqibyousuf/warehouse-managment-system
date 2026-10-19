@@ -346,3 +346,61 @@ export const generatePurchaseBillPDF = async (
 
   return uri;
 };
+
+/** One-page sales summary (e.g. a month) to share with an accountant. */
+export const generateSalesSummaryPDF = async (
+  invoices: SaleInvoice[],
+  settings: FactorySettings | null | undefined,
+  periodLabel: string,
+): Promise<string> => {
+  const companyName = settings?.factoryName?.trim() || 'Your Business';
+  const symbol = settings?.currencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL;
+  const money = (value: number) => formatMoney(value, symbol);
+  const active = invoices.filter((i) => i.paymentStatus !== 'cancelled');
+  const billed = active.reduce((sum, i) => sum + i.totalAmount, 0);
+  const received = active.reduce((sum, i) => sum + i.amountPaid, 0);
+  const due = active.reduce((sum, i) => sum + i.balanceDue, 0);
+
+  const rows = active
+    .map(
+      (i) => `<tr>
+        <td>${i.invoiceNumber}</td><td>${i.date}</td><td>${i.customerName}</td>
+        <td style="text-align:right">${money(i.totalAmount)}</td>
+        <td style="text-align:right">${money(i.amountPaid)}</td>
+        <td style="text-align:right">${money(i.balanceDue)}</td>
+      </tr>`,
+    )
+    .join('');
+
+  const html = `
+    <html><head><meta charset="utf-8" /><style>
+      body { font-family: Helvetica, Arial, sans-serif; padding: 24px; color: #131b2e; }
+      h1 { font-size: 20px; margin: 0 0 4px; } p { margin: 0 0 16px; color: #434655; font-size: 12px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th, td { border-bottom: 1px solid #c3c6d7; padding: 8px 6px; text-align: left; }
+      th { background: #f2f3ff; } .totals { margin-top: 16px; font-size: 13px; }
+    </style></head><body>
+      <h1>${companyName}</h1>
+      <p>Sales summary, ${periodLabel}</p>
+      <table>
+        <tr><th>Invoice</th><th>Date</th><th>Customer</th>
+        <th style="text-align:right">Total</th><th style="text-align:right">Paid</th>
+        <th style="text-align:right">Due</th></tr>
+        ${rows}
+      </table>
+      <div class="totals">
+        <b>Billed:</b> ${money(billed)} &nbsp; <b>Received:</b> ${money(received)} &nbsp;
+        <b>Outstanding:</b> ${money(due)}
+      </div>
+    </body></html>`;
+
+  const { uri } = await Print.printToFileAsync({ html });
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(uri, {
+      mimeType: 'application/pdf',
+      dialogTitle: `Sales summary ${periodLabel}`,
+      UTI: 'com.adobe.pdf',
+    });
+  }
+  return uri;
+};

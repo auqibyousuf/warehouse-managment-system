@@ -7,7 +7,7 @@ import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Ionicons } from '@expo/vector-icons';
 
-export type NavTabId = 'dashboard' | 'production' | 'inventory' | 'procure' | 'ledger';
+export type NavTabId = 'home' | 'stock' | 'invoices';
 
 export interface TabItem {
   id: NavTabId;
@@ -23,11 +23,9 @@ export interface TabBarProps {
 }
 
 export const defaultTabs: TabItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline' },
-  { id: 'production', label: 'Production', icon: 'construct-outline' },
-  { id: 'inventory', label: 'Inventory', icon: 'cube-outline' },
-  { id: 'procure', label: 'Procure', icon: 'cart-outline' },
-  { id: 'ledger', label: 'Ledger', icon: 'receipt-outline' },
+  { id: 'home', label: 'Home', icon: 'checkmark-circle-outline' },
+  { id: 'stock', label: 'Stock', icon: 'archive-outline' },
+  { id: 'invoices', label: 'Invoices', icon: 'receipt-outline' },
 ];
 
 export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = defaultTabs }) => {

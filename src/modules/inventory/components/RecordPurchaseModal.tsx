@@ -23,9 +23,14 @@ import { CreateIngredientModal } from './CreateIngredientModal';
 export interface RecordPurchaseModalProps {
   visible: boolean;
   onClose: () => void;
+  preselectedItemId?: string | null;
 }
 
-export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({ visible, onClose }) => {
+export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
+  visible,
+  onClose,
+  preselectedItemId,
+}) => {
   const money = useMoney();
   const symbol = useCurrencySymbol();
   const { data: ingredients = [] } = useIngredients();
@@ -46,11 +51,12 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({ visibl
   } = useForm<PurchaseFormInput, unknown, PurchaseFormData>({
     resolver: zodResolver(purchaseSchema),
     defaultValues: {
-      supplierId: suppliers[0]?.id || 'sup-1',
-      itemId: ingredients[0]?.id || 'ing-1',
-      quantity: 1000,
-      unitPrice: 12,
-      amountPaid: 6000,
+      supplierId: suppliers[0]?.id ?? '',
+      itemId: preselectedItemId ?? ingredients[0]?.id ?? '',
+      quantity: 1,
+      unitPrice:
+        ingredients.find((i) => i.id === (preselectedItemId ?? ingredients[0]?.id))?.unitCost ?? 0,
+      amountPaid: 0,
       date: new Date().toISOString().split('T')[0],
       billNumber: '',
       notes: '',

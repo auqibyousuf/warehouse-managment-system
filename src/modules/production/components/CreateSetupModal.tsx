@@ -83,7 +83,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
           ingredientName: ingredients[0]?.name || 'Raw Material 1',
           targetQuantity: 100,
           unit: ingredients[0]?.unit || 'kg',
-          unitCost: ingredients[0]?.unitCost || 20,
+          unitCost: ingredients[0]?.unitCost || 0,
         },
         {
           ingredientName: ingredients[1]?.name || 'Raw Material 2',

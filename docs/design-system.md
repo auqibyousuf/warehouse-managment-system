@@ -82,8 +82,9 @@ Inline `padding`, `margin`, `gap` and `fontSize` must use these tokens.
 
 | Component | Notes |
 | --- | --- |
-| `AppTopBar` | Brand row, page title, editable business name, avatar to `/settings`. |
-| `TabBar` | Dashboard, Production, Inventory, Procure, Ledger. Active = brand color, filled icon. |
+| `AppTopBar` | BatchIQ, business name chip, page subtitle, gear to Manage, avatar to Settings. |
+| `StackScreen` | Back-arrow header wrapper for Manage screens. |
+| `TabBar` | Home, Stock, Invoices. Active = brand color, filled icon. |
 | `Button` | `primary` filled brand; `secondary` surface with border; `subtle`; `ghost`; `danger`; `success`. |
 | `ChipPicker` | Segmented control on a tinted track. Selected = brand fill. Wraps on narrow screens. |
 | `Card` | Surface, 1px border, radius 8. Variants: `elevated`, `flat`, `accent`, `outlined`. |
@@ -95,10 +96,18 @@ Inline `padding`, `margin`, `gap` and `fontSize` must use these tokens.
 
 ## Information architecture
 
-`Dashboard` · `Production` (recipes, batches) · `Inventory` (balances, movements) ·
-`Procure` (purchase bills, suppliers) · `Ledger` (invoices, payments, customers, expenses).
-Business profile, backup and sample data live in **Settings** (avatar). Sheets are routes:
-`/sheets/<name>?<params>`.
+Follows the Stitch **BatchIQ Lite** screens. Three daily tabs and one place for everything else:
+
+- **Home**: today's overview, start a batch, low-stock alert, recent batch runs, money and profit.
+- **Stock**: big Add Stock and Use Stock tiles, search, and simple quantity cards with + Add and - Use.
+- **Invoices**: this month's billing, New Invoice, All / Unpaid / Paid, share, remind, record payment.
+- **Manage** (gear icon in the top bar): Recipes & Batches, Stock Movements, Suppliers & Bills,
+  Customers & Payments, Expenses, Financial Ledger, Profile & Settings.
+- The avatar opens Profile & Settings directly.
+
+Why three tabs: the daily jobs are start a batch, add or use stock, bill and collect, and check
+alerts. Rarely used lists live under Manage so they never compete with those jobs.
+Sheets are routes: `/sheets/<name>?<params>`. Manage screens are stack routes with a back arrow.
 
 ## Rules for contributors
 
@@ -111,6 +120,6 @@ Business profile, backup and sample data live in **Settings** (avatar). Sheets a
 
 ## Not in the app (Stitch screens that need data BatchIQ does not have)
 
-Equipment and machinery setup, facility and shift setup, storage bins and pallets, live line
-telemetry, QA gates and operator checklists, plant data-flow map. Add them only together with the
-data model and workflows behind them.
+Equipment and machinery, facility and shifts, storage bins and pallets, barcode and bin scanning,
+live line telemetry, QA gates, operator checklists, named staff greetings, production goals, carrier
+and driver allocation on invoices. Add them only together with the data model and workflow behind them.

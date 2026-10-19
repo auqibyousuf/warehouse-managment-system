@@ -4,11 +4,9 @@ import { AppTopBar, TabBar } from '../../components';
 import { routeToTab, tabPath } from '../../navigation/routes';
 
 const TITLES: Record<string, string> = {
-  index: 'Dashboard',
-  production: 'Production',
-  inventory: 'Inventory',
-  procure: 'Procure',
-  ledger: 'Ledger',
+  index: 'Overview',
+  stock: 'Stock & Materials',
+  invoices: 'Invoices & Receipts',
 };
 
 export default function TabsLayout() {
@@ -26,10 +24,8 @@ export default function TabsLayout() {
       )}
     >
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="production" />
-      <Tabs.Screen name="inventory" />
-      <Tabs.Screen name="procure" />
-      <Tabs.Screen name="ledger" />
+      <Tabs.Screen name="stock" />
+      <Tabs.Screen name="invoices" />
     </Tabs>
   );
 }

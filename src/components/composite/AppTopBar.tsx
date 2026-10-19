@@ -24,29 +24,42 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({ title }) => {
     <View style={styles.container}>
       <View style={styles.left}>
         <View style={styles.brandRow}>
-          <Icon name="cube" size="sm" color="brandPrimary" />
-          <Typography variant="label" color="secondary">
+          <Typography variant="h3" color="primary">
             BatchIQ
           </Typography>
-          <View style={styles.dot} />
+          {businessName ? (
+            <View style={styles.chip}>
+              <Typography variant="label" color="secondary" numberOfLines={1}>
+                {businessName}
+              </Typography>
+            </View>
+          ) : null}
         </View>
-        <Typography variant="title" color="primary" numberOfLines={1}>
+        <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
           {title}
-        </Typography>
-        <Typography variant="label" color="success" numberOfLines={1}>
-          {businessName || 'Set up your business'}
         </Typography>
       </View>
 
-      <Pressable
-        onPress={() => router.push('/settings')}
-        style={styles.avatar}
-        accessibilityRole="button"
-        accessibilityLabel="Open settings and business profile"
-        hitSlop={8}
-      >
-        <Icon name="person" size="md" color="onBrand" />
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          onPress={() => router.push('/manage')}
+          style={styles.iconButton}
+          accessibilityRole="button"
+          accessibilityLabel="Manage: recipes, suppliers, customers, expenses and more"
+          hitSlop={8}
+        >
+          <Icon name="settings-outline" size="lg" color="secondary" />
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/settings')}
+          style={styles.avatar}
+          accessibilityRole="button"
+          accessibilityLabel="Open business profile and settings"
+          hitSlop={8}
+        >
+          <Icon name="person" size="md" color="onBrand" />
+        </Pressable>
+      </View>
     </View>
   );
 };
@@ -63,14 +76,17 @@ const createStyles = (colors: ColorTokens) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border.subtle,
     },
-    left: { flex: 1, minWidth: 0, gap: theme.spacing.xxs, paddingRight: theme.spacing.sm },
-    brandRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs },
-    dot: {
-      width: 6,
-      height: 6,
-      borderRadius: theme.radii.full,
-      backgroundColor: colors.accent.success,
+    left: { flex: 1, minWidth: 0, paddingRight: theme.spacing.sm },
+    brandRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+    chip: {
+      flexShrink: 1,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xxs,
+      borderRadius: theme.radii.sm,
+      backgroundColor: colors.background.surfaceTertiary,
     },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
+    iconButton: { padding: theme.spacing.xxs },
     avatar: {
       width: 40,
       height: 40,

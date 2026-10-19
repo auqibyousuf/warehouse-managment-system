@@ -2,10 +2,9 @@ import { useMoney } from '../../hooks/useMoney';
 import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
 import { theme } from '../../theme';
-import { useSalesInvoices, useCustomerPayments, useCancelInvoice } from '../../hooks/api/useSales';
+import { useCustomerPayments } from '../../hooks/api/useSales';
 import { useCustomers } from '../../hooks/api/useCustomers';
 import { useExpenses } from '../../hooks/api/useExpenses';
-import { useAppStore } from '../../stores/useAppStore';
 import {
   Box,
   Stack,
@@ -16,28 +15,25 @@ import {
   Badge,
   ListItem,
   Divider,
-  ConfirmDialog,
   ChipPicker,
   LoadingState,
   EmptyState,
   ScreenList,
-  InsetStats,
 } from '../../components';
-import { SaleInvoice, Customer } from '../../types';
+import { Customer } from '../../types';
 
-type LedgerTab = 'invoices' | 'payments' | 'customers' | 'expenses';
+type LedgerTab = 'payments' | 'customers' | 'expenses';
 
-export const LedgerScreen: React.FC = () => {
+export interface LedgerScreenProps {
+  /** Which sections to show, in order. The first one opens first. */
+  tabs?: LedgerTab[];
+}
+
+export const LedgerScreen: React.FC<LedgerScreenProps> = ({
+  tabs = ['customers', 'payments', 'expenses'],
+}) => {
   const money = useMoney();
-  const [activeTab, setActiveTab] = useState<LedgerTab>('invoices');
-  const [invoiceToCancel, setInvoiceToCancel] = useState<SaleInvoice | null>(null);
-
-  const {
-    data: invoices = [],
-    isLoading: loadingInvoices,
-    refetch: refetchInvoices,
-    isRefetching: refetchingInvoices,
-  } = useSalesInvoices();
+  const [activeTab, setActiveTab] = useState<LedgerTab>(tabs[0]);
 
   const { data: customers = [], isLoading: loadingCustomers } = useCustomers();
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
@@ -52,246 +48,32 @@ export const LedgerScreen: React.FC = () => {
     refetch: refetchPayments,
   } = useCustomerPayments();
 
-  const cancelInvoiceMutation = useCancelInvoice();
-  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
-
   const handleRefresh = async () => {
-    await Promise.all([refetchInvoices(), refetchPayments()]);
+    await refetchPayments();
   };
-
-  const handleOpenInvoiceDetail = (invoice: SaleInvoice) => {
-    openSheet('invoice_detail', { invoiceId: invoice.id });
-  };
-
-  const handleRecordPayment = (invoice: SaleInvoice) => {
-    openSheet('record_payment', { invoiceId: invoice.id, customerId: invoice.customerId });
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!invoiceToCancel) return;
-    try {
-      await cancelInvoiceMutation.mutateAsync({
-        invoiceId: invoiceToCancel.id,
-        reason: 'Customer cancelled order or invoice correction',
-      });
-      setBannerAlert({
-        title: 'Invoice Cancelled',
-        message: `Cancelled ${invoiceToCancel.invoiceNumber}. Finished goods (${invoiceToCancel.quantity || invoiceToCancel.bagQuantity} ${invoiceToCancel.outputUnit || 'units'}) returned to inventory.`,
-        variant: 'warning',
-      });
-      setInvoiceToCancel(null);
-    } catch (err: any) {
-      setBannerAlert({
-        title: 'Cancellation Error',
-        message: err.message,
-        variant: 'danger',
-      });
-    }
-  };
-
-  const totalRevenue = invoices
-    .filter((i) => i.paymentStatus !== 'cancelled')
-    .reduce((acc, i) => acc + i.totalAmount, 0);
-
-  const totalCollected = payments.reduce((acc, p) => acc + p.amount, 0);
-  const totalDues = invoices
-    .filter((i) => i.paymentStatus !== 'cancelled')
-    .reduce((acc, i) => acc + i.balanceDue, 0);
 
   const header = (
     <>
-      <Row gap="sm" wrap>
-        <Button
-          label="New Invoice"
-          variant="primary"
-          leftIcon="receipt-outline"
-          onPress={() => openSheet('create_sale')}
+      {tabs.length > 1 && (
+        <ChipPicker
+          options={tabs.map((id) => ({
+            value: id,
+            label: id === 'payments' ? 'Payments' : id === 'customers' ? 'Customers' : 'Expenses',
+            count:
+              id === 'payments'
+                ? payments.length
+                : id === 'customers'
+                  ? customers.length
+                  : expenses.length,
+          }))}
+          selected={activeTab}
+          onSelect={(tab) => setActiveTab(tab as LedgerTab)}
         />
-        <Button
-          label="Receive Payment"
-          variant="secondary"
-          leftIcon="cash-outline"
-          onPress={() => openSheet('record_payment')}
-        />
-      </Row>
-
-      <InsetStats
-        stats={[
-          { label: 'Invoiced', value: `${money(totalRevenue)}` },
-          {
-            label: 'Collected',
-            value: `${money(totalCollected)}`,
-            valueColor: 'success',
-          },
-          {
-            label: 'Dues',
-            value: `${money(totalDues)}`,
-            valueColor: 'warning',
-          },
-        ]}
-      />
-
-      {/* Navigation Switcher: Invoices, Purchases, Data Tables, Collections */}
-      <ChipPicker
-        options={[
-          { value: 'invoices', label: 'Sales Invoices', count: invoices.length },
-          { value: 'payments', label: 'Payments', count: payments.length },
-          { value: 'customers', label: 'Customers', count: customers.length },
-          { value: 'expenses', label: 'Expenses', count: expenses.length },
-        ]}
-        selected={activeTab}
-        onSelect={(tab) => setActiveTab(tab as LedgerTab)}
-      />
+      )}
     </>
   );
 
-  const overlays = (
-    <>
-      {/* Controlled Invoice Cancellation Dialog */}
-      <ConfirmDialog
-        visible={!!invoiceToCancel}
-        onClose={() => setInvoiceToCancel(null)}
-        onConfirm={handleConfirmCancel}
-        title="Cancel Sales Invoice?"
-        message={`Are you sure you want to cancel invoice ${invoiceToCancel?.invoiceNumber}? This will return ${invoiceToCancel?.quantity || invoiceToCancel?.bagQuantity} ${invoiceToCancel?.outputUnit || 'units'} of ${invoiceToCancel?.productName} to inventory and reverse customer dues.`}
-        confirmLabel="Confirm Cancellation"
-        cancelLabel="Keep Invoice"
-        isDestructive
-        loading={cancelInvoiceMutation.isPending}
-      />
-    </>
-  );
-
-  if (activeTab === 'invoices') {
-    return (
-      <>
-        <ScreenList
-          header={
-            <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-              {header}
-            </Stack>
-          }
-          data={invoices}
-          keyExtractor={(row) => row.id}
-          placeholder={
-            loadingInvoices ? (
-              <LoadingState message="Loading sales invoices..." />
-            ) : invoices.length === 0 ? (
-              <EmptyState
-                title="No Invoices Yet"
-                description="Create a sales invoice to record a dispatch to a customer."
-                actionLabel="+ Create Sale Invoice"
-                onAction={() => openSheet('create_sale')}
-              />
-            ) : null
-          }
-          renderItem={({ item: inv }) => (
-            <Card
-              key={inv.id}
-              variant={inv.paymentStatus === 'cancelled' ? 'flat' : 'elevated'}
-              padding="normal"
-              onPress={() => handleOpenInvoiceDetail(inv)}
-              style={{
-                opacity: inv.paymentStatus === 'cancelled' ? 0.75 : 1,
-              }}
-            >
-              <Row justify="space-between" align="flex-start" gap="sm">
-                <Box flex={1} style={{ marginRight: theme.spacing.sm }}>
-                  <Row gap="xs" align="center" wrap>
-                    <Typography variant="title" weight="bold" color="primary">
-                      {inv.invoiceNumber}
-                    </Typography>
-                    <Badge
-                      label={inv.paymentStatus.toUpperCase()}
-                      variant={
-                        inv.paymentStatus === 'paid'
-                          ? 'success'
-                          : inv.paymentStatus === 'partial'
-                            ? 'warning'
-                            : inv.paymentStatus === 'cancelled'
-                              ? 'danger'
-                              : 'neutral'
-                      }
-                      size="sm"
-                    />
-                  </Row>
-                  <Typography
-                    variant="bodyMedium"
-                    weight="semibold"
-                    color="secondary"
-                    style={{ marginTop: theme.spacing.xxs }}
-                  >
-                    {inv.customerName}
-                  </Typography>
-                  <Typography variant="caption" color="muted">
-                    Date: {inv.date} • {inv.quantity || inv.bagQuantity} {inv.outputUnit || 'units'}{' '}
-                    ({inv.productName})
-                  </Typography>
-                </Box>
-
-                {/* Total Invoiced Amount */}
-                <Box align="flex-end" style={{ minWidth: 90, flexShrink: 0 }}>
-                  <Typography variant="bodyLarge" weight="bold" color="brandDeep">
-                    {money(inv.totalAmount)}
-                  </Typography>
-                  {inv.balanceDue > 0 && (
-                    <Typography variant="caption" weight="semibold" color="warning">
-                      Due: {money(inv.balanceDue)}
-                    </Typography>
-                  )}
-                </Box>
-              </Row>
-
-              <Divider variant="subtle" spacing="sm" />
-
-              {/* Payment Progress */}
-              <Row justify="space-between" align="center">
-                <Typography variant="caption" color="secondary">
-                  Paid: {money(inv.amountPaid)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  weight="bold"
-                  color={inv.balanceDue > 0 ? 'warning' : 'success'}
-                >
-                  {inv.balanceDue > 0 ? `Outstanding: ${money(inv.balanceDue)}` : 'Fully Settled'}
-                </Typography>
-              </Row>
-
-              {/* Quick Action Footer */}
-              <Row
-                gap="sm"
-                justify="space-between"
-                align="center"
-                style={{ marginTop: theme.spacing.smd }}
-              >
-                <Button
-                  label="View & PDF"
-                  variant="ghost"
-                  size="sm"
-                  leftIcon="document-text-outline"
-                  onPress={() => handleOpenInvoiceDetail(inv)}
-                />
-
-                {inv.paymentStatus !== 'cancelled' && inv.balanceDue > 0 && (
-                  <Button
-                    label="Receive Payment"
-                    variant="primary"
-                    size="sm"
-                    leftIcon="cash-outline"
-                    onPress={() => handleRecordPayment(inv)}
-                  />
-                )}
-              </Row>
-            </Card>
-          )}
-          refreshing={refetchingInvoices}
-          onRefresh={handleRefresh}
-        />
-        {overlays}
-      </>
-    );
-  }
+  const overlays = null;
 
   if (activeTab === 'customers') {
     return (
@@ -516,7 +298,7 @@ export const LedgerScreen: React.FC = () => {
               />
             </Card>
           )}
-          refreshing={refetchingInvoices}
+          refreshing={false}
           onRefresh={handleRefresh}
         />
         {overlays}

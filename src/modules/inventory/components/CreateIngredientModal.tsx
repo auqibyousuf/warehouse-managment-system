@@ -57,7 +57,7 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
         unit: unit.trim(),
         unitCost: parseFloat(unitCost) || 0,
         initialStock: parseFloat(initialStock) || 0,
-        minThreshold: parseFloat(minThreshold) || 100,
+        minThreshold: parseFloat(minThreshold) || 0,
       });
 
       setBannerAlert({

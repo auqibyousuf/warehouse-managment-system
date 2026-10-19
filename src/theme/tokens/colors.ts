@@ -67,6 +67,8 @@ export interface ColorTokens {
   overlay: { backdrop: string; subtle: string; medium: string };
   /** Solid fills for tinted icon chips and charts. */
   accent: { success: string; warning: string; error: string; info: string };
+  /** Readable text/icon color on top of a solid `accent` fill. */
+  onAccent: { success: string; warning: string };
 }
 
 export const lightColors: ColorTokens = {
@@ -123,6 +125,7 @@ export const lightColors: ColorTokens = {
     medium: 'rgba(19, 27, 46, 0.12)',
   },
   accent: { success: '#007d57', warning: '#fe932c', error: '#ba1a1a', info: '#2563eb' },
+  onAccent: { success: '#ffffff', warning: '#663500' },
 };
 
 export const darkColors: ColorTokens = {
@@ -199,6 +202,7 @@ export const darkColors: ColorTokens = {
     medium: 'rgba(255, 255, 255, 0.1)',
   },
   accent: { success: '#4edea3', warning: '#f59e0b', error: '#ffb4ab', info: '#54ddfc' },
+  onAccent: { success: '#003824', warning: '#472a00' },
 };
 
 export const getColors = (scheme: ColorScheme | null | undefined): ColorTokens =>

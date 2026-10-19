@@ -193,3 +193,37 @@ describe('business settings', () => {
     expect(getDB().settings.factoryName).toBe(before.factoryName);
   });
 });
+
+describe('using stock outside a batch', () => {
+  it('reduces raw material stock and records an out movement', async () => {
+    const before = ingredient('ing-1').currentStock;
+    const movements = getDB().movements.length;
+    await inventoryService.recordUsage({
+      itemId: 'ing-1',
+      quantity: 25,
+      kind: 'waste',
+      note: 'Spilled',
+    });
+    expect(ingredient('ing-1').currentStock).toBe(before - 25);
+    const last = getDB().movements[0];
+    expect(getDB().movements.length).toBe(movements + 1);
+    expect(last).toMatchObject({ movementType: 'stock_waste', direction: 'out', quantity: 25 });
+  });
+
+  it('refuses to use more than is in stock, or zero', async () => {
+    const before = ingredient('ing-1').currentStock;
+    await expect(
+      inventoryService.recordUsage({ itemId: 'ing-1', quantity: before + 1, kind: 'usage' }),
+    ).rejects.toThrow(/Only/);
+    await expect(
+      inventoryService.recordUsage({ itemId: 'ing-1', quantity: 0, kind: 'usage' }),
+    ).rejects.toThrow(/above 0/);
+    expect(ingredient('ing-1').currentStock).toBe(before);
+  });
+
+  it('does not allow finished goods to be used this way', async () => {
+    await expect(
+      inventoryService.recordUsage({ itemId: 'prod-1', quantity: 1, kind: 'usage' }),
+    ).rejects.toThrow(/raw materials/);
+  });
+});

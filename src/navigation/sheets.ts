@@ -18,7 +18,8 @@ export type SheetName =
   | 'company_profile'
   | 'edit_customer'
   | 'edit_supplier'
-  | 'edit_product';
+  | 'edit_product'
+  | 'use_stock';
 
 export interface SheetParams {
   setupId?: string;
@@ -27,6 +28,8 @@ export interface SheetParams {
   customerId?: string;
   supplierId?: string;
   productId?: string;
+  itemId?: string;
+  kind?: string;
 }
 
 interface OpenOptions {

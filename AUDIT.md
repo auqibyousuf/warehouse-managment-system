@@ -88,3 +88,13 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **PDFs never invent details:** invoices and bills print only what the business entered; empty sections are hidden.
 - **Web persistence fixed:** the SQLite key-value store has no synchronous API in the browser, so saves silently failed there. Web now uses `localStorage` (`deviceStore.web.ts`); phones keep SQLite. Verified by reloading after a save.
 - **Still open:** the sheets (create and edit forms) have not been re-laid-out against Stitch one by one; `lowStockThresholdKg` remains in the type but is unused.
+
+## 9. Stitch "BatchIQ Lite" navigation (latest)
+
+- **Decision (Product Manager and Information Architect):** the newest Stitch screens are BatchIQ Lite, a 3-tab app. For personal daily use it fits better than five tabs, so navigation is **Home, Stock, Invoices** plus a **Manage** list (gear icon) and **Settings** (avatar). Barcode scanning was skipped by choice.
+- **Stock:** Add Stock and Use Stock tiles. "Use stock" is a recorded movement (`stock_usage` / `stock_waste`) with tests, not a count overwrite.
+- **Invoices:** month overview, filters, reminder (WhatsApp link or share sheet), share PDF, record payment, monthly summary PDF.
+- **Financial Ledger:** receivables, payables, net position and a transaction queue from real invoices, bills and payments.
+- **Sheets:** invoice sheet shows the customer's balance against their credit limit; batch step 3 shows a stock check (needed vs on hand).
+- **Removed baked-in defaults:** forms no longer fall back to customer `cust-1`, product `prod-1`, price 500, pack size 20 or threshold 100.
+- **Dependencies:** updated to SDK 58 latest; deprecated transitive packages removed with overrides; install scripts approved via `allowScripts`. ESLint stays on 9.39.5 until eslint-plugin-react supports 10. Remaining audit findings are in build tooling with no patched release.
