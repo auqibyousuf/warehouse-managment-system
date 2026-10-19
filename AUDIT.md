@@ -70,3 +70,14 @@ Status: items marked **Fixed** are in this change; the rest are recommendations.
 - Still baked in and worth making settings: the currency symbol (the setting exists, but screens show the rupee sign), default units, and low-stock thresholds.
 
 **Login and accounts: Won't Have (now).** Personal single-user use. Required before a public launch, together with a backend and owner/staff roles.
+
+## 7. Stitch redesign (latest)
+
+Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light and dark). Full guide: `docs/design-system.md`.
+
+- **Appearance:** automatic light and dark from the device setting. Light is blue-led (`#004ac6`), dark is amber-led (`#f59e0b`). Colors come from `useColors()`; the old static `theme.colors` was removed so the compiler flags any leftover.
+- **Type:** Hanken Grotesk + JetBrains Mono with the exact Stitch sizes (36/28/22/20/16/14/12/11/18). One type system for both appearances.
+- **Shape:** Stitch radii (2/4/8/12), flat bordered cards, segmented tabs, mono caps labels, 44px buttons.
+- **Information architecture (Information Architect):** Dashboard, Production, Inventory, Procure, Ledger. Procure holds purchase bills and suppliers; Ledger holds invoices, payments, customers and expenses. The Business tab became **Settings** (avatar). The duplicate "Items Data Table" report was dropped.
+- **Real data only (Product Manager):** the Stitch screens for equipment, shifts, storage bins, live telemetry, QA gates and plant data-flow need data BatchIQ does not collect. They are not built and no placeholder numbers are shown.
+- **Still open:** currency symbol, default units and thresholds are shown in Settings but not yet editable (the rupee sign is used directly on screens); sheet forms use the new tokens but have not been re-laid-out screen by screen; PDF invoices keep their own print palette.
