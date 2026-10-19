@@ -23,22 +23,22 @@ Status: items marked **Fixed** are in this change; the rest are recommendations.
 - Critical: no accessibility. No accessibility labels, roles or states anywhere, and the modal close target was 32pt. **Fixed** in the shared components (`Button`, `Card`, `ListItem`, `TabBar`, `ChipPicker`, `Header`, `FeedbackBanner`, `Modal`). The close target is now 44pt.
 - High: 8 hardcoded colors bypassed the tokens, a second slate palette plus a duplicate amber. **Fixed** (token references).
 - High: the modal sheet body was fixed at 460pt, which was cramped on tablets and landscape, and Android had no keyboard avoidance. **Fixed** (60% of window height, Android `height` behavior).
-- Medium: about 115 inline spacing and font values still bypass the tokens. **Open**, to be moved onto tokens screen by screen.
+- Medium: about 115 inline spacing and font values bypassed the tokens. **Fixed** (all on `theme.spacing` / `theme.typography`; new `hairline`, `xsm`, `smd` steps added for the 1/6/10 values in use).
 - Medium: light mode only. **Open** (deliberate for now).
 - Inconsistency: both Uniwind `className` and `StyleSheet` are used. **Open**, pick one in the design system.
 
 ## 3. Senior UX Designer
 
 - Forms: errors surface via banners and field messages. The sale form no longer pre-fills a misleading quantity. **Fixed**.
-- Open: long modal forms (`CreateSetupModal` 549 lines, `StartRunModal` 464 lines) should be split into steps (recipe, then quantities, then review). Open: no confirmation summary before stock-affecting actions other than delete.
-- Open: ledger and invoice lists are `.map` inside `ScrollView`. Move to `FlatList` before data grows.
+- Long modal forms are now three-step flows with a progress indicator, Back/Next, and per-step validation: **Fixed** for `CreateSetupModal` (Basics, Output, Ingredients) and `StartRunModal` (Recipe, Output, Materials & cost). The cost summary on the last step doubles as the review before stock changes.
+- Ledger, invoice, purchase, payment, stock, supplier, recipe, batch, customer and expense lists are now windowed through `ScreenList` (`FlatList`). **Fixed**. The sold/received item tables and the dashboard's short recent lists stay as they are.
 - Copy: empty states in `RecordPurchaseModal` used "Click"; changed to "Tap" for a mobile-first product. **Fixed**.
 
 ## 4. Information Architect
 
-- Top level (Dashboard, Production, Stock, Sales, More) matches intent. "More" hides customers, expenses, company profile and suppliers' ledger, which are daily-use for sales and purchase staff.
+- Top level (Dashboard, Production, Stock, Sales, Business) matches intent. "More" was a catch-all label that hid customers, expenses and company profile; renamed **Business**. **Fixed**.
 - Recommended tree: Dashboard / Production / Stock (materials, suppliers, purchases) / Sales (invoices, customers, payments) / More (expenses, company profile). Move Customers under Sales and Suppliers stays under Stock. **Open** (needs PM sign-off).
-- Terminology is mixed ("bags" and "units", "setup" and "formula" and "recipe"). Pick one set. **Open**.
+- Terminology: user-facing text now says **Recipe** (was setup / formula / formulation) and **Batch** (was run / production run). **Fixed**. Internal type and field names (`setup`, `bagQuantity`) are unchanged to avoid a risky data-model rename; remove them with the persistence work.
 - Role separation (owner vs. staff) is not modeled anywhere. **Open**.
 
 ## 5. Principal System Architect
@@ -50,6 +50,6 @@ Status: items marked **Fixed** are in this change; the rest are recommendations.
 - Haptics calls were wrapped in `try/catch` around promises, which cannot catch rejections. **Fixed** (`src/utils/haptics.ts`).
 - Tooling: no `lint` or `typecheck` scripts or ESLint config. **Fixed** (`npm run lint`, `npm run typecheck`, `eslint.config.js`). Lint is 0 errors; 8 warnings remain, mostly React Compiler notices about react-hook-form's `watch()` that need `useWatch` per form.
 - README claimed Expo SDK 54 (the project is on 58) and did not say data is in memory or that a development build is required. **Fixed**.
-- Open, biggest item: routing is a tab switch in `AppNavigator` with 12 globally mounted modals, while `AGENTS.md` requires Expo Router in `src/app/`. Migrating gives deep links, a back stack and route-based sheets. It is a large cross-cutting change, so it should be its own PR, planned after persistence. Tradeoff: this is deferred cost, but doing it together with this fix batch would have made the change unreviewable.
-- Open: no tests. Start with the ledger logic in `services/api` (stock deduction and reversal, balances, document numbering).
+- Routing: **phase 1 done**. Expo Router now owns navigation (`src/app`: `(tabs)` group, root layout with providers). The 12 sheets are still store-driven and mounted in the root layout (`GlobalModals`). Phase 2: turn them into route-based sheets (`src/app/(modals)/...`) so each has a URL and back behavior.
+- Tests: **Fixed**. `npm test` runs 12 tests over document numbering, sales, purchases, adjustments and production. They found a real bug: reversing a batch after its output was sold clamped stock at 0 and left the ledger inflated. Reversal now refuses with a clear message. UI and form tests are still open.
 - Open: split `SalesScreen` (669 lines) into list, filters and invoice table.

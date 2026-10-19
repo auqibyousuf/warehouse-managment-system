@@ -442,6 +442,18 @@ export const productionService = {
       const product = db.products.find((p) => p.id === batch.productId);
       const bagItem = db.ingredients.find((i) => i.category === 'packaging');
 
+      // Guard first: never reverse if the batch output has already left the warehouse,
+      // otherwise raw materials would be restored while the sold goods stay unaccounted for.
+      if (product) {
+        const units = batch.unitsPacked || batch.bagsPacked || 0;
+        const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
+        if (onHand < units) {
+          throw new Error(
+            `Cannot reverse ${batch.batchNumber}: only ${onHand} of ${units} ${batch.outputUnit || 'units'} are still in stock. Cancel the related sales first.`
+          );
+        }
+      }
+
       // Compensating stock restoration: Return raw materials
       for (const item of batch.itemsConsumed) {
         const ing = db.ingredients.find((i) => i.id === item.ingredientId);
@@ -487,7 +499,7 @@ export const productionService = {
       // Deduct finished goods stock
       if (product) {
         const units = batch.unitsPacked || batch.bagsPacked || 0;
-        product.currentStockUnits = Math.max(0, (product.currentStockUnits || product.currentStockBags || 0) - units);
+        product.currentStockUnits = (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;
         product.currentStockBags = product.currentStockUnits;
 
         db.movements.unshift({

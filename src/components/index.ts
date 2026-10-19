@@ -42,3 +42,4 @@ export {
 } from 'panelui-native';
 
 export * from './composite/ScreenList';
+export * from './composite/StepIndicator';

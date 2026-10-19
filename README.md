@@ -6,7 +6,7 @@ Designed for manufacturing plants, feed processing factories, formulation mills,
 
 > **Status:** prototype. Data lives in an in-memory mock database (`src/services/api/mockDatabase.ts`) and resets on reload. Native modules (`panelui-native`, `uniwind`, `react-native-worklets`) require a development build, not Expo Go.
 >
-> Checks: `npm run lint` and `npm run typecheck`. Product/architecture audit: see `AUDIT.md`.
+> Checks: `npm run lint`, `npm run typecheck` and `npm test`. Product/architecture audit: see `AUDIT.md`.
 
 ---
 
