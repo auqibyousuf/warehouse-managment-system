@@ -14,6 +14,9 @@ import { InvoiceDetailModal } from '../../modules/sales/components/InvoiceDetail
 import { CreateCustomerModal } from '../../modules/customers/components/CreateCustomerModal';
 import { CustomerDetailModal } from '../../modules/customers/components/CustomerDetailModal';
 import { RecordExpenseModal } from '../../modules/expenses/components/RecordExpenseModal';
+import { EditSupplierModal } from '../../modules/inventory/components/EditSupplierModal';
+import { EditProductModal } from '../../modules/inventory/components/EditProductModal';
+import { EditCustomerModal } from '../../modules/customers/components/EditCustomerModal';
 import { CompanyProfileModal } from '../../modules/business/components/CompanyProfileModal';
 
 const onClose = closeSheet;
@@ -46,6 +49,15 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   ),
   create_expense: () => <RecordExpenseModal visible onClose={onClose} />,
   company_profile: () => <CompanyProfileModal visible onClose={onClose} />,
+  edit_customer: (p) => (
+    <EditCustomerModal visible onClose={onClose} customerId={p.customerId ?? null} />
+  ),
+  edit_supplier: (p) => (
+    <EditSupplierModal visible onClose={onClose} supplierId={p.supplierId ?? null} />
+  ),
+  edit_product: (p) => (
+    <EditProductModal visible onClose={onClose} productId={p.productId ?? null} />
+  ),
 };
 
 export default function SheetRoute() {

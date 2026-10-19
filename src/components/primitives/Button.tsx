@@ -138,7 +138,7 @@ export const Button: React.FC<ButtonProps> = ({
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
       pressScale={0.97}
       pressOpacity={variant === 'ghost' ? 0.7 : 1}
-      className={`flex-row items-center justify-center rounded-md border ${fullWidth ? 'w-full' : ''} ${className || ''}`}
+      className={`flex-row items-center justify-center border ${fullWidth ? 'w-full' : ''} ${className || ''}`}
       style={[
         styles.button,
         {
@@ -147,7 +147,7 @@ export const Button: React.FC<ButtonProps> = ({
           backgroundColor: disabled ? theme.colors.background.surfaceTertiary : colors.bg,
           borderColor: disabled ? theme.colors.border.default : colors.border,
           borderWidth: variant === 'ghost' ? 0 : 1,
-          borderRadius: theme.radii.sm,
+          borderRadius: theme.radii.lg,
           width: fullWidth ? '100%' : 'auto',
           minHeight: theme.spacing.layout.touchTargetMin,
         },

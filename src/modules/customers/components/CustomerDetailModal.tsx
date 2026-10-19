@@ -73,6 +73,13 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
                 ₹{customer.outstandingBalance.toLocaleString('en-IN')}
               </Typography>
             </Box>
+            <Button
+              label="Edit"
+              variant="subtle"
+              size="sm"
+              leftIcon="create-outline"
+              onPress={() => openSheet('edit_customer', { customerId: customer.id }, { replace: true })}
+            />
             {customer.outstandingBalance > 0 && (
               <Button
                 label="Receive Payment"

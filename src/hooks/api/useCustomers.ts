@@ -8,6 +8,17 @@ export const useCustomers = () => {
   });
 };
 
+export const useUpdateCustomer = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: CreateCustomerInput }) =>
+      customerService.updateCustomer(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+};
+
 export const useCreateCustomer = () => {
   const queryClient = useQueryClient();
   return useMutation({

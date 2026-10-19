@@ -128,7 +128,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
           render={({ field: { onChange, value } }) => (
             <TextInput
               label="Business / Factory Name"
-              placeholder="e.g. Nexus Agro Manufacturing"
+              placeholder="Your business name"
               value={value}
               onChangeText={onChange}
               error={errors.factoryName?.message}
@@ -142,7 +142,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
           render={({ field: { onChange, value } }) => (
             <TextInput
               label="Tagline / Business Subtitle"
-              placeholder="e.g. High-Yield Feeds & Nutritional Formulations"
+              placeholder="e.g. Quality products, delivered on time"
               value={value}
               onChangeText={onChange}
               error={errors.tagline?.message}

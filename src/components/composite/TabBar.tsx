@@ -63,9 +63,9 @@ export const TabBar: React.FC<TabBarProps> = ({
               accessibilityLabel={tab.label}
               accessibilityState={{ selected: isActive }}
             >
-              <View style={styles.iconContainer}>
+              <View style={[styles.iconContainer, isActive && styles.iconContainerActive]}>
                 <Icon
-                  name={tab.icon}
+                  name={isActive ? (tab.icon.replace('-outline', '') as typeof tab.icon) : tab.icon}
                   size="md"
                   color={isActive ? 'brandPrimary' : 'muted'}
                 />
@@ -89,7 +89,6 @@ export const TabBar: React.FC<TabBarProps> = ({
                 {tab.label}
               </Typography>
 
-              {isActive && <View style={styles.activeIndicator} />}
             </Pressable>
           );
         })}
@@ -103,6 +102,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.border.subtle,
+    borderTopLeftRadius: theme.radii.xl,
+    borderTopRightRadius: theme.radii.xl,
     ...theme.shadows.card,
   },
   tabsRow: {
@@ -122,6 +123,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    width: 56,
+    height: 30,
+    borderRadius: theme.radii.full,
+  },
+  iconContainerActive: {
+    backgroundColor: theme.colors.brand.wash,
   },
   badge: {
     position: 'absolute',

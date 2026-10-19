@@ -208,7 +208,7 @@ export const SalesScreen: React.FC = () => {
             ) : invoices.length === 0 ? (
               <EmptyState
                 title="No Invoices Yet"
-                description="Create a sales invoice to record finished feed dispatch to dairy farms or dealers."
+                description="Create a sales invoice to record a dispatch to a customer."
                 actionLabel="+ Create Sale Invoice"
                 onAction={() => openSheet('create_sale')}
               />

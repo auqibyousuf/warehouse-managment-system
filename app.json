@@ -25,7 +25,8 @@
       "expo-font",
       "expo-sharing",
       "expo-router",
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-splash-screen"
     ],
     "scheme": "batchiq"
   }

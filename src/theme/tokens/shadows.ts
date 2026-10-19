@@ -27,10 +27,10 @@ export const shadows: Record<string, ViewStyle> = {
     elevation: 2,
   },
   card: {
-    shadowColor: '#173F30',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#0F261D',
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 18,
     elevation: 2,
   },
   lg: {
@@ -42,10 +42,10 @@ export const shadows: Record<string, ViewStyle> = {
   },
   modal: {
     shadowColor: '#0F261D',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 10,
   },
 };
 

@@ -11,9 +11,9 @@ export const generateInvoicePDF = async (
   invoice: SaleInvoice,
   settings?: FactorySettings | null
 ): Promise<string> => {
-  const companyName = settings?.factoryName || 'BatchIQ Manufacturing Works';
+  const companyName = settings?.factoryName?.trim() || 'Your Business';
   const tagline = settings?.tagline || 'Process & Batch Manufacturing';
-  const address = settings?.address || 'Industrial Estate, Phase 2, Pune, Maharashtra';
+  const address = settings?.address || '';
   const phone = settings?.phone || '+91 98765 43210';
   const email = settings?.email || 'billing@batchiq.com';
   const gstin = settings?.gstin || '27AABCB1234F1Z5';
@@ -267,7 +267,7 @@ export const generatePurchaseBillPDF = async (
   purchase: Purchase,
   settings?: FactorySettings | null
 ): Promise<string> => {
-  const companyName = settings?.factoryName || 'BatchIQ Manufacturing Works';
+  const companyName = settings?.factoryName?.trim() || 'Your Business';
 
   const html = `
     <!DOCTYPE html>

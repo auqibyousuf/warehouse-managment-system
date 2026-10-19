@@ -139,7 +139,11 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Category Toggle */}
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
+            <Typography
+              variant="label"
+              color="secondary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Item Category
             </Typography>
             <Row gap="xs">
@@ -170,7 +174,11 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Custom Unit Selector */}
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
+            <Typography
+              variant="label"
+              color="secondary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Measurement Unit
             </Typography>
             <Row gap="xs" wrap style={{ marginBottom: theme.spacing.sm }}>

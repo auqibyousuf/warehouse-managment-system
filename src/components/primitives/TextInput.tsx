@@ -68,8 +68,7 @@ export const TextInput: React.FC<FormTextInputProps> = ({
         startContent={startContent}
         endContent={endContent}
         containerClassName={className}
-        className="rounded-md"
-        style={[{ borderRadius: theme.radii.sm }, style]}
+        style={[{ borderRadius: theme.radii.md }, style]}
         {...rest}
       />
     </View>

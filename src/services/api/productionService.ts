@@ -77,14 +77,11 @@ export const productionService = {
 
       // Resolve or automatically create product
       let resolvedProduct: Product;
-      const prodName =
-        input.productName?.trim() || input.name;
+      const prodName = input.productName?.trim() || input.name;
 
       const foundProduct = input.productId
         ? db.products.find((p) => p.id === input.productId)
-        : db.products.find(
-            (p) => p.name.toLowerCase() === prodName.toLowerCase()
-          );
+        : db.products.find((p) => p.name.toLowerCase() === prodName.toLowerCase());
 
       if (foundProduct) {
         resolvedProduct = foundProduct;
@@ -115,14 +112,10 @@ export const productionService = {
         let ing = item.ingredientId
           ? db.ingredients.find((i) => i.id === item.ingredientId)
           : undefined;
-        const ingName =
-          item.ingredientName?.trim() ||
-          (ing ? ing.name : 'Raw Ingredient');
+        const ingName = item.ingredientName?.trim() || (ing ? ing.name : 'Raw Ingredient');
 
         if (!ing) {
-          ing = db.ingredients.find(
-            (i) => i.name.toLowerCase() === ingName.toLowerCase()
-          );
+          ing = db.ingredients.find((i) => i.name.toLowerCase() === ingName.toLowerCase());
         }
 
         if (!ing) {
@@ -186,7 +179,7 @@ export const productionService = {
   // Update setup: creates a new version for future runs without rewriting previous runs!
   updateSetup: async (
     setupId: string,
-    input: Partial<CreateSetupInput>
+    input: Partial<CreateSetupInput>,
   ): Promise<ProductionSetup> => {
     return simulateNetwork(() => {
       const db = getDB();
@@ -204,10 +197,8 @@ export const productionService = {
               ? db.ingredients.find((i) => i.id === item.ingredientId)
               : undefined;
             return {
-              ingredientId:
-                item.ingredientId || (ing ? ing.id : generateId('ing')),
-              ingredientName:
-                item.ingredientName || (ing ? ing.name : 'Unknown Ingredient'),
+              ingredientId: item.ingredientId || (ing ? ing.id : generateId('ing')),
+              ingredientName: item.ingredientName || (ing ? ing.name : 'Unknown Ingredient'),
               targetQuantity: item.targetQuantity,
               unit: item.unit || (ing ? ing.unit : 'kg'),
             };
@@ -215,9 +206,11 @@ export const productionService = {
         : existing.recipeItems;
 
       const outputUnit = input.outputUnit || existing.outputUnit || 'bags';
-      const unitSize = input.unitSize || input.bagWeightKg || existing.unitSize || existing.bagWeightKg || 20;
+      const unitSize =
+        input.unitSize || input.bagWeightKg || existing.unitSize || existing.bagWeightKg || 20;
       const baseUnit = input.baseUnit || existing.baseUnit || 'kg';
-      const targetUnits = input.targetUnits || input.targetBags || existing.targetUnits || existing.targetBags || 50;
+      const targetUnits =
+        input.targetUnits || input.targetBags || existing.targetUnits || existing.targetBags || 50;
 
       // Increment version
       const updatedSetup: ProductionSetup = {
@@ -258,7 +251,7 @@ export const productionService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.batches].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -274,16 +267,22 @@ export const productionService = {
       if (!product) throw new Error('Associated finished feed product not found');
 
       const outputUnit = input.outputUnit || setup.outputUnit || product.outputUnit || 'bags';
-      const unitsPacked = input.unitsPacked !== undefined ? input.unitsPacked : (input.bagsPacked || 50);
-      const packagingUsedUnits = input.packagingUsedUnits !== undefined ? input.packagingUsedUnits : (input.packagingUsedBags || unitsPacked);
+      const unitsPacked =
+        input.unitsPacked !== undefined ? input.unitsPacked : input.bagsPacked || 50;
+      const packagingUsedUnits =
+        input.packagingUsedUnits !== undefined
+          ? input.packagingUsedUnits
+          : input.packagingUsedBags || unitsPacked;
       const baseUnit = input.baseUnit || setup.baseUnit || product.baseUnit || 'kg';
       const unitSize = setup.unitSize || product.unitSize || product.bagWeightKg || 20;
-      const actualFinishedQuantity = input.actualFinishedQuantity !== undefined
-        ? input.actualFinishedQuantity
-        : (input.actualFinishedWeightKg || unitsPacked * unitSize);
-      const measurableWastage = input.measurableWastage !== undefined
-        ? input.measurableWastage
-        : (input.measurableWastageKg || 0);
+      const actualFinishedQuantity =
+        input.actualFinishedQuantity !== undefined
+          ? input.actualFinishedQuantity
+          : input.actualFinishedWeightKg || unitsPacked * unitSize;
+      const measurableWastage =
+        input.measurableWastage !== undefined
+          ? input.measurableWastage
+          : input.measurableWastageKg || 0;
 
       // Packaging units
       const bagItem = db.ingredients.find((i) => i.category === 'packaging');
@@ -298,7 +297,9 @@ export const productionService = {
         const ing = db.ingredients.find((i) => i.id === itemInput.ingredientId);
         if (!ing) throw new Error(`Ingredient ${itemInput.ingredientId} not found`);
 
-        const plannedItem = setup.recipeItems.find((r) => r.ingredientId === itemInput.ingredientId);
+        const plannedItem = setup.recipeItems.find(
+          (r) => r.ingredientId === itemInput.ingredientId,
+        );
         const plannedQty = plannedItem ? plannedItem.targetQuantity : itemInput.actualQuantity;
 
         const lineCost = itemInput.actualQuantity * ing.unitCost;
@@ -324,7 +325,10 @@ export const productionService = {
       }
 
       // Add finished product stock
-      const prevStock = product.currentStockUnits !== undefined ? product.currentStockUnits : (product.currentStockBags || 0);
+      const prevStock =
+        product.currentStockUnits !== undefined
+          ? product.currentStockUnits
+          : product.currentStockBags || 0;
       product.currentStockUnits = prevStock + unitsPacked;
       product.currentStockBags = product.currentStockUnits;
 
@@ -335,12 +339,13 @@ export const productionService = {
           ? Number((directBatchCost / actualFinishedQuantity).toFixed(2))
           : 0;
       const directCostPerUnit =
-        unitsPacked > 0
-          ? Number((directBatchCost / unitsPacked).toFixed(2))
-          : 0;
+        unitsPacked > 0 ? Number((directBatchCost / unitsPacked).toFixed(2)) : 0;
 
       const batchId = generateId('batch');
-      const batchNumber = nextDocumentNumber('BAT', db.batches.map((b) => b.batchNumber));
+      const batchNumber = nextDocumentNumber(
+        'BAT',
+        db.batches.map((b) => b.batchNumber),
+      );
 
       const newBatch: ProductionBatch = {
         id: batchId,
@@ -449,7 +454,7 @@ export const productionService = {
         const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
         if (onHand < units) {
           throw new Error(
-            `Cannot reverse ${batch.batchNumber}: only ${onHand} of ${units} ${batch.outputUnit || 'units'} are still in stock. Cancel the related sales first.`
+            `Cannot reverse ${batch.batchNumber}: only ${onHand} of ${units} ${batch.outputUnit || 'units'} are still in stock. Cancel the related sales first.`,
           );
         }
       }
@@ -499,7 +504,8 @@ export const productionService = {
       // Deduct finished goods stock
       if (product) {
         const units = batch.unitsPacked || batch.bagsPacked || 0;
-        product.currentStockUnits = (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;
+        product.currentStockUnits =
+          (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;
         product.currentStockBags = product.currentStockUnits;
 
         db.movements.unshift({

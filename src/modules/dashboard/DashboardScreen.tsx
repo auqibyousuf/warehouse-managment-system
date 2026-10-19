@@ -1,5 +1,6 @@
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
+import { Pressable } from 'react-native';
 import React from 'react';
 import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
 import { useProductionBatches } from '../../hooks/api/useProduction';
@@ -21,6 +22,7 @@ import {
   FeedbackBanner,
   LoadingState,
   ChipPicker,
+  Icon,
 } from '../../components';
 
 const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
@@ -54,14 +56,22 @@ export const DashboardScreen: React.FC = () => {
         {/* Factory Header Banner */}
         <Box>
           <Row justify="space-between" align="center">
-            <Box>
+            <Pressable
+              style={{ flex: 1, marginRight: theme.spacing.sm }}
+              onPress={() => openSheet('company_profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Edit business profile"
+            >
               <Typography variant="caption" color="muted">
                 OPERATIONAL DASHBOARD
               </Typography>
-              <Typography variant="h1" weight="bold" color="brandDeep">
-                {settings?.factoryName || 'BatchIQ Factory'}
-              </Typography>
-            </Box>
+              <Row gap="xs" align="center">
+                <Typography variant="h1" weight="bold" color="brandDeep" style={{ flexShrink: 1 }}>
+                  {settings?.factoryName?.trim() || 'Set your business name'}
+                </Typography>
+                <Icon name="create-outline" size="sm" color="muted" />
+              </Row>
+            </Pressable>
             <Badge label="Active" variant="success" dot />
           </Row>
         </Box>
@@ -243,7 +253,9 @@ export const DashboardScreen: React.FC = () => {
             <Divider variant="brand" spacing="xs" />
 
             <Typography variant="caption" color="muted">
-              Note: Unsold finished stock is held as inventory and not counted as COGS. Production cost for this period was ₹{(metrics?.financial.productionCost || 0).toLocaleString('en-IN')}.
+              Note: Unsold finished stock is held as inventory and not counted as COGS. Production
+              cost for this period was ₹
+              {(metrics?.financial.productionCost || 0).toLocaleString('en-IN')}.
             </Typography>
           </Stack>
         </Card>
@@ -287,12 +299,7 @@ export const DashboardScreen: React.FC = () => {
             <Typography variant="title" weight="bold" color="primary">
               Recent Invoices & Dispatches
             </Typography>
-            <Button
-              label="View All"
-              variant="ghost"
-              size="sm"
-              onPress={() => goToTab('sales')}
-            />
+            <Button label="View All" variant="ghost" size="sm" onPress={() => goToTab('sales')} />
           </Row>
 
           <Stack gap="xs">
@@ -302,7 +309,9 @@ export const DashboardScreen: React.FC = () => {
                 title={`${inv.invoiceNumber} • ${inv.customerName}`}
                 subtitle={`${inv.quantity || inv.bagQuantity} ${inv.outputUnit || 'units'} ${inv.productName}`}
                 meta={`Total: ₹${inv.totalAmount.toLocaleString('en-IN')} • Paid: ₹${inv.amountPaid.toLocaleString('en-IN')}`}
-                value={inv.balanceDue > 0 ? `Due: ₹${inv.balanceDue.toLocaleString('en-IN')}` : 'PAID'}
+                value={
+                  inv.balanceDue > 0 ? `Due: ₹${inv.balanceDue.toLocaleString('en-IN')}` : 'PAID'
+                }
                 valueColor={inv.balanceDue > 0 ? 'warning' : 'success'}
                 badge={{
                   label: inv.paymentStatus.toUpperCase(),
@@ -310,10 +319,10 @@ export const DashboardScreen: React.FC = () => {
                     inv.paymentStatus === 'paid'
                       ? 'success'
                       : inv.paymentStatus === 'partial'
-                      ? 'warning'
-                      : inv.paymentStatus === 'cancelled'
-                      ? 'danger'
-                      : 'neutral',
+                        ? 'warning'
+                        : inv.paymentStatus === 'cancelled'
+                          ? 'danger'
+                          : 'neutral',
                 }}
                 showDivider
               />

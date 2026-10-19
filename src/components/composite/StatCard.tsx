@@ -132,9 +132,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   iconWrapper: {
-    width: 26,
-    height: 26,
-    borderRadius: theme.radii.xs,
+    width: 32,
+    height: 32,
+    borderRadius: theme.radii.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: theme.spacing.xs,

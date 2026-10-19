@@ -1,6 +1,5 @@
 import React from 'react';
-import { ViewStyle } from 'react-native';
-import { Surface as PanelSurface } from 'panelui-native';
+import { View, ViewStyle } from 'react-native';
 import { theme } from '../../theme';
 import { spacingScale } from '../../theme/tokens/spacing';
 
@@ -109,14 +108,11 @@ export const Box: React.FC<BoxProps> = ({
   };
 
   return (
-    <PanelSurface
-      variant="transparent"
-      padding="none"
-      className={className}
-      style={[computedStyle, style]}
-    >
+    // A plain View on purpose: PanelUI's Surface adds overflow-hidden + a 12px radius,
+    // which clipped borders, shadows and text of everything wrapped in a Box.
+    <View className={className} style={[computedStyle, style]}>
       {children}
-    </PanelSurface>
+    </View>
   );
 };
 

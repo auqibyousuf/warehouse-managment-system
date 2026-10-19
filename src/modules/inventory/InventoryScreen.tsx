@@ -54,7 +54,7 @@ export const InventoryScreen: React.FC = () => {
     <>
       {/* Module Header */}
       <Box>
-        <Row justify="space-between" align="center">
+        <Row justify="space-between" align="center" wrap gap="sm">
           <Box>
             <Typography variant="caption" color="muted">
               WAREHOUSE & STOCK LEDGER
@@ -63,7 +63,7 @@ export const InventoryScreen: React.FC = () => {
               Inventory & Stock
             </Typography>
           </Box>
-          <Row gap="xs" wrap>
+          <Row gap="xs" wrap style={{ width: '100%', marginTop: theme.spacing.sm }}>
             <Button
               label="+ Raw Material"
               variant="primary"
@@ -232,13 +232,21 @@ export const InventoryScreen: React.FC = () => {
                 </Typography>
 
                 <Row gap="xs" align="center">
-                  {item.type !== 'finished_feed' && (
+                  {item.type !== 'finished_feed' ? (
                     <Button
                       label="Edit / Delete"
                       variant="ghost"
                       size="sm"
                       leftIcon="create-outline"
                       onPress={() => setItemToEdit(item)}
+                    />
+                  ) : (
+                    <Button
+                      label="Edit Product"
+                      variant="ghost"
+                      size="sm"
+                      leftIcon="create-outline"
+                      onPress={() => openSheet('edit_product', { productId: item.id })}
                     />
                   )}
                   <Button
@@ -379,6 +387,13 @@ export const InventoryScreen: React.FC = () => {
                   >
                     ₹{(sup.balanceDue || 0).toLocaleString('en-IN')}
                   </Typography>
+                  <Button
+                    label="Edit"
+                    variant="ghost"
+                    size="sm"
+                    leftIcon="create-outline"
+                    onPress={() => openSheet('edit_supplier', { supplierId: sup.id })}
+                  />
                   <Button
                     label="+ Record Bill"
                     variant="subtle"

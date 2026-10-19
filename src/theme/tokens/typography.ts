@@ -5,10 +5,34 @@
 
 import { TextStyle } from 'react-native';
 
+/**
+ * Premium type system: Manrope for display (headings, metrics), Inter for reading text.
+ * Custom fonts are selected per weight by family name (fontWeight is ignored for them),
+ * so every weight maps to a loaded face. Loaded in src/app/_layout.tsx.
+ */
+export type FontWeightKey = 'regular' | 'medium' | 'semibold' | 'bold' | 'heavy';
+
 export const fontFamilies = {
   sans: 'System',
   mono: 'Courier',
+  body: {
+    regular: 'Inter_400Regular',
+    medium: 'Inter_500Medium',
+    semibold: 'Inter_600SemiBold',
+    bold: 'Inter_700Bold',
+    heavy: 'Inter_700Bold',
+  } satisfies Record<FontWeightKey, string>,
+  display: {
+    regular: 'Manrope_500Medium',
+    medium: 'Manrope_500Medium',
+    semibold: 'Manrope_600SemiBold',
+    bold: 'Manrope_700Bold',
+    heavy: 'Manrope_800ExtraBold',
+  } satisfies Record<FontWeightKey, string>,
 } as const;
+
+/** Variants set in the display face; everything else uses the body face. */
+export const displayVariants = new Set(['display', 'h1', 'h2', 'h3', 'title', 'metric', 'metricSmall']);
 
 export const fontWeights: Record<string, TextStyle['fontWeight']> = {
   regular: '400',
@@ -41,12 +65,12 @@ export const lineHeights = {
 } as const;
 
 export const letterSpacings = {
-  tighter: -0.5,
-  tight: -0.2,
+  tighter: -0.8,
+  tight: -0.4,
   normal: 0,
   wide: 0.3,
   wider: 0.6,
-  caps: 0.8,
+  caps: 1.0,
 } as const;
 
 export const textVariants: Record<string, TextStyle> = {

@@ -15,13 +15,18 @@ export type SheetName =
   | 'invoice_detail'
   | 'purchase_detail'
   | 'customer_detail'
-  | 'company_profile';
+  | 'company_profile'
+  | 'edit_customer'
+  | 'edit_supplier'
+  | 'edit_product';
 
 export interface SheetParams {
   setupId?: string;
   invoiceId?: string;
   purchaseId?: string;
   customerId?: string;
+  supplierId?: string;
+  productId?: string;
 }
 
 interface OpenOptions {

@@ -112,6 +112,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: theme.spacing.sm,
   },
   scrollContent: {
@@ -122,14 +123,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.full,
     borderWidth: 1,
-    minHeight: 32,
+    minHeight: 40,
   },
   countBadge: {
     paddingHorizontal: theme.spacing.xs,
     paddingVertical: theme.spacing.hairline,
-    borderRadius: theme.radii.xs,
+    borderRadius: theme.radii.full,
     marginLeft: theme.spacing.xs,
   },
 });

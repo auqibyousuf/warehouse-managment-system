@@ -1,6 +1,7 @@
 import { getDB, resetDB } from '../mockDatabase';
 import { salesService } from '../salesService';
 import { inventoryService } from '../inventoryService';
+import { customerService } from '../customerService';
 import { productionService } from '../productionService';
 
 const today = new Date().toISOString().split('T')[0];
@@ -135,5 +136,44 @@ describe('production', () => {
       date: today,
     });
     await expect(productionService.reverseBatch(batch.id)).rejects.toThrow();
+  });
+});
+
+describe('editing master data', () => {
+  it('updates a customer without touching the money balances', async () => {
+    const before = { ...customer() };
+    await customerService.updateCustomer('cust-1', {
+      name: 'Renamed Traders',
+      phone: '99999',
+      address: 'New address',
+    });
+    expect(customer().name).toBe('Renamed Traders');
+    expect(customer().outstandingBalance).toBe(before.outstandingBalance);
+    expect(customer().totalPurchases).toBe(before.totalPurchases);
+  });
+
+  it('keeps issued invoices as they were when a customer is renamed', async () => {
+    const invoiceName = getDB().invoices[0].customerName;
+    await customerService.updateCustomer('cust-1', { name: 'Renamed', phone: '1', address: 'x' });
+    expect(getDB().invoices[0].customerName).toBe(invoiceName);
+  });
+
+  it('updates a supplier and a product price', async () => {
+    const supplier = getDB().suppliers[0];
+    await inventoryService.updateSupplier(supplier.id, { name: 'New Vendor', phone: '123' });
+    expect(getDB().suppliers[0].name).toBe('New Vendor');
+
+    await inventoryService.updateProduct('prod-1', {
+      name: 'Renamed Product',
+      sellingPricePerUnit: 650,
+    });
+    expect(product().name).toBe('Renamed Product');
+    expect(product().sellingPricePerUnit).toBe(650);
+  });
+
+  it('rejects edits to records that do not exist', async () => {
+    await expect(
+      inventoryService.updateProduct('nope', { name: 'x', sellingPricePerUnit: 1 }),
+    ).rejects.toThrow(/not found/);
   });
 });

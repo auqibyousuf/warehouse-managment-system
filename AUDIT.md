@@ -53,3 +53,20 @@ Status: items marked **Fixed** are in this change; the rest are recommendations.
 - Routing: **done**. Expo Router owns navigation (`src/app`: `(tabs)` group, root layout with providers). All 14 sheets are now routes at `/sheets/<name>?<params>` through one registry (`src/app/sheets/[sheet].tsx`), opened with `openSheet()` and closed with `closeSheet()` from `src/navigation/sheets.ts`. The store no longer holds modal state or selected ids, and chained flows (invoice, then payment) replace the sheet instead of stacking. Open: sheets have no slide-out animation on close, and the edit-material and nested create-material/supplier sheets still open from local state.
 - Tests: **Fixed**. `npm test` runs 12 tests over document numbering, sales, purchases, adjustments and production. They found a real bug: reversing a batch after its output was sold clamped stock at 0 and left the ledger inflated. Reversal now refuses with a clear message. UI and form tests are still open.
 - Open: split `SalesScreen` (669 lines) into list, filters and invoice table.
+
+## 6. Modern UI refresh and editability (latest)
+
+**Root cause of the clipped cards, rounded headings and highlighted first button:** the shared `Box` wrapped PanelUI's `Surface`, which adds `overflow-hidden` and a 12px radius to every wrapper. It clipped card borders and shadows, rounded text highlights, and cut long text. `Box` is now a plain `View`; `Card` has one radius source. **Fixed globally.**
+
+**Design system (Head of Product Design):**
+- Typography: Manrope (headings, metrics) and Inter (reading text), loaded in the root layout behind the splash screen. Weights map to loaded faces, not `fontWeight`.
+- Softer radii (cards 20, sheets 28, inputs 12-14, pills full), softer shadows, pill chips and badges, filled-icon tab bar with a pill indicator, circular icon chips on stat cards.
+- Headers wrap instead of overflowing; chip rows wrap; verified with no horizontal overflow on all five tabs at 390px width.
+
+**Editability (Product Manager, no hardcoded business data):**
+- The dashboard business name is tappable and opens the profile editor. The seed identity is generic ("My Business", blank address and bank details). PDF and screen fallbacks no longer name a company or city.
+- New edit flows: customer, supplier, finished product (name, price, description). Issued invoices and bills keep the names they were issued with.
+- Cattle-feed wording removed from user-facing copy.
+- Still baked in and worth making settings: the currency symbol (the setting exists, but screens show the rupee sign), default units, and low-stock thresholds.
+
+**Login and accounts: Won't Have (now).** Personal single-user use. Required before a public launch, together with a backend and owner/staff roles.

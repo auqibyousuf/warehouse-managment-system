@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
   },
   sheetContainer: {
     backgroundColor: theme.colors.background.surface,
-    borderTopLeftRadius: theme.radii.xl,
-    borderTopRightRadius: theme.radii.xl,
+    borderTopLeftRadius: theme.radii.xxl,
+    borderTopRightRadius: theme.radii.xxl,
     maxHeight: '90%',
     ...theme.shadows.modal,
   },

@@ -36,7 +36,7 @@ export const salesService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.invoices].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -46,7 +46,7 @@ export const salesService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.payments].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -70,7 +70,7 @@ export const salesService = {
 
       if (available < qty) {
         throw new Error(
-          `Insufficient stock. Available: ${available} ${unit}, Requested: ${qty} ${unit}.`
+          `Insufficient stock. Available: ${available} ${unit}, Requested: ${qty} ${unit}.`,
         );
       }
 
@@ -102,7 +102,10 @@ export const salesService = {
       customer.outstandingBalance += balanceDue;
 
       const invoiceId = generateId('inv');
-      const invoiceNumber = nextDocumentNumber('INV', db.invoices.map((i) => i.invoiceNumber));
+      const invoiceNumber = nextDocumentNumber(
+        'INV',
+        db.invoices.map((i) => i.invoiceNumber),
+      );
 
       const newInvoice: SaleInvoice = {
         id: invoiceId,
@@ -147,7 +150,10 @@ export const salesService = {
       if (amountPaid > 0) {
         db.payments.unshift({
           id: generateId('pay'),
-          paymentNumber: nextDocumentNumber('REC', db.payments.map((p) => p.paymentNumber)),
+          paymentNumber: nextDocumentNumber(
+            'REC',
+            db.payments.map((p) => p.paymentNumber),
+          ),
           date: input.date,
           customerId: customer.id,
           customerName: customer.name,
@@ -185,7 +191,10 @@ export const salesService = {
       customer.outstandingBalance = Math.max(0, customer.outstandingBalance - input.amount);
 
       const paymentId = generateId('pay');
-      const paymentNumber = nextDocumentNumber('REC', db.payments.map((p) => p.paymentNumber));
+      const paymentNumber = nextDocumentNumber(
+        'REC',
+        db.payments.map((p) => p.paymentNumber),
+      );
 
       const newPayment: CustomerPayment = {
         id: paymentId,

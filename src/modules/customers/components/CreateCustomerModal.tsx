@@ -73,7 +73,7 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       visible={visible}
       onClose={onClose}
       title="Add New Customer"
-      subtitle="Register a dairy farm, cooperative, or dealer"
+      subtitle="Register a buyer, dealer, or distributor"
       primaryAction={{
         label: 'Save Customer Record',
         onPress: handleSubmit(onSubmit),
@@ -90,8 +90,8 @@ export const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
           name="name"
           render={({ field: { onChange, value } }) => (
             <TextInput
-              label="Customer / Dairy Farm Name"
-              placeholder="e.g. Kisan Dairy Cooperative"
+              label="Customer Name"
+              placeholder="e.g. Sharma Traders"
               value={value}
               onChangeText={onChange}
               error={errors.name?.message}

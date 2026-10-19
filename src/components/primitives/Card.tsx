@@ -74,7 +74,7 @@ export const CardComponent: React.FC<CardProps> = ({
   };
 
   const baseCardStyle: ViewStyle = {
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.xl,
     padding: getPadding(),
     overflow: 'hidden',
     ...getVariantStyles(),
@@ -87,7 +87,7 @@ export const CardComponent: React.FC<CardProps> = ({
   if (onPress || variant === 'interactive') {
     return (
       <AnimatedPressable
-        className={`rounded-lg overflow-hidden ${className || ''}`}
+        className={className}
         accessibilityRole="button"
         pressScale={0.98}
         pressOpacity={0.92}
@@ -104,7 +104,7 @@ export const CardComponent: React.FC<CardProps> = ({
 
   return (
     <PanelCard
-      className={`rounded-lg overflow-hidden ${className || ''}`}
+      className={className}
       style={combinedStyle}
     >
       {children}

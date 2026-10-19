@@ -82,7 +82,7 @@ export const Badge: React.FC<BadgeProps> = ({
     <PanelBadge
       variant={panelVariantMap[variant]}
       size={isSm ? 'sm' : 'md'}
-      className={`rounded ${className || ''}`}
+      className={className}
       style={[
         styles.badge,
         {
@@ -90,7 +90,7 @@ export const Badge: React.FC<BadgeProps> = ({
           borderColor: variantStyles.border,
           height: isSm ? theme.spacing.layout.badgeHeightSm : theme.spacing.layout.badgeHeightMd,
           paddingHorizontal: isSm ? theme.spacing.xs : theme.spacing.sm,
-          borderRadius: theme.radii.xs,
+          borderRadius: theme.radii.full,
         },
         style,
       ]}

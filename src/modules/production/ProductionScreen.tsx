@@ -87,7 +87,7 @@ export const ProductionScreen: React.FC = () => {
     <>
       {/* Module Header */}
       <Box>
-        <Row justify="space-between" align="center">
+        <Row justify="space-between" align="center" wrap gap="sm">
           <Box>
             <Typography variant="caption" color="muted">
               MANUFACTURING & RUNS

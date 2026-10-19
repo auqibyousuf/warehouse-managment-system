@@ -101,7 +101,7 @@ export const BusinessScreen: React.FC = () => {
                 {' '}
                 <Row justify="space-between" align="center">
                   <Typography variant="bodySmall" color="secondary">
-                    Dairy farms, cooperatives, and commercial livestock buyers.
+                    Everyone you sell to, with what they owe you.
                   </Typography>
                   <Button
                     label="+ Add Customer"
@@ -122,7 +122,7 @@ export const BusinessScreen: React.FC = () => {
             ) : customers.length === 0 ? (
               <EmptyState
                 title="No Customers Yet"
-                description="Register buyers and dairy farms to track receivables."
+                description="Register your buyers to track what they owe you."
                 actionLabel="+ Add Customer"
                 onAction={() => openSheet('create_customer')}
               />
@@ -310,7 +310,7 @@ export const BusinessScreen: React.FC = () => {
                     Business Name:
                   </Typography>
                   <Typography variant="bodySmall" weight="semibold" color="primary">
-                    {settings?.factoryName || 'Nexus Manufacturing Works'}
+                    {settings?.factoryName?.trim() || 'Not set'}
                   </Typography>
                 </Row>
                 {settings?.tagline && (

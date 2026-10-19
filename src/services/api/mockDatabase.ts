@@ -36,17 +36,16 @@ export interface DatabaseState {
 
 export const initialDatabase: DatabaseState = {
   settings: {
-    factoryName: 'Nexus Manufacturing Works',
-    tagline: 'Premium Nutritional Feeds & Formulations',
-    address: 'Plot 42, Industrial Area, Phase II, Pune, Maharashtra - 411013',
-    gstin: '27AABCB1234F1Z5',
-    phone: '+91 98220 54321',
-    email: 'accounts@nexusmfg.in',
-    bankName: 'HDFC Bank Ltd',
-    accountNumber: '50200012345678',
-    ifscCode: 'HDFC0001234',
-    termsAndConditions:
-      '1. Goods once sold will not be accepted back.\n2. Interest @ 18% p.a. charged after due date.\n3. Subject to Pune jurisdiction.',
+    factoryName: 'My Business',
+    tagline: '',
+    address: '',
+    gstin: '',
+    phone: '',
+    email: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    termsAndConditions: '',
     currencySymbol: '₹',
     defaultUnitName: 'bags',
     defaultUnitSize: 20,

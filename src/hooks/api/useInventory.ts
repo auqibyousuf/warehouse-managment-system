@@ -113,7 +113,6 @@ export const useDeleteIngredient = () => {
   });
 };
 
-
 export const useSuppliers = () => {
   return useQuery({
     queryKey: ['inventory', 'suppliers'],
@@ -121,18 +120,46 @@ export const useSuppliers = () => {
   });
 };
 
-export const useCreateSupplier = () => {
+export const useUpdateSupplier = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: {
-      name: string;
-      phone: string;
-      address?: string;
-      gstNumber?: string;
-    }) => inventoryService.createSupplier(input),
+    mutationFn: ({
+      id,
+      input,
+    }: {
+      id: string;
+      input: { name: string; phone: string; address?: string; gstNumber?: string };
+    }) => inventoryService.updateSupplier(id, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory', 'suppliers'] });
     },
   });
 };
 
+export const useUpdateProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      input,
+    }: {
+      id: string;
+      input: { name: string; sellingPricePerUnit: number; description?: string };
+    }) => inventoryService.updateProduct(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+
+export const useCreateSupplier = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; phone: string; address?: string; gstNumber?: string }) =>
+      inventoryService.createSupplier(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['inventory', 'suppliers'] });
+    },
+  });
+};

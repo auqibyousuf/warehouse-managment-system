@@ -2,7 +2,7 @@ import React from 'react';
 import { TextProps as RNTextProps, TextStyle } from 'react-native';
 import { Text as PanelText } from 'panelui-native';
 import { theme } from '../../theme';
-import { textVariants } from '../../theme/tokens/typography';
+import { textVariants, displayVariants, FontWeightKey } from '../../theme/tokens/typography';
 
 export type TypographyVariant = keyof typeof textVariants;
 
@@ -61,12 +61,20 @@ export const Typography: React.FC<TypographyProps> = ({
 }) => {
   const variantStyle = theme.typography.variants[variant] || theme.typography.variants.body;
   const textColor = colorMap[color] || theme.colors.text.primary;
-  const fontWeight = weight ? theme.typography.fontWeights[weight] : variantStyle.fontWeight;
+  const weightValue = weight ? theme.typography.fontWeights[weight] : variantStyle.fontWeight;
+  const weightKey = (Object.keys(theme.typography.fontWeights) as FontWeightKey[]).find(
+    (key) => theme.typography.fontWeights[key] === weightValue
+  ) ?? 'regular';
+  const face = displayVariants.has(variant)
+    ? theme.typography.fontFamilies.display
+    : theme.typography.fontFamilies.body;
 
   const computedStyle: TextStyle = {
     ...variantStyle,
     color: textColor,
-    ...(fontWeight ? { fontWeight } : {}),
+    // The face carries the weight; a separate fontWeight would fake-bold it on web.
+    fontFamily: face[weightKey],
+    fontWeight: 'normal',
     ...(align ? { textAlign: align } : {}),
     ...(transform ? { textTransform: transform } : {}),
     ...(tabular ? { fontVariant: ['tabular-nums'] } : {}),
