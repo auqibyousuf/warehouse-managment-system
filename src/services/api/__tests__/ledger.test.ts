@@ -140,6 +140,27 @@ describe('production', () => {
   });
 });
 
+describe('deleting a recipe', () => {
+  it('removes an unused recipe and archives one with batch history', async () => {
+    const created = await productionService.createSetup({
+      name: 'Temp mix',
+      productName: 'Temp product',
+      recipeItems: [{ ingredientId: 'ing-1', targetQuantity: 5 }],
+    });
+    expect(await productionService.deleteSetup(created.id)).toBe('deleted');
+    expect((await productionService.getSetups()).some((s) => s.id === created.id)).toBe(false);
+
+    await productionService.createBatch({
+      setupId: 'setup-1',
+      date: '2026-01-01',
+      unitsPacked: 1,
+      actualFinishedQuantity: 20,
+      actualItems: [{ ingredientId: 'ing-1', actualQuantity: 1 }],
+    });
+    expect(await productionService.deleteSetup('setup-1')).toBe('archived');
+  });
+});
+
 describe('payment terms', () => {
   it('sets a due date only for credit invoices', async () => {
     const base = {

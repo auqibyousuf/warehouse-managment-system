@@ -96,10 +96,10 @@ export const productionService = {
           outputUnit,
           unitSize,
           baseUnit,
-          sellingPricePerUnit: 500,
+          sellingPricePerUnit: 0,
           currentStockUnits: 0,
           bagWeightKg: unitSize,
-          sellingPricePerBag: 500,
+          sellingPricePerBag: 0,
           currentStockBags: 0,
           description: `Custom manufactured product: ${prodName}`,
           isActive: true,
@@ -121,15 +121,15 @@ export const productionService = {
         if (!ing) {
           const ingId = generateId('ing');
           const ingUnit = item.unit || 'kg';
-          const ingCost = item.unitCost && item.unitCost > 0 ? item.unitCost : 20;
+          const ingCost = item.unitCost && item.unitCost > 0 ? item.unitCost : 0;
           ing = {
             id: ingId,
             name: ingName,
             category: 'raw_material',
             unit: ingUnit,
             unitCost: ingCost,
-            currentStock: 1000,
-            minThreshold: 100,
+            currentStock: 0,
+            minThreshold: 0,
             isActive: true,
           };
           db.ingredients.push(ing);
@@ -232,6 +232,21 @@ export const productionService = {
 
       db.setups[index] = updatedSetup;
       return updatedSetup;
+    });
+  },
+
+  // Delete a recipe nobody has used; one with batch history is archived so past runs stay intact.
+  deleteSetup: async (setupId: string): Promise<'deleted' | 'archived'> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const index = db.setups.findIndex((s) => s.id === setupId);
+      if (index === -1) throw new Error('Setup not found');
+      if (db.batches.some((b) => b.setupId === setupId)) {
+        db.setups[index].status = 'archived';
+        return 'archived';
+      }
+      db.setups.splice(index, 1);
+      return 'deleted';
     });
   },
 

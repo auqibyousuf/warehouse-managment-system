@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { useMoney } from '../../hooks/useMoney';
-import { useProductionSetups, useSetSetupStatus } from '../../hooks/api/useProduction';
+import {
+  useDeleteProductionSetup,
+  useProductionSetups,
+  useSetSetupStatus,
+} from '../../hooks/api/useProduction';
 import { useIngredients } from '../../hooks/api/useInventory';
 import { useAppStore } from '../../stores/useAppStore';
 import { useColors } from '../../theme';
@@ -34,6 +38,8 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
   const setStatus = useSetSetupStatus();
+  const remove = useDeleteProductionSetup();
+  const [confirming, setConfirming] = useState(false);
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const setup = setups.find((s) => s.id === setupId);
@@ -66,6 +72,23 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
       });
     } catch (err: any) {
       setBannerAlert({ title: 'Could not update', message: err.message, variant: 'danger' });
+    }
+  };
+
+  const doDelete = async () => {
+    try {
+      const result = await remove.mutateAsync(setup.id);
+      setBannerAlert({
+        title: result === 'deleted' ? 'Recipe deleted' : 'Recipe archived',
+        message:
+          result === 'deleted'
+            ? `${setup.name} was removed.`
+            : `${setup.name} has past batches, so it was archived instead of deleted.`,
+        variant: 'info',
+      });
+      onClose();
+    } catch (err: any) {
+      setBannerAlert({ title: 'Could not delete', message: err.message, variant: 'danger' });
     }
   };
 
@@ -150,6 +173,39 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             Instructions: {setup.notes}
           </Typography>
         ) : null}
+
+        <Row gap="sm">
+          <Button
+            label="Edit recipe"
+            variant="subtle"
+            size="sm"
+            leftIcon="create-outline"
+            onPress={() => {
+              onClose();
+              openSheet('edit_setup', { setupId: setup.id });
+            }}
+          />
+          {confirming ? (
+            <>
+              <Button
+                label="Yes, delete"
+                variant="danger"
+                size="sm"
+                loading={remove.isPending}
+                onPress={doDelete}
+              />
+              <Button label="Keep" variant="ghost" size="sm" onPress={() => setConfirming(false)} />
+            </>
+          ) : (
+            <Button
+              label="Delete"
+              variant="ghost"
+              size="sm"
+              leftIcon="trash-outline"
+              onPress={() => setConfirming(true)}
+            />
+          )}
+        </Row>
 
         {active && (
           <Button

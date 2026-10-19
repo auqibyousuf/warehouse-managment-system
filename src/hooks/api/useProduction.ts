@@ -76,3 +76,13 @@ export const useReverseProductionBatch = () => {
     },
   });
 };
+
+export const useDeleteProductionSetup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => productionService.deleteSetup(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['production', 'setups'] });
+    },
+  });
+};

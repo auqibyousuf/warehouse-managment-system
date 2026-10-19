@@ -145,46 +145,52 @@ export const StockScreen: React.FC = () => {
           const isFinished = item.type === 'finished_feed';
           const low = item.isLowStock;
           return (
-            <Card
-              variant="elevated"
-              padding="compact"
-              onPress={() => openSheet('stock_detail', { itemId: item.id })}
-            >
+            <Card variant="elevated" padding="compact">
               <Stack gap="sm">
-                <Row justify="space-between" align="flex-start" gap="sm">
-                  <Box flex={1}>
-                    <Typography variant="title" color="primary" numberOfLines={2}>
-                      {item.name}
-                    </Typography>
-                    <Typography variant="bodySmall" color="muted">
-                      {isFinished
-                        ? 'Finished goods'
-                        : item.type === 'packaging'
-                          ? 'Packaging'
-                          : 'Raw material'}
-                    </Typography>
-                  </Box>
-                  {low ? (
-                    <Badge
-                      label={`Min: ${item.minThreshold} ${item.unit}`}
-                      variant="warning"
-                      icon="warning-outline"
-                      size="sm"
-                      soft
-                    />
-                  ) : (
-                    <Badge
-                      label={isFinished ? 'Ready to ship' : 'In stock'}
-                      variant="success"
-                      icon="checkmark-circle-outline"
-                      size="sm"
-                      soft
-                    />
-                  )}
-                </Row>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.name} details`}
+                  onPress={() => openSheet('stock_detail', { itemId: item.id })}
+                >
+                  <Row justify="space-between" align="flex-start" gap="sm">
+                    <Box flex={1}>
+                      <Typography variant="title" color="primary" numberOfLines={2}>
+                        {item.name}
+                      </Typography>
+                      <Typography variant="bodySmall" color="muted">
+                        {isFinished
+                          ? 'Finished goods'
+                          : item.type === 'packaging'
+                            ? 'Packaging'
+                            : 'Raw material'}
+                      </Typography>
+                    </Box>
+                    {low ? (
+                      <Badge
+                        label={`Min: ${item.minThreshold} ${item.unit}`}
+                        variant="warning"
+                        icon="warning-outline"
+                        size="sm"
+                        soft
+                      />
+                    ) : (
+                      <Badge
+                        label={isFinished ? 'Ready to ship' : 'In stock'}
+                        variant="success"
+                        icon="checkmark-circle-outline"
+                        size="sm"
+                        soft
+                      />
+                    )}
+                  </Row>
+                </Pressable>
 
                 <Row justify="space-between" align="flex-end" gap="sm">
-                  <Box>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.name} quantity details`}
+                    onPress={() => openSheet('stock_detail', { itemId: item.id })}
+                  >
                     <Typography variant="label" color={low ? 'warning' : 'muted'}>
                       {low
                         ? 'Low stock level'
@@ -204,7 +210,7 @@ export const StockScreen: React.FC = () => {
                         {item.unit}
                       </Typography>
                     </Row>
-                  </Box>
+                  </Pressable>
 
                   <Row gap="xs">
                     {isFinished ? (

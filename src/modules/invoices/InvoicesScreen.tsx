@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Linking, Share } from 'react-native';
+import { Linking, Pressable, Share } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
 import { theme, useColors } from '../../theme';
 import { useMoney } from '../../hooks/useMoney';
@@ -268,58 +268,60 @@ export const InvoicesScreen: React.FC = () => {
       renderItem={({ item: invoice }) => {
         const unpaid = invoice.paymentStatus !== 'cancelled' && invoice.balanceDue > 0;
         return (
-          <Card
-            variant="elevated"
-            padding="none"
-            onPress={() => openSheet('invoice_detail', { invoiceId: invoice.id })}
-          >
-            <Row
-              justify="space-between"
-              align="flex-start"
-              gap="sm"
-              style={{ padding: theme.spacing.base, paddingBottom: theme.spacing.xs }}
+          <Card variant="elevated" padding="none">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Invoice ${invoice.invoiceNumber} details`}
+              onPress={() => openSheet('invoice_detail', { invoiceId: invoice.id })}
             >
-              <Box flex={1}>
-                <Typography variant="title" color="primary" numberOfLines={1}>
-                  {invoice.customerName}
-                </Typography>
-                <Row gap="xs" align="center" style={{ marginTop: 2 }}>
-                  <Typography variant="dataMedium" color="secondary">
-                    {invoice.invoiceNumber.replace(/^[A-Z]+-\d{4}-/, '#')}
+              <Row
+                justify="space-between"
+                align="flex-start"
+                gap="sm"
+                style={{ padding: theme.spacing.base, paddingBottom: theme.spacing.xs }}
+              >
+                <Box flex={1}>
+                  <Typography variant="title" color="primary" numberOfLines={1}>
+                    {invoice.customerName}
                   </Typography>
-                  <Typography variant="bodySmall" color="secondary">
-                    • {invoice.date}
+                  <Row gap="xs" align="center" style={{ marginTop: 2 }}>
+                    <Typography variant="dataMedium" color="secondary">
+                      {invoice.invoiceNumber.replace(/^[A-Z]+-\d{4}-/, '#')}
+                    </Typography>
+                    <Typography variant="bodySmall" color="secondary">
+                      • {invoice.date}
+                    </Typography>
+                  </Row>
+                </Box>
+                {statusBadge(invoice)}
+              </Row>
+
+              <Stack
+                gap="xs"
+                style={{ paddingHorizontal: theme.spacing.base, paddingVertical: theme.spacing.xs }}
+              >
+                <Row gap="xs" align="center">
+                  <Icon name="cube-outline" size={18} color="secondary" />
+                  <Typography
+                    variant="bodyMedium"
+                    color="primary"
+                    numberOfLines={1}
+                    style={{ flex: 1 }}
+                  >
+                    {invoice.quantity || invoice.bagQuantity} {invoice.outputUnit || 'units'}{' '}
+                    {invoice.productName}
                   </Typography>
                 </Row>
-              </Box>
-              {statusBadge(invoice)}
-            </Row>
-
-            <Stack
-              gap="xs"
-              style={{ paddingHorizontal: theme.spacing.base, paddingVertical: theme.spacing.xs }}
-            >
-              <Row gap="xs" align="center">
-                <Icon name="cube-outline" size={18} color="secondary" />
-                <Typography
-                  variant="bodyMedium"
-                  color="primary"
-                  numberOfLines={1}
-                  style={{ flex: 1 }}
-                >
-                  {invoice.quantity || invoice.bagQuantity} {invoice.outputUnit || 'units'}{' '}
-                  {invoice.productName}
-                </Typography>
-              </Row>
-              <Row justify="space-between" align="center">
-                <Typography variant="bodySmall" color="secondary">
-                  Total bill
-                </Typography>
-                <Typography variant="dataLarge" color={unpaid ? 'warning' : 'primary'} tabular>
-                  {money(invoice.totalAmount)}
-                </Typography>
-              </Row>
-            </Stack>
+                <Row justify="space-between" align="center">
+                  <Typography variant="bodySmall" color="secondary">
+                    Total bill
+                  </Typography>
+                  <Typography variant="dataLarge" color={unpaid ? 'warning' : 'primary'} tabular>
+                    {money(invoice.totalAmount)}
+                  </Typography>
+                </Row>
+              </Stack>
+            </Pressable>
 
             <Row
               gap="sm"

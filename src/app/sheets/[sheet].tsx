@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { closeSheet, SheetName, SheetParams } from '../../navigation/sheets';
 import { StartBatchPage } from '../../modules/production/components/StartBatchPage';
-import { CreateSetupModal } from '../../modules/production/components/CreateSetupModal';
+import { RecipePage } from '../../modules/production/components/RecipePage';
 import { AddStockPage } from '../../modules/inventory/components/AddStockPage';
 import { CountStockPage } from '../../modules/inventory/components/CountStockPage';
 import { CreateIngredientModal } from '../../modules/inventory/components/CreateIngredientModal';
@@ -29,7 +29,8 @@ const onClose = closeSheet;
 
 const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   start_batch: (p) => <StartBatchPage onClose={onClose} preselectedSetupId={p.setupId ?? null} />,
-  create_setup: () => <CreateSetupModal visible onClose={onClose} />,
+  create_setup: () => <RecipePage onClose={onClose} />,
+  edit_setup: (p) => <RecipePage onClose={onClose} setupId={p.setupId ?? null} />,
   record_purchase: (p) => <AddStockPage onClose={onClose} preselectedItemId={p.itemId ?? null} />,
   use_stock: (p) => (
     <UseStockPage
