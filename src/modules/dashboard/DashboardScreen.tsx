@@ -1,6 +1,13 @@
-import React from 'react';
-import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import { openSheet } from '../../navigation/sheets';
+import { goToTab, openManage } from '../../navigation/routes';
+import { theme, useColors } from '../../theme';
+import { useMoney } from '../../hooks/useMoney';
+import { useDashboardMetrics } from '../../hooks/api/useDashboard';
 import { useProductionBatches } from '../../hooks/api/useProduction';
+import { useInventoryItems } from '../../hooks/api/useInventory';
+import { useCustomers } from '../../hooks/api/useCustomers';
 import { useSalesInvoices } from '../../hooks/api/useSales';
 import { useAppStore, FilterPeriod } from '../../stores/useAppStore';
 import {
@@ -9,15 +16,14 @@ import {
   Stack,
   Row,
   Typography,
-  StatCard,
   Card,
   Button,
   Badge,
-  ListItem,
-  Divider,
-  FeedbackBanner,
   LoadingState,
   ChipPicker,
+  ProgressBar,
+  Icon,
+  IconTile,
 } from '../../components';
 
 const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
@@ -27,299 +33,406 @@ const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
   { value: 'all_time', label: 'All Time' },
 ];
 
+interface StatTileProps {
+  label: string;
+  value: string;
+  caption: string;
+  icon: React.ComponentProps<typeof IconTile>['icon'];
+  tone: React.ComponentProps<typeof IconTile>['tone'];
+  valueColor?: 'primary' | 'warning';
+  onPress: () => void;
+}
+
+/** Equal-height overview tile: label and icon on top, value and caption at the bottom. */
+const StatTile: React.FC<StatTileProps> = ({
+  label,
+  value,
+  caption,
+  icon,
+  tone,
+  valueColor = 'primary',
+  onPress,
+}) => (
+  <Card variant="elevated" padding="compact" style={styles.smallCard} onPress={onPress}>
+    <Row justify="space-between" align="center" gap="xs">
+      <Typography variant="bodySmall" color="secondary" numberOfLines={1} style={{ flex: 1 }}>
+        {label}
+      </Typography>
+      <IconTile icon={icon} tone={tone} size={28} />
+    </Row>
+    <Box>
+      <Typography variant="dataLarge" color={valueColor} tabular numberOfLines={1}>
+        {value}
+      </Typography>
+      <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+        {caption}
+      </Typography>
+    </Box>
+  </Card>
+);
+
+const greeting = (hour: number) =>
+  hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+/** Home: what needs attention today, one tap to start a batch, how the business is doing. */
 export const DashboardScreen: React.FC = () => {
-  const { selectedPeriod, setSelectedPeriod, openModal, setActiveTab } = useAppStore();
+  const colors = useColors();
+  const money = useMoney();
+  const { selectedPeriod, setSelectedPeriod } = useAppStore();
   const { data: metrics, isLoading, refetch, isRefetching } = useDashboardMetrics(selectedPeriod);
-  const { data: settings } = useFactorySettings();
   const { data: batches = [] } = useProductionBatches();
+  const { data: stock = [] } = useInventoryItems();
+  const { data: customers = [] } = useCustomers();
   const { data: invoices = [] } = useSalesInvoices();
+  const [dismissed, setDismissed] = useState<string | null>(null);
+
+  const now = new Date();
+  const dateLine = now.toLocaleDateString('en', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
+
+  const lowStock = useMemo(() => stock.filter((item) => item.isLowStock), [stock]);
+  const alertItem = lowStock.find((item) => item.id !== dismissed) ?? null;
+  const recentBatches = batches.slice(0, 4);
+  const owing = useMemo(
+    () =>
+      customers
+        .filter((c) => c.outstandingBalance > 0)
+        .sort((a, b) => b.outstandingBalance - a.outstandingBalance),
+    [customers],
+  );
+  const today = now.toISOString().split('T')[0];
+  const overdue = useMemo(
+    () => invoices.filter((i) => i.balanceDue > 0 && i.dueDate && i.dueDate < today),
+    [invoices, today],
+  );
 
   if (isLoading && !metrics) {
     return (
       <ScreenContainer>
-        <LoadingState message="Loading factory operations dashboard..." />
+        <LoadingState message="Loading..." />
       </ScreenContainer>
     );
   }
 
-  const recentBatches = batches.slice(0, 3);
-  const recentInvoices = invoices.slice(0, 3);
+  const unitName = metrics?.production.defaultUnitName || 'units';
+  const revenue = metrics?.sales.salesRevenue ?? 0;
+  const collected = metrics?.sales.cashCollected ?? 0;
+  const settledShare = revenue > 0 ? Math.min(1, collected / revenue) : 0;
+  const finance = metrics?.financial;
 
   return (
     <ScreenContainer refreshing={isRefetching} onRefresh={refetch}>
-      <Stack gap="lg">
-        {/* Factory Header Banner */}
+      <Stack gap="xl">
         <Box>
-          <Row justify="space-between" align="center">
-            <Box>
-              <Typography variant="caption" color="muted">
-                OPERATIONAL DASHBOARD
-              </Typography>
-              <Typography variant="h1" weight="bold" color="brandDeep">
-                {settings?.factoryName || 'BatchIQ Factory'}
-              </Typography>
-            </Box>
-            <Badge label="Active" variant="success" dot />
-          </Row>
+          <Typography variant="h2" color="primary">
+            {greeting(now.getHours())}
+          </Typography>
+          <Typography variant="bodyMedium" color="secondary">
+            Today, {dateLine}
+          </Typography>
         </Box>
 
-        {/* Date Filter Chips */}
         <ChipPicker
           options={PERIOD_OPTIONS}
           selected={selectedPeriod}
-          onSelect={(period) => setSelectedPeriod(period)}
+          onSelect={(value) => setSelectedPeriod(value as FilterPeriod)}
         />
 
-        {/* Low Stock Warning Alert if any item below threshold */}
-        {metrics && metrics.inventory.lowStockCount > 0 && (
-          <FeedbackBanner
-            variant="warning"
-            title="Low Inventory Warning"
-            message={`${metrics.inventory.lowStockCount} raw material or feed items are currently below minimum safety stock levels.`}
-            onPress={() => setActiveTab('inventory')}
-          />
-        )}
-
-        {/* Quick Operational Actions Bar */}
-        <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 8 }}>
-            QUICK ACTIONS
-          </Typography>
-          <Row gap="xs" wrap>
-            <Button
-              label="+ Run Batch"
-              variant="primary"
-              size="sm"
-              leftIcon="construct-outline"
-              onPress={() => openModal('start_batch')}
-            />
-            <Button
-              label="+ Record Sale"
-              variant="secondary"
-              size="sm"
-              leftIcon="receipt-outline"
-              onPress={() => openModal('create_sale')}
-            />
-            <Button
-              label="+ Purchase"
-              variant="subtle"
-              size="sm"
-              leftIcon="cart-outline"
-              onPress={() => openModal('record_purchase')}
-            />
-            <Button
-              label="+ Payment"
-              variant="subtle"
-              size="sm"
-              leftIcon="cash-outline"
-              onPress={() => openModal('record_payment')}
-            />
-          </Row>
-        </Box>
-
-        {/* Primary Operational KPIs Grid */}
+        {/* Overview: four equal tiles, each opens the place it summarises */}
         <Stack gap="sm">
-          <Typography variant="label" color="secondary">
-            PRODUCTION & SALES ({selectedPeriod.replace('_', ' ').toUpperCase()})
+          <Typography variant="title" color="primary">
+            Overview
           </Typography>
-          <Row gap="sm">
-            <Box flex={1}>
-              <StatCard
-                label="Units Produced"
-                value={`${metrics?.production.totalUnitsProduced || metrics?.production.totalBagsProduced || 0} ${metrics?.production.defaultUnitName || 'Units'}`}
-                subtitle={`${metrics?.production.totalBaseQuantity || metrics?.production.totalWeightKg || 0} ${metrics?.production.baseUnit || 'kg'} output`}
-                icon="cube-outline"
-                variant="forest"
-                onPress={() => setActiveTab('production')}
-              />
-            </Box>
-            <Box flex={1}>
-              <StatCard
-                label="Units Sold"
-                value={`${metrics?.sales.totalUnitsSold || metrics?.sales.totalBagsSold || 0} ${metrics?.sales.defaultUnitName || 'Units'}`}
-                subtitle="Dispatched to buyers"
-                icon="cart-outline"
-                variant="default"
-                onPress={() => setActiveTab('sales')}
-              />
-            </Box>
+          <Row gap="sm" align="stretch">
+            <StatTile
+              label={`${unitName.charAt(0).toUpperCase() + unitName.slice(1)} produced`}
+              icon="cube"
+              tone="success"
+              value={(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')}
+              caption={`${(metrics?.production.totalBaseQuantity ?? 0).toLocaleString('en-IN')} ${metrics?.production.baseUnit || 'kg'}`}
+              onPress={() => openManage('/recipes')}
+            />
+            <StatTile
+              label="Batches done"
+              icon="checkmark-circle"
+              tone="success"
+              value={String(metrics?.production.totalBatches ?? 0)}
+              caption="Confirmed"
+              onPress={() => openManage('/recipes')}
+            />
           </Row>
-
-          <Row gap="sm">
-            <Box flex={1}>
-              <StatCard
-                label="Sales Revenue"
-                value={`₹${(metrics?.sales.salesRevenue || 0).toLocaleString('en-IN')}`}
-                subtitle="Invoiced value"
-                icon="trending-up-outline"
-                variant="default"
-              />
-            </Box>
-            <Box flex={1}>
-              <StatCard
-                label="Cash Collected"
-                value={`₹${(metrics?.sales.cashCollected || 0).toLocaleString('en-IN')}`}
-                subtitle="Payments received"
-                icon="wallet-outline"
-                variant="success"
-              />
-            </Box>
+          <Row gap="sm" align="stretch">
+            <StatTile
+              label="Stock alerts"
+              icon={lowStock.length > 0 ? 'warning' : 'shield-checkmark'}
+              tone={lowStock.length > 0 ? 'warning' : 'success'}
+              value={String(lowStock.length)}
+              valueColor={lowStock.length > 0 ? 'warning' : 'primary'}
+              caption={lowStock.length > 0 ? lowStock[0].name : 'All healthy'}
+              onPress={() => goToTab('stock')}
+            />
+            <StatTile
+              label="Customer dues"
+              icon="wallet"
+              tone={(metrics?.sales.outstandingDues ?? 0) > 0 ? 'warning' : 'success'}
+              value={money(metrics?.sales.outstandingDues ?? 0)}
+              valueColor={(metrics?.sales.outstandingDues ?? 0) > 0 ? 'warning' : 'primary'}
+              caption={`${owing.length} customer${owing.length === 1 ? '' : 's'} owing`}
+              onPress={() => goToTab('invoices')}
+            />
           </Row>
         </Stack>
 
-        {/* Customer Dues & Finished Stock */}
-        <Row gap="sm">
-          <Box flex={1}>
-            <StatCard
-              label="Customer Dues"
-              value={`₹${(metrics?.sales.outstandingDues || 0).toLocaleString('en-IN')}`}
-              subtitle="Receivables pending"
-              icon="alert-circle-outline"
-              variant={metrics && metrics.sales.outstandingDues > 0 ? 'warning' : 'default'}
-              onPress={() => setActiveTab('more')}
+        {/* Primary actions */}
+        <Stack gap="xs">
+          <Button
+            label="+ Start New Batch"
+            variant="primary"
+            size="lg"
+            leftIcon="play-circle-outline"
+            fullWidth
+            onPress={() => openSheet('start_batch')}
+          />
+          <Row gap="sm">
+            <Button
+              label="Add / Use Stock"
+              variant="secondary"
+              leftIcon="archive-outline"
+              style={{ flex: 1 }}
+              onPress={() => goToTab('stock')}
             />
-          </Box>
-          <Box flex={1}>
-            <StatCard
-              label="Finished Floor Stock"
-              value={`${metrics?.inventory.finishedUnitsCount || metrics?.inventory.finishedFeedBags || 0} ${metrics?.production.defaultUnitName || 'Units'}`}
-              subtitle="Available in warehouse"
-              icon="layers-outline"
-              variant="default"
-              onPress={() => setActiveTab('inventory')}
+            <Button
+              label="New Invoice"
+              variant="secondary"
+              leftIcon="receipt-outline"
+              style={{ flex: 1 }}
+              onPress={() => openSheet('create_sale')}
             />
-          </Box>
-        </Row>
-
-        {/* Authoritative Financial & Estimated Profit Card (PRD Section 3.4 & 5.4) */}
-        <Card variant="accent" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: 8 }}>
-            <Typography variant="label" color="brandDeep">
-              ESTIMATED OPERATING PROFIT
-            </Typography>
-            <Badge label="Authoritative Estimate" variant="forest" size="sm" />
           </Row>
+        </Stack>
 
-          <Typography
-            variant="display"
-            weight="bold"
-            color={(metrics?.financial.estimatedOperatingProfit || 0) >= 0 ? 'brandDeep' : 'error'}
-            style={{ marginBottom: 12 }}
-          >
-            ₹{(metrics?.financial.estimatedOperatingProfit || 0).toLocaleString('en-IN')}
+        {/* Low-stock alert */}
+        {alertItem && (
+          <Card tone="warning" padding="compact">
+            <Row gap="sm" align="flex-start">
+              <IconTile icon="cube" tone="warning" size={32} />
+              <Box flex={1}>
+                <Row justify="space-between" align="center">
+                  <Typography variant="title" color="warning">
+                    Low {alertItem.type === 'raw_material' ? 'raw material' : 'stock'}
+                  </Typography>
+                  <Typography variant="label" color="warning">
+                    Action suggested
+                  </Typography>
+                </Row>
+                <Typography variant="bodySmall" color="secondary" style={{ marginTop: 2 }}>
+                  {alertItem.name} is running low (
+                  <Typography variant="dataMedium" color="primary">
+                    {alertItem.currentStock.toLocaleString('en-IN')} {alertItem.unit} remaining
+                  </Typography>
+                  ).{lowStock.length > 1 ? ` ${lowStock.length - 1} more below minimum.` : ''}
+                </Typography>
+                <Row gap="md" align="center" style={{ marginTop: theme.spacing.xs }}>
+                  <Pressable
+                    onPress={() => openSheet('record_purchase', { itemId: alertItem.id })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reorder ${alertItem.name}`}
+                  >
+                    <Typography variant="bodySmall" weight="semibold" color="warning">
+                      Reorder Now →
+                    </Typography>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setDismissed(alertItem.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Dismiss alert"
+                  >
+                    <Typography variant="bodySmall" color="secondary">
+                      Dismiss
+                    </Typography>
+                  </Pressable>
+                </Row>
+              </Box>
+            </Row>
+          </Card>
+        )}
+
+        {/* Needs attention: only shown when something is actually overdue or owed */}
+        {(overdue.length > 0 || owing.length > 0) && (
+          <Stack gap="sm">
+            <Typography variant="title" color="primary">
+              Needs attention
+            </Typography>
+            {overdue.length > 0 && (
+              <Card tone="danger" padding="compact" onPress={() => goToTab('invoices')}>
+                <Row justify="space-between" align="center">
+                  <Box flex={1}>
+                    <Typography variant="title" color="error">
+                      {overdue.length} overdue invoice{overdue.length === 1 ? '' : 's'}
+                    </Typography>
+                    <Typography variant="bodySmall" color="secondary">
+                      {money(overdue.reduce((sum, i) => sum + i.balanceDue, 0))} past the due date
+                    </Typography>
+                  </Box>
+                  <Icon name="chevron-forward" size={20} color="subtle" />
+                </Row>
+              </Card>
+            )}
+            {owing.slice(0, 3).map((c) => (
+              <Card
+                key={c.id}
+                variant="elevated"
+                padding="compact"
+                onPress={() => openSheet('customer_detail', { customerId: c.id })}
+              >
+                <Row justify="space-between" align="center">
+                  <Box flex={1}>
+                    <Typography variant="title" color="primary" numberOfLines={1}>
+                      {c.name}
+                    </Typography>
+                    <Typography variant="bodySmall" color="secondary">
+                      Owes you
+                    </Typography>
+                  </Box>
+                  <Typography variant="dataLarge" color="warning" tabular>
+                    {money(c.outstandingBalance)}
+                  </Typography>
+                </Row>
+              </Card>
+            ))}
+          </Stack>
+        )}
+
+        {/* Batch runs */}
+        <Stack gap="sm">
+          <Row justify="space-between" align="center">
+            <Row gap="xs" align="center">
+              <Typography variant="title" color="primary">
+                Recent batch runs
+              </Typography>
+              <Badge label={String(batches.length)} variant="neutral" size="sm" />
+            </Row>
+            <Pressable
+              onPress={() => openManage('/recipes')}
+              accessibilityRole="button"
+              accessibilityLabel="View all batches"
+            >
+              <Typography variant="bodySmall" weight="medium" color="brandPrimary">
+                View all
+              </Typography>
+            </Pressable>
+          </Row>
+          {recentBatches.length === 0 ? (
+            <Card variant="flat" padding="compact">
+              <Typography variant="bodySmall" color="secondary">
+                No batches yet. Tap &quot;Start New Batch&quot; to run your first one.
+              </Typography>
+            </Card>
+          ) : (
+            recentBatches.map((batch) => {
+              const reversed = batch.status === 'reversed';
+              return (
+                <Card
+                  key={batch.id}
+                  variant="elevated"
+                  padding="compact"
+                  onPress={() => openSheet('batch_detail', { batchId: batch.id })}
+                >
+                  <Row gap="sm" align="flex-start">
+                    <IconTile
+                      icon={reversed ? 'refresh' : 'checkmark'}
+                      tone={reversed ? 'danger' : 'success'}
+                      size={32}
+                    />
+                    <Box flex={1}>
+                      <Row gap="xs" align="center">
+                        <Typography variant="dataMedium" color="secondary">
+                          {batch.batchNumber.replace(/^BAT-\d+-/, '#')}
+                        </Typography>
+                        <Typography
+                          variant="title"
+                          color="primary"
+                          numberOfLines={1}
+                          style={{ flexShrink: 1 }}
+                        >
+                          {batch.productName}
+                        </Typography>
+                      </Row>
+                      <Typography variant="bodySmall" color="secondary">
+                        {batch.unitsPacked} {batch.outputUnit} • {batch.date}
+                      </Typography>
+                    </Box>
+                    <Badge
+                      label={reversed ? 'Reversed' : 'Done'}
+                      variant={reversed ? 'danger' : 'success'}
+                      size="sm"
+                    />
+                  </Row>
+                </Card>
+              );
+            })
+          )}
+        </Stack>
+
+        {/* Money: two compact cards, details one tap away */}
+        <Stack gap="sm">
+          <Typography variant="title" color="primary">
+            Money
           </Typography>
-
-          <Stack gap="xs">
-            <Row justify="space-between">
+          <Card variant="elevated" padding="compact" onPress={() => goToTab('invoices')}>
+            <Row justify="space-between" align="center">
               <Typography variant="bodySmall" color="secondary">
-                (+) Sales Revenue:
+                Sales billed
               </Typography>
-              <Typography variant="bodySmall" weight="semibold" color="primary">
-                ₹{(metrics?.financial.salesRevenue || 0).toLocaleString('en-IN')}
+              <Typography variant="dataLarge" color="primary" tabular>
+                {money(revenue)}
               </Typography>
             </Row>
-
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                (-) Cost of Goods Sold (COGS):
+            <Box marginTop="xs">
+              <ProgressBar value={settledShare} color={colors.brand.medium} height={10} />
+            </Box>
+            <Row justify="space-between" style={{ marginTop: theme.spacing.xs }}>
+              <Typography variant="bodySmall" color="success">
+                Collected {money(collected)}
               </Typography>
-              <Typography variant="bodySmall" weight="semibold" color="error">
-                -₹{(metrics?.financial.costOfGoodsSold || 0).toLocaleString('en-IN')}
-              </Typography>
-            </Row>
-
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                (-) Operating Overheads (Wages, Power, Fuel):
-              </Typography>
-              <Typography variant="bodySmall" weight="semibold" color="error">
-                -₹{(metrics?.financial.operatingExpenses || 0).toLocaleString('en-IN')}
+              <Typography variant="bodySmall" color="warning">
+                Due {money(metrics?.sales.outstandingDues ?? 0)}
               </Typography>
             </Row>
+          </Card>
 
-            <Divider variant="brand" spacing="xs" />
-
-            <Typography variant="caption" color="muted">
-              Note: Unsold finished stock is held as inventory and not counted as COGS. Production cost for this period was ₹{(metrics?.financial.productionCost || 0).toLocaleString('en-IN')}.
-            </Typography>
-          </Stack>
-        </Card>
-
-        {/* Recent Production Batches */}
-        <Card variant="elevated" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: 8 }}>
-            <Typography variant="title" weight="bold" color="primary">
-              Recent Production Batches
-            </Typography>
-            <Button
-              label="View All"
-              variant="ghost"
-              size="sm"
-              onPress={() => setActiveTab('production')}
-            />
-          </Row>
-
-          <Stack gap="xs">
-            {recentBatches.map((batch) => (
-              <ListItem
-                key={batch.id}
-                title={`${batch.batchNumber} • ${batch.productName}`}
-                subtitle={`Output: ${batch.unitsPacked || batch.bagsPacked} ${batch.outputUnit || 'units'} (${batch.actualFinishedQuantity || batch.actualFinishedWeightKg} ${batch.baseUnit || 'kg'})`}
-                meta={`Date: ${batch.date} • Batch Cost: ₹${batch.directBatchCost.toLocaleString('en-IN')}`}
-                value={`₹${(batch.directCostPerUnit || batch.directCostPerBag || 0).toFixed(1)}/${batch.outputUnit || 'unit'}`}
-                valueColor="brandPrimary"
-                badge={{
-                  label: batch.status.toUpperCase(),
-                  variant: batch.status === 'confirmed' ? 'success' : 'danger',
-                }}
-                showDivider
-              />
-            ))}
-          </Stack>
-        </Card>
-
-        {/* Recent Sales Dispatches */}
-        <Card variant="elevated" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: 8 }}>
-            <Typography variant="title" weight="bold" color="primary">
-              Recent Invoices & Dispatches
-            </Typography>
-            <Button
-              label="View All"
-              variant="ghost"
-              size="sm"
-              onPress={() => setActiveTab('sales')}
-            />
-          </Row>
-
-          <Stack gap="xs">
-            {recentInvoices.map((inv) => (
-              <ListItem
-                key={inv.id}
-                title={`${inv.invoiceNumber} • ${inv.customerName}`}
-                subtitle={`${inv.quantity || inv.bagQuantity} ${inv.outputUnit || 'units'} ${inv.productName}`}
-                meta={`Total: ₹${inv.totalAmount.toLocaleString('en-IN')} • Paid: ₹${inv.amountPaid.toLocaleString('en-IN')}`}
-                value={inv.balanceDue > 0 ? `Due: ₹${inv.balanceDue.toLocaleString('en-IN')}` : 'PAID'}
-                valueColor={inv.balanceDue > 0 ? 'warning' : 'success'}
-                badge={{
-                  label: inv.paymentStatus.toUpperCase(),
-                  variant:
-                    inv.paymentStatus === 'paid'
-                      ? 'success'
-                      : inv.paymentStatus === 'partial'
-                      ? 'warning'
-                      : inv.paymentStatus === 'cancelled'
-                      ? 'danger'
-                      : 'neutral',
-                }}
-                showDivider
-              />
-            ))}
-          </Stack>
-        </Card>
+          <Card
+            variant="elevated"
+            padding="compact"
+            onPress={() => openSheet('profit_detail', { period: selectedPeriod })}
+          >
+            <Row justify="space-between" align="center">
+              <Box>
+                <Typography variant="bodySmall" color="secondary">
+                  Estimated operating profit
+                </Typography>
+                <Typography
+                  variant="dataLarge"
+                  color={(finance?.estimatedOperatingProfit ?? 0) >= 0 ? 'success' : 'error'}
+                  tabular
+                >
+                  {money(finance?.estimatedOperatingProfit ?? 0)}
+                </Typography>
+              </Box>
+              <Icon name="chevron-forward" size={20} color="subtle" />
+            </Row>
+          </Card>
+        </Stack>
       </Stack>
     </ScreenContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  smallCard: { flex: 1, height: 112, justifyContent: 'space-between' },
+});
 
 export default DashboardScreen;

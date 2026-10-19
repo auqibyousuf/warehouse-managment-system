@@ -4,8 +4,14 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import { SaleInvoice, CustomerPayment, InvoiceStatus } from '../../types';
+
+const addDays = (isoDate: string, days: number) => {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().split('T')[0];
+};
 
 export interface CreateSaleInput {
   customerId: string;
@@ -18,6 +24,8 @@ export interface CreateSaleInput {
   amountPaidNow: number;
   paymentMethod?: 'cash' | 'upi' | 'bank_transfer' | 'cheque';
   date: string;
+  /** Days after the invoice date the balance is due; 0 or omitted means due immediately. */
+  paymentTermDays?: number;
   notes?: string;
 }
 
@@ -36,7 +44,7 @@ export const salesService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.invoices].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -46,7 +54,7 @@ export const salesService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.payments].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -70,7 +78,7 @@ export const salesService = {
 
       if (available < qty) {
         throw new Error(
-          `Insufficient stock. Available: ${available} ${unit}, Requested: ${qty} ${unit}.`
+          `Insufficient stock. Available: ${available} ${unit}, Requested: ${qty} ${unit}.`,
         );
       }
 
@@ -102,7 +110,10 @@ export const salesService = {
       customer.outstandingBalance += balanceDue;
 
       const invoiceId = generateId('inv');
-      const invoiceNumber = `INV-2026-${(db.invoices.length + 1).toString().padStart(3, '0')}`;
+      const invoiceNumber = nextDocumentNumber(
+        'INV',
+        db.invoices.map((i) => i.invoiceNumber),
+      );
 
       const newInvoice: SaleInvoice = {
         id: invoiceId,
@@ -123,6 +134,9 @@ export const salesService = {
         balanceDue,
         paymentStatus,
         isCredit,
+        ...(isCredit && input.paymentTermDays
+          ? { dueDate: addDays(input.date, input.paymentTermDays) }
+          : {}),
       };
 
       db.invoices.unshift(newInvoice);
@@ -147,7 +161,10 @@ export const salesService = {
       if (amountPaid > 0) {
         db.payments.unshift({
           id: generateId('pay'),
-          paymentNumber: `REC-2026-${(db.payments.length + 1).toString().padStart(3, '0')}`,
+          paymentNumber: nextDocumentNumber(
+            'REC',
+            db.payments.map((p) => p.paymentNumber),
+          ),
           date: input.date,
           customerId: customer.id,
           customerName: customer.name,
@@ -185,7 +202,10 @@ export const salesService = {
       customer.outstandingBalance = Math.max(0, customer.outstandingBalance - input.amount);
 
       const paymentId = generateId('pay');
-      const paymentNumber = `REC-2026-${(db.payments.length + 1).toString().padStart(3, '0')}`;
+      const paymentNumber = nextDocumentNumber(
+        'REC',
+        db.payments.map((p) => p.paymentNumber),
+      );
 
       const newPayment: CustomerPayment = {
         id: paymentId,

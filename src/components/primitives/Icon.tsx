@@ -1,6 +1,6 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../theme';
+import { theme, useColors, ColorTokens } from '../../theme';
 import { TextColor } from './Typography';
 
 export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -20,31 +20,31 @@ const sizeMap: Record<IconSize, number> = {
   xl: theme.spacing.layout.iconSizeXl, // 28
 };
 
-const resolveColor = (color: TextColor | string): string => {
+const resolveColor = (colors: ColorTokens, color: TextColor | string): string => {
   switch (color) {
     case 'primary':
-      return theme.colors.text.primary;
+      return colors.text.primary;
     case 'secondary':
-      return theme.colors.text.secondary;
+      return colors.text.secondary;
     case 'muted':
-      return theme.colors.text.muted;
+      return colors.text.muted;
     case 'subtle':
-      return theme.colors.text.subtle;
+      return colors.text.subtle;
     case 'onBrand':
     case 'onDark':
-      return theme.colors.text.onBrand;
+      return colors.text.onBrand;
     case 'success':
-      return theme.colors.text.success;
+      return colors.text.success;
     case 'warning':
-      return theme.colors.text.warning;
+      return colors.text.warning;
     case 'error':
-      return theme.colors.text.error;
+      return colors.text.error;
     case 'info':
-      return theme.colors.text.info;
+      return colors.text.info;
     case 'brandPrimary':
-      return theme.colors.brand.primary;
+      return colors.brand.primary;
     case 'brandDeep':
-      return theme.colors.brand.deep;
+      return colors.brand.deep;
     default:
       return color;
   }
@@ -52,7 +52,8 @@ const resolveColor = (color: TextColor | string): string => {
 
 export const Icon: React.FC<IconProps> = ({ name, size = 'md', color = 'primary', style }) => {
   const pixelSize = typeof size === 'number' ? size : sizeMap[size] || 20;
-  const hexColor = resolveColor(color);
+  const colors = useColors();
+  const hexColor = resolveColor(colors, color);
 
   return <Ionicons name={name} size={pixelSize} color={hexColor} style={style} />;
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { theme } from '../../theme';
+import { tapLight } from '../../utils/haptics';
+import { theme, useColors } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Badge, BadgeVariant } from '../primitives/Badge';
@@ -43,11 +43,10 @@ export const ListItem: React.FC<ListItemProps> = ({
   showDivider = false,
   style,
 }) => {
+  const colors = useColors();
   const handlePress = () => {
     if (!onPress) return;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
+    tapLight();
     onPress();
   };
 
@@ -60,7 +59,7 @@ export const ListItem: React.FC<ListItemProps> = ({
               style={[
                 styles.iconBox,
                 {
-                  backgroundColor: iconBg || theme.colors.brand.wash,
+                  backgroundColor: iconBg || colors.brand.wash,
                 },
               ]}
             >
@@ -120,7 +119,12 @@ export const ListItem: React.FC<ListItemProps> = ({
 
   if (onPress) {
     return (
-      <Pressable onPress={handlePress} style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}>
+      <Pressable
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel={[title, subtitle, value].filter(Boolean).join(', ')}
+        style={({ pressed }) => [{ opacity: pressed ? 0.75 : 1 }]}
+      >
         {content}
       </Pressable>
     );

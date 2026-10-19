@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Box } from '../primitives/Box';
 
 export interface ScreenContainerProps {
@@ -28,11 +28,12 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   contentContainerStyle,
   children,
 }) => {
+  const colors = useColors();
   const insets = useSafeAreaInsets();
 
   const containerStyle: ViewStyle = {
     flex: 1,
-    backgroundColor: theme.colors.background.canvas,
+    backgroundColor: colors.background.canvas,
     ...style,
   };
 
@@ -66,8 +67,8 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={theme.colors.brand.primary}
-              colors={[theme.colors.brand.primary]}
+              tintColor={colors.brand.primary}
+              colors={[colors.brand.primary]}
             />
           ) : undefined
         }

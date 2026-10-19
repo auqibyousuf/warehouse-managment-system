@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { theme } from '../../theme';
+import { tapSelection } from '../../utils/haptics';
+import { theme, useColors, ColorTokens } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Ionicons } from '@expo/vector-icons';
 
-export type NavTabId = 'dashboard' | 'production' | 'inventory' | 'sales' | 'more';
+export type NavTabId = 'home' | 'stock' | 'invoices';
 
 export interface TabItem {
   id: NavTabId;
@@ -23,18 +23,14 @@ export interface TabBarProps {
 }
 
 export const defaultTabs: TabItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline' },
-  { id: 'production', label: 'Production', icon: 'construct-outline' },
-  { id: 'inventory', label: 'Stock', icon: 'cube-outline' },
-  { id: 'sales', label: 'Sales', icon: 'receipt-outline' },
-  { id: 'more', label: 'More', icon: 'ellipsis-horizontal-circle-outline' },
+  { id: 'home', label: 'Home', icon: 'checkmark-circle-outline' },
+  { id: 'stock', label: 'Stock', icon: 'archive-outline' },
+  { id: 'invoices', label: 'Invoices', icon: 'receipt-outline' },
 ];
 
-export const TabBar: React.FC<TabBarProps> = ({
-  activeTab,
-  onTabChange,
-  tabs = defaultTabs,
-}) => {
+export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = defaultTabs }) => {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   return (
@@ -47,7 +43,7 @@ export const TabBar: React.FC<TabBarProps> = ({
         },
       ]}
     >
-      <View style={styles.tabsRow}>
+      <View style={styles.tabsRow} accessibilityRole="tablist">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
 
@@ -55,22 +51,23 @@ export const TabBar: React.FC<TabBarProps> = ({
             <Pressable
               key={tab.id}
               onPress={() => {
-                try {
-                  Haptics.selectionAsync();
-                } catch {}
+                tapSelection();
                 onTabChange(tab.id);
               }}
               style={styles.tabButton}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: isActive }}
             >
               <View style={styles.iconContainer}>
                 <Icon
-                  name={tab.icon}
-                  size="md"
+                  name={isActive ? (tab.icon.replace('-outline', '') as typeof tab.icon) : tab.icon}
+                  size={22}
                   color={isActive ? 'brandPrimary' : 'muted'}
                 />
                 {tab.badgeCount !== undefined && tab.badgeCount > 0 && (
                   <View style={styles.badge}>
-                    <Typography variant="badgeText" color="onBrand" style={{ fontSize: 9 }}>
+                    <Typography variant="badgeText" color="onBrand" style={styles.badgeText}>
                       {tab.badgeCount > 99 ? '99+' : tab.badgeCount}
                     </Typography>
                   </View>
@@ -78,17 +75,15 @@ export const TabBar: React.FC<TabBarProps> = ({
               </View>
 
               <Typography
-                variant="caption"
-                weight={isActive ? 'bold' : 'medium'}
+                variant="bodySmall"
+                weight="regular"
                 style={{
-                  color: isActive ? theme.colors.brand.primary : theme.colors.text.muted,
-                  marginTop: 2,
+                  color: isActive ? colors.brand.primary : colors.text.muted,
+                  marginTop: theme.spacing.xxs,
                 }}
               >
                 {tab.label}
               </Typography>
-
-              {isActive && <View style={styles.activeIndicator} />}
             </Pressable>
           );
         })}
@@ -97,51 +92,61 @@ export const TabBar: React.FC<TabBarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: theme.colors.background.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.subtle,
-    ...theme.shadows.card,
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    height: theme.spacing.layout.bottomNavHeight,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    position: 'relative',
-  },
-  iconContainer: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -10,
-    backgroundColor: theme.colors.status.error.bg,
-    borderColor: theme.colors.status.error.text,
-    borderWidth: 1,
-    borderRadius: theme.radii.full,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 0,
-    width: 28,
-    height: 3,
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
-    backgroundColor: theme.colors.brand.primary,
-  },
-});
+const createStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background.canvas,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -1 },
+      shadowOpacity: colors.scheme === 'dark' ? 0.4 : 0.04,
+      shadowRadius: 8,
+      elevation: 8,
+    },
+    tabsRow: {
+      flexDirection: 'row',
+      height: theme.spacing.layout.bottomNavHeight,
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      paddingHorizontal: theme.spacing.base,
+    },
+    tabButton: {
+      width: 80,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+      gap: theme.spacing.xxs,
+    },
+    iconContainer: {
+      position: 'relative',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 40,
+      height: 24,
+    },
+    badge: {
+      position: 'absolute',
+      top: -4,
+      right: -10,
+      backgroundColor: colors.status.error.bg,
+      borderColor: colors.status.error.text,
+      borderWidth: 1,
+      borderRadius: theme.radii.full,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: theme.spacing.hairline,
+    },
+    badgeText: {
+      fontSize: theme.typography.fontSizes.xxs,
+    },
+    activeIndicator: {
+      position: 'absolute',
+      top: 0,
+      width: 28,
+      height: 3,
+      borderBottomLeftRadius: 2,
+      borderBottomRightRadius: 2,
+      backgroundColor: colors.brand.primary,
+    },
+  });
 
 export default TabBar;

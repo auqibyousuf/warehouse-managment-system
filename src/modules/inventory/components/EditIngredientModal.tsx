@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useCurrencySymbol } from '../../../hooks/useMoney';
+import { theme, useColors } from '../../../theme';
+import React, { useState } from 'react';
 import { useUpdateIngredient, useDeleteIngredient } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -26,6 +28,8 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   item,
   onClose,
 }) => {
+  const symbol = useCurrencySymbol();
+  const colors = useColors();
   const updateMutation = useUpdateIngredient();
   const deleteMutation = useDeleteIngredient();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -39,7 +43,11 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   const [error, setError] = useState('');
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
-  useEffect(() => {
+  // Re-seed the form whenever the sheet opens for an item (state adjusted during render, not in an effect).
+  const syncKey = item ? `${item.id}:${visible}` : null;
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
     if (item) {
       setName(item.name);
       setCategory(item.type === 'packaging' ? 'packaging' : 'raw_material');
@@ -49,7 +57,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       setMinThreshold(String(item.minThreshold ?? 100));
       setError('');
     }
-  }, [item, visible]);
+  }
 
   if (!item) return null;
 
@@ -134,7 +142,11 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Category Toggle */}
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+            <Typography
+              variant="label"
+              color="secondary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Item Category
             </Typography>
             <Row gap="xs">
@@ -165,10 +177,14 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Custom Unit Selector */}
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+            <Typography
+              variant="label"
+              color="secondary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Measurement Unit
             </Typography>
-            <Row gap="xs" wrap style={{ marginBottom: 8 }}>
+            <Row gap="xs" wrap style={{ marginBottom: theme.spacing.sm }}>
               {COMMON_RAW_UNITS.map((u) => (
                 <Button
                   key={u}
@@ -190,7 +206,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           <Row gap="md">
             <Box flex={1}>
               <TextInput
-                label={`Standard Cost (₹ / ${unit})`}
+                label={`Standard Cost (${symbol} / ${unit})`}
                 placeholder="0"
                 keyboardType="numeric"
                 value={unitCost}
@@ -220,10 +236,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           {/* Danger Zone: Delete item */}
           <Box
             style={{
-              marginTop: 12,
-              paddingTop: 16,
+              marginTop: theme.spacing.md,
+              paddingTop: theme.spacing.base,
               borderTopWidth: 1,
-              borderTopColor: '#F3F4F6',
+              borderTopColor: colors.border.subtle,
             }}
           >
             <Row justify="space-between" align="center">
@@ -250,7 +266,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       <ConfirmDialog
         visible={confirmDeleteVisible}
         title="Delete Stock Item?"
-        message={`Are you sure you want to delete "${item.name}"? If it is used in active production formulas, the deletion will be blocked.`}
+        message={`Are you sure you want to delete "${item.name}"? If it is used in active recipes, the deletion will be blocked.`}
         confirmLabel="Yes, Delete Item"
         isDestructive={true}
         loading={deleteMutation.isPending}

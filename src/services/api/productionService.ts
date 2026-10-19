@@ -4,14 +4,13 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import {
   Product,
   ProductionSetup,
   ProductionBatch,
   BatchIngredientConsumption,
   SetupStatus,
-  InventoryMovement,
 } from '../../types';
 
 export interface CreateBatchInput {
@@ -78,21 +77,18 @@ export const productionService = {
 
       // Resolve or automatically create product
       let resolvedProduct: Product;
-      const prodName =
-        input.productName?.trim() || input.name;
+      const prodName = input.productName?.trim() || input.name;
 
       const foundProduct = input.productId
         ? db.products.find((p) => p.id === input.productId)
-        : db.products.find(
-            (p) => p.name.toLowerCase() === prodName.toLowerCase()
-          );
+        : db.products.find((p) => p.name.toLowerCase() === prodName.toLowerCase());
 
       if (foundProduct) {
         resolvedProduct = foundProduct;
       } else {
         const prodId = generateId('prod');
         const outputUnit = input.outputUnit || 'units';
-        const unitSize = input.unitSize || input.bagWeightKg || 20;
+        const unitSize = input.unitSize || input.bagWeightKg || 1;
         const baseUnit = input.baseUnit || 'kg';
         resolvedProduct = {
           id: prodId,
@@ -100,10 +96,10 @@ export const productionService = {
           outputUnit,
           unitSize,
           baseUnit,
-          sellingPricePerUnit: 500,
+          sellingPricePerUnit: 0,
           currentStockUnits: 0,
           bagWeightKg: unitSize,
-          sellingPricePerBag: 500,
+          sellingPricePerBag: 0,
           currentStockBags: 0,
           description: `Custom manufactured product: ${prodName}`,
           isActive: true,
@@ -116,28 +112,24 @@ export const productionService = {
         let ing = item.ingredientId
           ? db.ingredients.find((i) => i.id === item.ingredientId)
           : undefined;
-        const ingName =
-          item.ingredientName?.trim() ||
-          (ing ? ing.name : 'Raw Ingredient');
+        const ingName = item.ingredientName?.trim() || (ing ? ing.name : 'Raw Ingredient');
 
         if (!ing) {
-          ing = db.ingredients.find(
-            (i) => i.name.toLowerCase() === ingName.toLowerCase()
-          );
+          ing = db.ingredients.find((i) => i.name.toLowerCase() === ingName.toLowerCase());
         }
 
         if (!ing) {
           const ingId = generateId('ing');
           const ingUnit = item.unit || 'kg';
-          const ingCost = item.unitCost && item.unitCost > 0 ? item.unitCost : 20;
+          const ingCost = item.unitCost && item.unitCost > 0 ? item.unitCost : 0;
           ing = {
             id: ingId,
             name: ingName,
             category: 'raw_material',
             unit: ingUnit,
             unitCost: ingCost,
-            currentStock: 1000,
-            minThreshold: 100,
+            currentStock: 0,
+            minThreshold: 0,
             isActive: true,
           };
           db.ingredients.push(ing);
@@ -157,9 +149,9 @@ export const productionService = {
         input.bagWeightKg ||
         resolvedProduct.unitSize ||
         resolvedProduct.bagWeightKg ||
-        20;
+        1;
       const baseUnit = input.baseUnit || resolvedProduct.baseUnit || 'kg';
-      const targetUnits = input.targetUnits || input.targetBags || 50;
+      const targetUnits = input.targetUnits || input.targetBags || 0;
 
       const newSetup: ProductionSetup = {
         id: generateId('setup'),
@@ -187,7 +179,7 @@ export const productionService = {
   // Update setup: creates a new version for future runs without rewriting previous runs!
   updateSetup: async (
     setupId: string,
-    input: Partial<CreateSetupInput>
+    input: Partial<CreateSetupInput>,
   ): Promise<ProductionSetup> => {
     return simulateNetwork(() => {
       const db = getDB();
@@ -205,10 +197,8 @@ export const productionService = {
               ? db.ingredients.find((i) => i.id === item.ingredientId)
               : undefined;
             return {
-              ingredientId:
-                item.ingredientId || (ing ? ing.id : generateId('ing')),
-              ingredientName:
-                item.ingredientName || (ing ? ing.name : 'Unknown Ingredient'),
+              ingredientId: item.ingredientId || (ing ? ing.id : generateId('ing')),
+              ingredientName: item.ingredientName || (ing ? ing.name : 'Unknown Ingredient'),
               targetQuantity: item.targetQuantity,
               unit: item.unit || (ing ? ing.unit : 'kg'),
             };
@@ -216,9 +206,11 @@ export const productionService = {
         : existing.recipeItems;
 
       const outputUnit = input.outputUnit || existing.outputUnit || 'bags';
-      const unitSize = input.unitSize || input.bagWeightKg || existing.unitSize || existing.bagWeightKg || 20;
+      const unitSize =
+        input.unitSize || input.bagWeightKg || existing.unitSize || existing.bagWeightKg || 1;
       const baseUnit = input.baseUnit || existing.baseUnit || 'kg';
-      const targetUnits = input.targetUnits || input.targetBags || existing.targetUnits || existing.targetBags || 50;
+      const targetUnits =
+        input.targetUnits || input.targetBags || existing.targetUnits || existing.targetBags || 0;
 
       // Increment version
       const updatedSetup: ProductionSetup = {
@@ -243,6 +235,21 @@ export const productionService = {
     });
   },
 
+  // Delete a recipe nobody has used; one with batch history is archived so past runs stay intact.
+  deleteSetup: async (setupId: string): Promise<'deleted' | 'archived'> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const index = db.setups.findIndex((s) => s.id === setupId);
+      if (index === -1) throw new Error('Setup not found');
+      if (db.batches.some((b) => b.setupId === setupId)) {
+        db.setups[index].status = 'archived';
+        return 'archived';
+      }
+      db.setups.splice(index, 1);
+      return 'deleted';
+    });
+  },
+
   // Change setup lifecycle status: 'active' | 'paused' | 'archived'
   setSetupStatus: async (setupId: string, status: SetupStatus): Promise<ProductionSetup> => {
     return simulateNetwork(() => {
@@ -259,7 +266,7 @@ export const productionService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.batches].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -275,16 +282,22 @@ export const productionService = {
       if (!product) throw new Error('Associated finished feed product not found');
 
       const outputUnit = input.outputUnit || setup.outputUnit || product.outputUnit || 'bags';
-      const unitsPacked = input.unitsPacked !== undefined ? input.unitsPacked : (input.bagsPacked || 50);
-      const packagingUsedUnits = input.packagingUsedUnits !== undefined ? input.packagingUsedUnits : (input.packagingUsedBags || unitsPacked);
+      const unitsPacked =
+        input.unitsPacked !== undefined ? input.unitsPacked : input.bagsPacked || 50;
+      const packagingUsedUnits =
+        input.packagingUsedUnits !== undefined
+          ? input.packagingUsedUnits
+          : input.packagingUsedBags || unitsPacked;
       const baseUnit = input.baseUnit || setup.baseUnit || product.baseUnit || 'kg';
       const unitSize = setup.unitSize || product.unitSize || product.bagWeightKg || 20;
-      const actualFinishedQuantity = input.actualFinishedQuantity !== undefined
-        ? input.actualFinishedQuantity
-        : (input.actualFinishedWeightKg || unitsPacked * unitSize);
-      const measurableWastage = input.measurableWastage !== undefined
-        ? input.measurableWastage
-        : (input.measurableWastageKg || 0);
+      const actualFinishedQuantity =
+        input.actualFinishedQuantity !== undefined
+          ? input.actualFinishedQuantity
+          : input.actualFinishedWeightKg || unitsPacked * unitSize;
+      const measurableWastage =
+        input.measurableWastage !== undefined
+          ? input.measurableWastage
+          : input.measurableWastageKg || 0;
 
       // Packaging units
       const bagItem = db.ingredients.find((i) => i.category === 'packaging');
@@ -299,7 +312,9 @@ export const productionService = {
         const ing = db.ingredients.find((i) => i.id === itemInput.ingredientId);
         if (!ing) throw new Error(`Ingredient ${itemInput.ingredientId} not found`);
 
-        const plannedItem = setup.recipeItems.find((r) => r.ingredientId === itemInput.ingredientId);
+        const plannedItem = setup.recipeItems.find(
+          (r) => r.ingredientId === itemInput.ingredientId,
+        );
         const plannedQty = plannedItem ? plannedItem.targetQuantity : itemInput.actualQuantity;
 
         const lineCost = itemInput.actualQuantity * ing.unitCost;
@@ -325,7 +340,10 @@ export const productionService = {
       }
 
       // Add finished product stock
-      const prevStock = product.currentStockUnits !== undefined ? product.currentStockUnits : (product.currentStockBags || 0);
+      const prevStock =
+        product.currentStockUnits !== undefined
+          ? product.currentStockUnits
+          : product.currentStockBags || 0;
       product.currentStockUnits = prevStock + unitsPacked;
       product.currentStockBags = product.currentStockUnits;
 
@@ -336,12 +354,13 @@ export const productionService = {
           ? Number((directBatchCost / actualFinishedQuantity).toFixed(2))
           : 0;
       const directCostPerUnit =
-        unitsPacked > 0
-          ? Number((directBatchCost / unitsPacked).toFixed(2))
-          : 0;
+        unitsPacked > 0 ? Number((directBatchCost / unitsPacked).toFixed(2)) : 0;
 
       const batchId = generateId('batch');
-      const batchNumber = `BAT-2026-${(db.batches.length + 1).toString().padStart(3, '0')}`;
+      const batchNumber = nextDocumentNumber(
+        'BAT',
+        db.batches.map((b) => b.batchNumber),
+      );
 
       const newBatch: ProductionBatch = {
         id: batchId,
@@ -443,6 +462,18 @@ export const productionService = {
       const product = db.products.find((p) => p.id === batch.productId);
       const bagItem = db.ingredients.find((i) => i.category === 'packaging');
 
+      // Guard first: never reverse if the batch output has already left the warehouse,
+      // otherwise raw materials would be restored while the sold goods stay unaccounted for.
+      if (product) {
+        const units = batch.unitsPacked || batch.bagsPacked || 0;
+        const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
+        if (onHand < units) {
+          throw new Error(
+            `Cannot reverse ${batch.batchNumber}: only ${onHand} of ${units} ${batch.outputUnit || 'units'} are still in stock. Cancel the related sales first.`,
+          );
+        }
+      }
+
       // Compensating stock restoration: Return raw materials
       for (const item of batch.itemsConsumed) {
         const ing = db.ingredients.find((i) => i.id === item.ingredientId);
@@ -488,7 +519,8 @@ export const productionService = {
       // Deduct finished goods stock
       if (product) {
         const units = batch.unitsPacked || batch.bagsPacked || 0;
-        product.currentStockUnits = Math.max(0, (product.currentStockUnits || product.currentStockBags || 0) - units);
+        product.currentStockUnits =
+          (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;
         product.currentStockBags = product.currentStockUnits;
 
         db.movements.unshift({

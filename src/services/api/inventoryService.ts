@@ -4,14 +4,8 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
-import {
-  Ingredient,
-  Product,
-  InventoryMovement,
-  Purchase,
-  StockUnit,
-} from '../../types';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
+import { Ingredient, Product, InventoryMovement, Purchase, StockUnit } from '../../types';
 
 export interface UnifiedStockItem {
   id: string;
@@ -70,8 +64,7 @@ export const inventoryService = {
             : (prod.currentStockBags ?? 0);
         const unit = prod.outputUnit || 'units';
         const price = prod.sellingPricePerUnit || prod.sellingPricePerBag || 0;
-        const threshold =
-          db.settings.lowUnitsThreshold || db.settings.lowBagsThreshold || 100;
+        const threshold = db.settings.lowUnitsThreshold || db.settings.lowBagsThreshold || 100;
         unified.push({
           id: prod.id,
           name: prod.name,
@@ -109,7 +102,7 @@ export const inventoryService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.movements].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -127,11 +120,7 @@ export const inventoryService = {
       const totalAmount = input.quantity * input.unitPrice;
       const balanceDue = Math.max(0, totalAmount - input.amountPaid);
       const paymentStatus =
-        input.amountPaid >= totalAmount
-          ? 'paid'
-          : input.amountPaid > 0
-          ? 'partial'
-          : 'unpaid';
+        input.amountPaid >= totalAmount ? 'paid' : input.amountPaid > 0 ? 'partial' : 'unpaid';
 
       // Update item stock
       item.currentStock += input.quantity;
@@ -142,7 +131,10 @@ export const inventoryService = {
       supplier.balanceDue += balanceDue;
 
       const purchaseId = generateId('pur');
-      const purchaseNumber = `PUR-2026-${(db.purchases.length + 1).toString().padStart(3, '0')}`;
+      const purchaseNumber = nextDocumentNumber(
+        'PUR',
+        db.purchases.map((p) => p.purchaseNumber),
+      );
 
       const newPurchase: Purchase = {
         id: purchaseId,
@@ -191,7 +183,7 @@ export const inventoryService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.purchases].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -226,6 +218,80 @@ export const inventoryService = {
     });
   },
 
+  updateSupplier: async (
+    id: string,
+    input: {
+      name: string;
+      phone: string;
+      address?: string;
+      gstNumber?: string;
+    },
+  ) => {
+    return simulateNetwork(() => {
+      const supplier = getDB().suppliers.find((s) => s.id === id);
+      if (!supplier) throw new Error('Supplier not found');
+      supplier.name = input.name;
+      supplier.phone = input.phone;
+      supplier.address = input.address;
+      supplier.gstNumber = input.gstNumber;
+      return { ...supplier };
+    });
+  },
+
+  /** Edits the catalogue entry of a finished product. Stock changes go through adjustments. */
+  updateProduct: async (
+    id: string,
+    input: { name: string; sellingPricePerUnit: number; description?: string },
+  ): Promise<Product> => {
+    return simulateNetwork(() => {
+      const product = getDB().products.find((p) => p.id === id);
+      if (!product) throw new Error('Product not found');
+      product.name = input.name;
+      product.sellingPricePerUnit = input.sellingPricePerUnit;
+      product.sellingPricePerBag = input.sellingPricePerUnit;
+      if (input.description !== undefined) product.description = input.description;
+      return { ...product };
+    });
+  },
+
+  /**
+   * Take raw material or packaging out of stock outside a production batch
+   * (hand mixing, samples, spillage, damage). Recorded as an `out` movement.
+   */
+  recordUsage: async (input: {
+    itemId: string;
+    quantity: number;
+    kind: 'usage' | 'waste';
+    note?: string;
+  }): Promise<void> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const ing = db.ingredients.find((i) => i.id === input.itemId);
+      if (!ing) throw new Error('Only raw materials and packaging can be used this way.');
+      if (!(input.quantity > 0)) throw new Error('Enter a quantity above 0.');
+      if (input.quantity > ing.currentStock) {
+        throw new Error(
+          `Only ${ing.currentStock} ${ing.unit} of ${ing.name} in stock, cannot use ${input.quantity}.`,
+        );
+      }
+      ing.currentStock -= input.quantity;
+      db.movements.unshift({
+        id: generateId('mov'),
+        date: new Date().toISOString().split('T')[0],
+        itemId: ing.id,
+        itemName: ing.name,
+        itemType: ing.category,
+        movementType: input.kind === 'waste' ? 'stock_waste' : 'stock_usage',
+        quantity: input.quantity,
+        unit: ing.unit,
+        direction: 'out',
+        referenceType: 'usage',
+        referenceId: input.kind,
+        notes:
+          input.note?.trim() || (input.kind === 'waste' ? 'Waste / loss' : 'Used outside a batch'),
+      });
+    });
+  },
 
   // Adjust stock based on physical count or reconciliation
   adjustStock: async (input: AdjustStockInput): Promise<void> => {
@@ -391,12 +457,10 @@ export const inventoryService = {
       if (idx === -1) throw new Error(`Stock item ${id} not found.`);
 
       // Check if ingredient is actively used in setups
-      const inUseSetup = db.setups.find((s) =>
-        s.recipeItems.some((r) => r.ingredientId === id)
-      );
+      const inUseSetup = db.setups.find((s) => s.recipeItems.some((r) => r.ingredientId === id));
       if (inUseSetup) {
         throw new Error(
-          `Cannot delete "${db.ingredients[idx].name}" because it is currently used in formula "${inUseSetup.name}". Remove it from the formula first.`
+          `Cannot delete "${db.ingredients[idx].name}" because it is currently used in formula "${inUseSetup.name}". Remove it from the formula first.`,
         );
       }
 
@@ -405,4 +469,3 @@ export const inventoryService = {
     });
   },
 };
-

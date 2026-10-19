@@ -4,7 +4,7 @@
  */
 
 import { getDB } from './mockDatabase';
-import { simulateNetwork, generateId } from './apiClient';
+import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import { Expense, ExpenseCategory } from '../../types';
 
 export interface CreateExpenseInput {
@@ -20,7 +20,7 @@ export const expenseService = {
     return simulateNetwork(() => {
       const db = getDB();
       return [...db.expenses].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
   },
@@ -29,7 +29,10 @@ export const expenseService = {
     return simulateNetwork(() => {
       const db = getDB();
       const expenseId = generateId('exp');
-      const expenseNumber = `EXP-2026-${(db.expenses.length + 1).toString().padStart(3, '0')}`;
+      const expenseNumber = nextDocumentNumber(
+        'EXP',
+        db.expenses.map((e) => e.expenseNumber),
+      );
 
       const newExpense: Expense = {
         id: expenseId,

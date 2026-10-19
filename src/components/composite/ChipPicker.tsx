@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, ScrollView, Pressable, StyleSheet, ViewStyle } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
+import { tapLight } from '../../utils/haptics';
 import { Typography } from '../primitives/Typography';
-import { Badge } from '../primitives/Badge';
 
 export interface ChipOption<T = string> {
   value: T;
@@ -15,122 +14,130 @@ export interface ChipPickerProps<T = string> {
   options: ChipOption<T>[];
   selected: T;
   onSelect: (value: T) => void;
-  scrollable?: boolean;
+  /**
+   * `pills` (default): separate rounded filter chips that scroll sideways (Stitch Stock filters).
+   * `segmented`: equal-width tabs inside a tinted track (Stitch Invoices All / Unpaid / Paid).
+   */
+  variant?: 'pills' | 'segmented';
   style?: ViewStyle;
 }
+
+const labelOf = <T,>(opt: ChipOption<T>) =>
+  opt.count !== undefined ? `${opt.label} (${opt.count})` : opt.label;
 
 export const ChipPicker = <T extends string | number>({
   options,
   selected,
   onSelect,
-  scrollable = false,
+  variant = 'pills',
   style,
 }: ChipPickerProps<T>) => {
-  const renderChips = () => (
-    <View style={[styles.container, style]}>
-      {options.map((opt) => {
-        const isSelected = opt.value === selected;
+  const colors = useColors();
 
-        return (
-          <Pressable
-            key={String(opt.value)}
-            onPress={() => {
-              if (!isSelected) {
-                try {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                } catch {}
-                onSelect(opt.value);
-              }
-            }}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: isSelected
-                  ? theme.colors.brand.primary
-                  : theme.colors.background.surface,
-                borderColor: isSelected
-                  ? theme.colors.brand.primary
-                  : theme.colors.border.default,
-              },
-            ]}
-          >
-            <Typography
-              variant="bodySmall"
-              weight={isSelected ? 'bold' : 'medium'}
-              style={{
-                color: isSelected ? theme.colors.text.onBrand : theme.colors.text.secondary,
-              }}
-            >
-              {opt.label}
-            </Typography>
+  const press = (value: T, isSelected: boolean) => {
+    if (isSelected) return;
+    tapLight();
+    onSelect(value);
+  };
 
-            {opt.count !== undefined && (
-              <View
-                style={[
-                  styles.countBadge,
-                  {
-                    backgroundColor: isSelected
-                      ? theme.colors.brand.deep
-                      : theme.colors.background.surfaceSecondary,
-                  },
-                ]}
-              >
-                <Typography
-                  variant="caption"
-                  weight="bold"
-                  style={{
-                    fontSize: 10,
-                    color: isSelected ? theme.colors.text.onBrand : theme.colors.text.muted,
-                  }}
-                >
-                  {opt.count}
-                </Typography>
-              </View>
-            )}
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-
-  if (scrollable) {
+  if (variant === 'segmented') {
     return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {renderChips()}
-      </ScrollView>
+      <View style={[styles.track, { backgroundColor: colors.background.surfaceTertiary }, style]}>
+        {options.map((opt) => {
+          const isSelected = opt.value === selected;
+          return (
+            <Pressable
+              key={String(opt.value)}
+              onPress={() => press(opt.value, isSelected)}
+              accessibilityRole="tab"
+              accessibilityLabel={opt.label}
+              accessibilityState={{ selected: isSelected }}
+              style={[
+                styles.segment,
+                isSelected && [{ backgroundColor: colors.background.surface }, theme.shadows.card],
+              ]}
+            >
+              <Typography
+                variant="bodySmall"
+                weight="semibold"
+                style={{ color: isSelected ? colors.brand.primary : colors.text.secondary }}
+              >
+                {labelOf(opt)}
+              </Typography>
+            </Pressable>
+          );
+        })}
+      </View>
     );
   }
 
-  return renderChips();
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={[styles.scroll, style]}
+      contentContainerStyle={styles.pills}
+    >
+      {options.map((opt) => {
+        const isSelected = opt.value === selected;
+        return (
+          <Pressable
+            key={String(opt.value)}
+            onPress={() => press(opt.value, isSelected)}
+            accessibilityRole="button"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ selected: isSelected }}
+            style={[
+              styles.pill,
+              {
+                backgroundColor: isSelected
+                  ? colors.brand.primary
+                  : colors.background.surfaceTertiary,
+              },
+              isSelected && theme.shadows.card,
+            ]}
+          >
+            <Typography
+              variant="label"
+              transform="none"
+              style={{ color: isSelected ? colors.text.onBrand : colors.text.secondary }}
+            >
+              {labelOf(opt)}
+            </Typography>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: { flexGrow: 0 },
+  pills: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.xxs,
   },
-  scrollContent: {
-    paddingHorizontal: theme.spacing.layout.screenPaddingHorizontal,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  pill: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radii.sm,
-    borderWidth: 1,
     minHeight: 32,
+    borderRadius: theme.radii.xl,
+    justifyContent: 'center',
   },
-  countBadge: {
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: 1,
-    borderRadius: theme.radii.xs,
-    marginLeft: theme.spacing.xs,
+  track: {
+    flexDirection: 'row',
+    padding: theme.spacing.xs,
+    gap: theme.spacing.xs,
+    borderRadius: theme.radii.md,
+  },
+  segment: {
+    flex: 1,
+    height: 36,
+    borderRadius: theme.radii.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

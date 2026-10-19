@@ -1,0 +1,151 @@
+# BatchIQ Design System
+
+Single source of truth for how BatchIQ looks. It mirrors the Stitch project
+**"BatchIQ Warehouse Operations Manager"** (project `2815155283243332533`). When Stitch and this file
+disagree, update this file and `src/theme/tokens/` together.
+
+## Principles
+
+1. **Industrial clarity.** Flat surfaces, 1px borders, soft shadows only on cards. Data is the hero.
+2. **Mono for data, grotesk for words.** Labels, figures and codes are JetBrains Mono; headlines and
+   reading text are Hanken Grotesk.
+3. **One primary action per screen.** Everything else is secondary or ghost.
+4. **Automatic light and dark.** The app follows the device appearance. Nothing is hard-wired to a mode.
+5. **No baked-in business data.** Names, units and currency come from the editable profile.
+
+## Appearance (light and dark)
+
+Colors are read with `useColors()` (from `src/theme`). Never import a color value directly and never
+hard-code a hex in a component. Both palettes live in `src/theme/tokens/colors.ts`.
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| Brand primary (fills, active) | `#004ac6` | `#f59e0b` |
+| Brand accent text | `#003ea8` | `#ffc174` |
+| Text on brand | `#ffffff` | `#472a00` |
+| Canvas | `#faf8ff` | `#0f141b` |
+| Surface (cards) | `#ffffff` | `#171c23` |
+| Surface secondary (insets, segmented bg) | `#f2f3ff` | `#1b2027` |
+| Surface tertiary (tracks) | `#eaedff` | `#252a32` |
+| Text primary | `#131b2e` | `#dee2ec` |
+| Text secondary | `#434655` | `#d8c3ad` |
+| Text muted | `#5f6373` | `#b3a08a` |
+| Border default | `#c3c6d7` | `#3a3f47` |
+| Border subtle | `#e2e7ff` | `#252a32` |
+| Success | `#006243` | `#4edea3` |
+| Warning | `#904d00` | `#ffc174` |
+| Error | `#ba1a1a` | `#ffb4ab` |
+| Info | `#004ac6` | `#54ddfc` |
+
+Semantic groups: `colors.brand`, `colors.background`, `colors.text`, `colors.border`,
+`colors.status.{success,warning,error,info,neutral}` (each with `text/bg/border/icon`),
+`colors.accent` (solid fills for charts and bars), `colors.overlay`.
+
+PanelUI components follow the same palettes through the CSS variables in `global.css`.
+
+## Typography
+
+Fonts are loaded in `src/app/_layout.tsx` and mapped per weight in `src/theme/tokens/typography.ts`
+(custom fonts ignore `fontWeight`, so the family name carries the weight).
+
+| Variant | Stitch token | Font | Size / line | Weight |
+| --- | --- | --- | --- | --- |
+| `display` | headline-xl | Hanken Grotesk | 36 / 44 | 700 |
+| `h1` | headline-xl-mobile | Hanken Grotesk | 28 / 36 | 700 |
+| `h2` | headline-lg-mobile | Hanken Grotesk | 22 / 30 | 600 |
+| `h3` | headline-md | Hanken Grotesk | 20 / 28 | 600 |
+| `title` | title-sm | Hanken Grotesk | 16 / 24 | 600 |
+| `bodyLarge` | body-lg | Hanken Grotesk | 16 / 24 | 400 |
+| `body`, `bodyMedium` | body-md | Hanken Grotesk | 14 / 20 | 400 |
+| `bodySmall`, `caption` | body-sm | Hanken Grotesk | 12 / 16 | 400 / 500 |
+| `label` | label-caps | JetBrains Mono | 11 / 16, +0.06em, uppercase | 600 |
+| `dataLarge` | label-data-lg | JetBrains Mono | 18 / 24 | 600 |
+| `dataMedium` | label-data-md | JetBrains Mono | 14 / 20 | 500 |
+| `metric` | key figures | Hanken Grotesk | 22 / 30 | 700 |
+| `badgeText` | badge | JetBrains Mono | 10 / 13, uppercase | 600 |
+
+Use `<Typography variant="…">`. Money and quantities use `tabular` so digits align.
+
+## Shape, spacing, elevation
+
+| Token | Value |
+| --- | --- |
+| Radii | `xs 2`, `sm 4`, `md 8`, `lg 8`, `xl 12`, `xxl 16`, `full 9999` |
+| Cards, buttons, inputs, chips | `md` (8). Badges `sm` (4). Avatars and dots `full`. |
+| Spacing scale | 1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64 (`theme.spacing.*`) |
+| Touch targets | min 44. Buttons: sm 36, md 44, lg 52. Tab bar 64. |
+| Elevation | `shadows.card` is 1px offset, 5% opacity. Depth comes from borders and fills. |
+
+Inline `padding`, `margin`, `gap` and `fontSize` must use these tokens.
+
+## Components (measured from the Stitch markup)
+
+| Component | Spec |
+| --- | --- |
+| `Card` | White, **no border**, radius 12, `shadows.card` (1px, 5%). Dark mode adds a hairline. `tone` = tinted alert card (no border). |
+| `Button` | Primary: brand fill, 44 (48 large, 40 small), radius 8, soft shadow. `secondary`: white, shadow, no border. `subtle`: tonal fill, brand text. `tonalWarning`: tonal fill, amber text. `warning`: solid amber. `ghost`: text only. |
+| `ChipPicker` | `pills` (default): separate rounded chips, mono label, scroll sideways; selected = brand fill. `segmented`: equal-width tabs in a tinted track; selected = white tab. |
+| `Badge` | Mono caps, tinted. Sharp (2px) for status, `soft` (12px) for health labels like In stock. |
+| `IconTile` | 28, 32 or 40px tinted rounded square holding one icon. |
+| `AppTopBar` | 64px, flat with a soft shadow. BatchIQ + business chip, page subtitle, gear (Manage), 32px avatar (Settings). |
+| `TabBar` | 64px, flat, soft shadow. Three 80x44 targets, 22px icons, 12px labels. |
+| `SearchField` | Tinted, borderless, soft shadow, 22px icon. |
+| `InsetStats`, `ProgressBar`, `StepIndicator`, `ScreenList`, `StackScreen`, `Modal` | As before. |
+
+Type in use: key figures on cards are mono 18 (`dataLarge`); stock quantities and billed totals are
+28 bold (`h1`); card titles 16/600 (`title`); secondary text 12 (`bodySmall`).
+
+## Show less, open for more
+
+Every list row shows only what you need to recognise it and act on it. Everything else lives in a
+detail sheet that opens on tap, with the full picture and the less common actions.
+
+| Row | Shows | Opens |
+| --- | --- | --- |
+| Stock item | name, status, quantity, Add / Use | `stock_detail`: value, safety level, cost, recent movements, count, edit |
+| Invoice | customer, number, date, item line, total, one or two actions | `invoice_detail` |
+| Batch | number, product, units, date, status | `batch_detail`: cost breakdown, ingredients used, reversal |
+| Recipe | name, product, cost per unit, status | `recipe_detail`: formulation, cost, instructions, pause/start |
+| Supplier | name, phone, what you owe | `supplier_detail`: contact, bills, edit |
+| Customer | name, phone, what they owe | `customer_detail` |
+| Profit card | one figure | `profit_detail`: the breakdown |
+
+## Information architecture
+
+Follows the Stitch **BatchIQ Lite** screens. Three daily tabs and one place for everything else:
+
+- **Home**: today's overview, start a batch, low-stock alert, recent batch runs, money and profit.
+- **Stock**: big Add Stock and Use Stock tiles, search, and simple quantity cards with + Add and - Use.
+- **Invoices**: this month's billing, New Invoice, All / Unpaid / Paid, share, remind, record payment.
+- **Manage** (gear icon in the top bar): Recipes & Batches, Stock Movements, Suppliers & Bills,
+  Customers & Payments, Expenses, Financial Ledger, Profile & Settings.
+- The avatar opens Profile & Settings directly.
+
+Why three tabs: the daily jobs are start a batch, add or use stock, bill and collect, and check
+alerts. Rarely used lists live under Manage so they never compete with those jobs.
+Sheets are routes: `/sheets/<name>?<params>`. Manage screens are stack routes with a back arrow.
+
+## Rules for contributors
+
+- Read colors with `useColors()`; build style sheets with `createStyles(colors)` + `useMemo`.
+- Use `Typography`, never raw `Text` with a hard-coded font.
+- Use tokens for spacing, radii and sizes. No hex colors in screens.
+- Show real data only. Do not add decorative telemetry, fake machines or placeholder numbers.
+- Check both appearances before shipping a screen (device setting, or `colorScheme` in the browser).
+- Changing a token means updating this file in the same commit.
+
+## Not in the app (Stitch screens that need data BatchIQ does not have)
+
+Equipment and machinery, facility and shifts, storage bins and pallets, barcode and bin scanning,
+live line telemetry, QA gates, operator checklists, named staff greetings, production goals, carrier
+and driver allocation on invoices. Add them only together with the data model and workflow behind them.
+
+## Full-page action flows (Lite)
+
+The main actions are full pages, not modals: **Add Stock**, **Use Stock**, **Start Batch**, **Create Invoice**, **Receive Payment**, **Add Expense**, **Add Customer**, **Count Stock** (`/sheets/<name>`, built from `src/components/flow/`).
+
+- `FlowPage`: back arrow, BATCHIQ label, title, scrolling card stack.
+- `FlowHeaderCard`, `FlowSection` (labelled card, optional right action link), `SelectedCard`, `QuantityStepper`, `OptionGrid`.
+- One primary button at the bottom, with Cancel below. Amber (`warning`) tone is used only for stock going out.
+- Defaults come from data (first active recipe or product); customers and materials are chosen explicitly. Nothing is hard-coded.
+- Create Invoice supports payment terms (Immediate, Net 7/15/30), which sets `dueDate` on credit invoices.

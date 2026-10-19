@@ -52,4 +52,20 @@ export const customerService = {
       return newCustomer;
     });
   },
+
+  /** Edits contact details only; balances are owned by invoices and payments. */
+  updateCustomer: async (id: string, input: CreateCustomerInput): Promise<Customer> => {
+    return simulateNetwork(() => {
+      const customer = getDB().customers.find((c) => c.id === id);
+      if (!customer) throw new Error('Customer not found');
+      customer.name = input.name;
+      customer.phone = input.phone;
+      customer.address = input.address;
+      customer.email = input.email;
+      customer.gstin = input.gstin;
+      customer.creditLimit = input.creditLimit ?? customer.creditLimit;
+      customer.notes = input.notes;
+      return { ...customer };
+    });
+  },
 };

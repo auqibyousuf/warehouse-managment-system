@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
@@ -23,7 +23,11 @@
     },
     "plugins": [
       "expo-font",
-      "expo-sharing"
-    ]
+      "expo-sharing",
+      "expo-router",
+      "expo-sqlite",
+      "expo-splash-screen"
+    ],
+    "scheme": "batchiq"
   }
 }

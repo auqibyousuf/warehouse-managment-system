@@ -18,7 +18,7 @@ export const batchRunSchema = z.object({
       z.object({
         ingredientId: z.string(),
         actualQuantity: z.number().positive('Quantity must be greater than 0'),
-      })
+      }),
     )
     .min(1, 'At least one ingredient is required'),
   notes: z.string().optional(),
@@ -29,12 +29,16 @@ export const batchRunSchema = z.object({
 });
 
 export type BatchRunFormData = z.infer<typeof batchRunSchema>;
+export type BatchRunFormInput = z.input<typeof batchRunSchema>;
 
 export const setupSchema = z.object({
   name: z.string().min(2, 'Setup name is required'),
   productId: z.string().optional(),
   productName: z.string().min(1, 'Product name is required'),
-  outputUnit: z.string().min(1, 'Enter output unit (e.g. bags, bottles, drums, boxes)').default('units'),
+  outputUnit: z
+    .string()
+    .min(1, 'Enter output unit (e.g. bags, bottles, drums, boxes)')
+    .default('units'),
   targetUnits: z.number().int().positive('Target units must be greater than 0'),
   unitSize: z.number().positive('Standard package size must be greater than 0'),
   baseUnit: z.string().min(1, 'Measurement unit (kg, L, g, ml)').default('kg'),
@@ -46,7 +50,7 @@ export const setupSchema = z.object({
         targetQuantity: z.number().positive('Target quantity must be greater than 0'),
         unit: z.string().min(1, 'Unit is required').default('kg'),
         unitCost: z.number().min(0).optional(),
-      })
+      }),
     )
     .min(1, 'At least one recipe ingredient is required'),
   notes: z.string().optional(),
@@ -56,6 +60,7 @@ export const setupSchema = z.object({
 });
 
 export type SetupFormData = z.infer<typeof setupSchema>;
+export type SetupFormInput = z.input<typeof setupSchema>;
 
 export const purchaseSchema = z.object({
   supplierId: z.string().min(1, 'Please select a supplier'),
@@ -69,6 +74,7 @@ export const purchaseSchema = z.object({
 });
 
 export type PurchaseFormData = z.infer<typeof purchaseSchema>;
+export type PurchaseFormInput = z.input<typeof purchaseSchema>;
 
 export const saleInvoiceSchema = z.object({
   customerId: z.string().min(1, 'Please select a customer'),
@@ -86,6 +92,7 @@ export const saleInvoiceSchema = z.object({
 });
 
 export type SaleInvoiceFormData = z.infer<typeof saleInvoiceSchema>;
+export type SaleInvoiceFormInput = z.input<typeof saleInvoiceSchema>;
 
 export const customerPaymentSchema = z.object({
   customerId: z.string().min(1, 'Please select a customer'),
@@ -97,16 +104,10 @@ export const customerPaymentSchema = z.object({
 });
 
 export type CustomerPaymentFormData = z.infer<typeof customerPaymentSchema>;
+export type CustomerPaymentFormInput = z.input<typeof customerPaymentSchema>;
 
 export const expenseSchema = z.object({
-  category: z.enum([
-    'electricity',
-    'labour',
-    'transport',
-    'maintenance',
-    'packaging',
-    'other',
-  ]),
+  category: z.enum(['electricity', 'labour', 'transport', 'maintenance', 'packaging', 'other']),
   amount: z.number().positive('Expense amount must be greater than 0'),
   description: z.string().min(3, 'Description must be at least 3 characters'),
   date: z.string().min(1, 'Date is required'),
@@ -114,6 +115,7 @@ export const expenseSchema = z.object({
 });
 
 export type ExpenseFormData = z.infer<typeof expenseSchema>;
+export type ExpenseFormInput = z.input<typeof expenseSchema>;
 
 export const stockAdjustmentSchema = z.object({
   itemId: z.string().min(1, 'Please select an item'),
@@ -123,6 +125,7 @@ export const stockAdjustmentSchema = z.object({
 });
 
 export type StockAdjustmentFormData = z.infer<typeof stockAdjustmentSchema>;
+export type StockAdjustmentFormInput = z.input<typeof stockAdjustmentSchema>;
 
 export const customerSchema = z.object({
   name: z.string().min(2, 'Customer name must be at least 2 characters'),
@@ -135,18 +138,26 @@ export const customerSchema = z.object({
 });
 
 export type CustomerFormData = z.infer<typeof customerSchema>;
+export type CustomerFormInput = z.input<typeof customerSchema>;
 
 export const companyProfileSchema = z.object({
   factoryName: z.string().min(2, 'Business name is required'),
   tagline: z.string().optional(),
-  address: z.string().min(5, 'Factory address is required'),
+  address: z.string().optional(),
   gstin: z.string().optional(),
-  phone: z.string().min(8, 'Contact phone is required'),
+  phone: z.string().optional(),
   email: z.string().email('Enter valid email address').or(z.literal('')).optional(),
   bankName: z.string().optional(),
   accountNumber: z.string().optional(),
   ifscCode: z.string().optional(),
   termsAndConditions: z.string().optional(),
+  // Preferences (kept as text while typing, converted on save)
+  currencySymbol: z.string().trim().min(1, 'Enter a currency symbol').max(5, 'Up to 5 characters'),
+  defaultUnitName: z.string().trim().min(1, 'Enter a unit name, e.g. bags'),
+  defaultBaseUnit: z.string().trim().min(1, 'Enter a measure, e.g. kg or L'),
+  defaultUnitSize: z.string().refine((v) => Number(v) > 0, 'Enter a number above 0'),
+  lowUnitsThreshold: z.string().refine((v) => v.trim() !== '' && Number(v) >= 0, 'Enter 0 or more'),
 });
 
 export type CompanyProfileFormData = z.infer<typeof companyProfileSchema>;
+export type CompanyProfileFormInput = z.input<typeof companyProfileSchema>;

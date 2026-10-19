@@ -9,16 +9,20 @@ import { DashboardMetrics, FactorySettings } from '../../types';
 
 export const dashboardService = {
   getMetrics: async (
-    period: 'today' | 'this_week' | 'this_month' | 'all_time' = 'this_month'
+    period: 'today' | 'this_week' | 'this_month' | 'all_time' = 'this_month',
   ): Promise<DashboardMetrics> => {
     return simulateNetwork(() => {
       const db = getDB();
 
       // Date filtering helper
-      const now = new Date('2026-10-18T12:00:00Z');
-      const startOfDay = '2026-10-18';
-      const startOfWeek = '2026-10-12';
-      const startOfMonth = '2026-10-01';
+      const now = new Date();
+      const toDateKey = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // week starts Monday
+      const startOfDay = toDateKey(now);
+      const startOfWeek = toDateKey(weekStart);
+      const startOfMonth = toDateKey(new Date(now.getFullYear(), now.getMonth(), 1));
 
       const isDateInPeriod = (dateStr: string): boolean => {
         if (period === 'all_time') return true;
@@ -30,10 +34,16 @@ export const dashboardService = {
 
       // 1. Production metrics
       const periodBatches = db.batches.filter(
-        (b) => b.status === 'confirmed' && isDateInPeriod(b.date)
+        (b) => b.status === 'confirmed' && isDateInPeriod(b.date),
       );
-      const totalUnitsProduced = periodBatches.reduce((acc, b) => acc + (b.unitsPacked || b.bagsPacked || 0), 0);
-      const totalBaseQuantity = periodBatches.reduce((acc, b) => acc + (b.actualFinishedQuantity || b.actualFinishedWeightKg || 0), 0);
+      const totalUnitsProduced = periodBatches.reduce(
+        (acc, b) => acc + (b.unitsPacked || b.bagsPacked || 0),
+        0,
+      );
+      const totalBaseQuantity = periodBatches.reduce(
+        (acc, b) => acc + (b.actualFinishedQuantity || b.actualFinishedWeightKg || 0),
+        0,
+      );
       const productionCost = periodBatches.reduce((acc, b) => acc + b.directBatchCost, 0);
       const totalBatches = periodBatches.length;
 
@@ -42,14 +52,17 @@ export const dashboardService = {
         totalUnitsProduced > 0
           ? productionCost / totalUnitsProduced
           : db.batches.length > 0
-          ? (db.batches[0].directCostPerUnit || db.batches[0].directCostPerBag || 334)
-          : 334;
+            ? db.batches[0].directCostPerUnit || db.batches[0].directCostPerBag || 0
+            : 0;
 
       // 2. Sales metrics
       const periodInvoices = db.invoices.filter(
-        (inv) => inv.paymentStatus !== 'cancelled' && isDateInPeriod(inv.date)
+        (inv) => inv.paymentStatus !== 'cancelled' && isDateInPeriod(inv.date),
       );
-      const totalUnitsSold = periodInvoices.reduce((acc, inv) => acc + (inv.quantity || inv.bagQuantity || 0), 0);
+      const totalUnitsSold = periodInvoices.reduce(
+        (acc, inv) => acc + (inv.quantity || inv.bagQuantity || 0),
+        0,
+      );
       const salesRevenue = periodInvoices.reduce((acc, inv) => acc + inv.totalAmount, 0);
 
       // 3. Cash Collections
@@ -61,12 +74,18 @@ export const dashboardService = {
 
       // 4. Inventory metrics
       const rawMaterialsCount = db.ingredients.length;
-      const finishedUnitsCount = db.products.reduce((acc, p) => acc + (p.currentStockUnits !== undefined ? p.currentStockUnits : (p.currentStockBags || 0)), 0);
+      const finishedUnitsCount = db.products.reduce(
+        (acc, p) =>
+          acc + (p.currentStockUnits !== undefined ? p.currentStockUnits : p.currentStockBags || 0),
+        0,
+      );
       const lowIngredientsCount = db.ingredients.filter(
-        (i) => i.currentStock <= i.minThreshold
+        (i) => i.currentStock <= i.minThreshold,
       ).length;
       const lowProductsCount = db.products.filter(
-        (p) => (p.currentStockUnits !== undefined ? p.currentStockUnits : (p.currentStockBags || 0)) <= (db.settings.lowUnitsThreshold || db.settings.lowBagsThreshold || 100)
+        (p) =>
+          (p.currentStockUnits !== undefined ? p.currentStockUnits : p.currentStockBags || 0) <=
+          (db.settings.lowUnitsThreshold || db.settings.lowBagsThreshold || 100),
       ).length;
       const lowStockCount = lowIngredientsCount + lowProductsCount;
 

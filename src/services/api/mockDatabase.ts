@@ -17,6 +17,7 @@ import {
   CustomerPayment,
   Expense,
 } from '../../types';
+import { createDeviceSnapshotStore } from '../storage/deviceStore';
 
 export interface DatabaseState {
   settings: FactorySettings;
@@ -35,16 +36,16 @@ export interface DatabaseState {
 
 export const initialDatabase: DatabaseState = {
   settings: {
-    factoryName: 'Nexus Manufacturing Works',
-    tagline: 'Premium Nutritional Feeds & Formulations',
-    address: 'Plot 42, Industrial Area, Phase II, Pune, Maharashtra - 411013',
-    gstin: '27AABCB1234F1Z5',
-    phone: '+91 98220 54321',
-    email: 'accounts@nexusmfg.in',
-    bankName: 'HDFC Bank Ltd',
-    accountNumber: '50200012345678',
-    ifscCode: 'HDFC0001234',
-    termsAndConditions: '1. Goods once sold will not be accepted back.\n2. Interest @ 18% p.a. charged after due date.\n3. Subject to Pune jurisdiction.',
+    factoryName: 'My Business',
+    tagline: '',
+    address: '',
+    gstin: '',
+    phone: '',
+    email: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    termsAndConditions: '',
     currencySymbol: '₹',
     defaultUnitName: 'bags',
     defaultUnitSize: 20,
@@ -132,9 +133,24 @@ export const initialDatabase: DatabaseState = {
       effectiveDate: '2026-10-01',
       notes: 'Standard batch formulation for daily production run.',
       recipeItems: [
-        { ingredientId: 'ing-1', ingredientName: 'Rice Bran (Deoiled/Chokar)', targetQuantity: 300, unit: 'kg' },
-        { ingredientId: 'ing-2', ingredientName: 'Raab / Cane Molasses', targetQuantity: 80, unit: 'kg' },
-        { ingredientId: 'ing-3', ingredientName: 'Mineral Salt & Premix', targetQuantity: 20, unit: 'kg' },
+        {
+          ingredientId: 'ing-1',
+          ingredientName: 'Rice Bran (Deoiled/Chokar)',
+          targetQuantity: 300,
+          unit: 'kg',
+        },
+        {
+          ingredientId: 'ing-2',
+          ingredientName: 'Raab / Cane Molasses',
+          targetQuantity: 80,
+          unit: 'kg',
+        },
+        {
+          ingredientId: 'ing-3',
+          ingredientName: 'Mineral Salt & Premix',
+          targetQuantity: 20,
+          unit: 'kg',
+        },
       ],
     },
   ],
@@ -276,11 +292,22 @@ export const initialDatabase: DatabaseState = {
   expenses: [],
 };
 
-// In-memory active database instance
-let db: DatabaseState = JSON.parse(JSON.stringify(initialDatabase));
+const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
+const snapshots = createDeviceSnapshotStore<DatabaseState>();
+
+// Active database: the saved snapshot when there is one, otherwise the demo seed.
+// Spreading over the seed keeps newly added collections defined after an app update.
+const saved = snapshots.load();
+let db: DatabaseState = saved ? { ...clone(initialDatabase), ...saved } : clone(initialDatabase);
+
+/** Queue a save of the current state. Called after every completed API call. */
+export const persistDB = (): void => snapshots.scheduleSave(() => db);
 
 export const getDB = (): DatabaseState => db;
 
+/** Back to the demo seed (also overwrites what is saved on the device). */
 export const resetDB = (): void => {
-  db = JSON.parse(JSON.stringify(initialDatabase));
+  db = clone(initialDatabase);
+  snapshots.saveNow(db);
 };

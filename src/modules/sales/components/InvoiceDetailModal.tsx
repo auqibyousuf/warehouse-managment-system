@@ -1,8 +1,8 @@
+import { useMoney } from '../../../hooks/useMoney';
+import { openSheet } from '../../../navigation/sheets';
+import { theme, useColors } from '../../../theme';
 import React, { useState } from 'react';
-import {
-  useSalesInvoices,
-  useCancelInvoice,
-} from '../../../hooks/api/useSales';
+import { useSalesInvoices, useCancelInvoice } from '../../../hooks/api/useSales';
 import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import { generateInvoicePDF } from '../../../utils/pdfGenerator';
@@ -30,13 +30,15 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   onClose,
   invoiceId,
 }) => {
+  const money = useMoney();
+  const colors = useColors();
   const [downloading, setDownloading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const { data: invoices = [] } = useSalesInvoices();
   const { data: settings } = useFactorySettings();
   const cancelInvoiceMutation = useCancelInvoice();
-  const { openModal, setSelectedInvoiceId, setSelectedCustomerId, setBannerAlert } = useAppStore();
+  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const invoice = invoices.find((inv) => inv.id === invoiceId);
 
@@ -65,10 +67,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   };
 
   const handleReceivePayment = () => {
-    setSelectedInvoiceId(invoice.id);
-    setSelectedCustomerId(invoice.customerId);
-    onClose();
-    openModal('record_payment');
+    openSheet(
+      'record_payment',
+      { invoiceId: invoice.id, customerId: invoice.customerId },
+      { replace: true },
+    );
   };
 
   const handleConfirmCancel = async () => {
@@ -97,10 +100,10 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
     invoice.paymentStatus === 'paid'
       ? 'success'
       : invoice.paymentStatus === 'partial'
-      ? 'warning'
-      : invoice.paymentStatus === 'cancelled'
-      ? 'danger'
-      : 'neutral';
+        ? 'warning'
+        : invoice.paymentStatus === 'cancelled'
+          ? 'danger'
+          : 'neutral';
 
   return (
     <>
@@ -138,7 +141,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   TOTAL VALUE
                 </Typography>
                 <Typography variant="h2" weight="bold" color="brandDeep">
-                  ₹{invoice.totalAmount.toLocaleString('en-IN')}
+                  {money(invoice.totalAmount)}
                 </Typography>
               </Box>
             </Row>
@@ -146,14 +149,19 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Customer Details */}
           <Card variant="elevated" padding="normal">
-            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 6 }}>
+            <Typography
+              variant="title"
+              weight="bold"
+              color="primary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Billed To (Customer)
             </Typography>
             <Typography variant="bodyMedium" weight="semibold" color="secondary">
               {invoice.customerName}
             </Typography>
             {invoice.customerAddress && (
-              <Typography variant="caption" color="muted" style={{ marginTop: 2 }}>
+              <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xxs }}>
                 Address: {invoice.customerAddress}
               </Typography>
             )}
@@ -163,7 +171,12 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               </Typography>
             )}
             {invoice.customerGstin && (
-              <Typography variant="caption" weight="semibold" color="secondary" style={{ marginTop: 2 }}>
+              <Typography
+                variant="caption"
+                weight="semibold"
+                color="secondary"
+                style={{ marginTop: theme.spacing.xxs }}
+              >
                 GSTIN: {invoice.customerGstin}
               </Typography>
             )}
@@ -171,26 +184,57 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Itemized Line Items Table */}
           <Card variant="elevated" padding="normal">
-            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 8 }}>
+            <Typography
+              variant="title"
+              weight="bold"
+              color="primary"
+              style={{ marginBottom: theme.spacing.sm }}
+            >
               Itemized Breakdown
             </Typography>
 
-            <Row justify="space-between" style={{ paddingBottom: 6, borderBottomWidth: 1, borderColor: '#e2e8f0' }}>
+            <Row
+              justify="space-between"
+              style={{
+                paddingBottom: theme.spacing.xsm,
+                borderBottomWidth: 1,
+                borderColor: colors.border.default,
+              }}
+            >
               <Typography variant="caption" weight="bold" color="muted" style={{ flex: 2 }}>
                 ITEM DESCRIPTION
               </Typography>
-              <Typography variant="caption" weight="bold" color="muted" style={{ width: 60, textAlign: 'center' }}>
+              <Typography
+                variant="caption"
+                weight="bold"
+                color="muted"
+                style={{ width: 60, textAlign: 'center' }}
+              >
                 QTY
               </Typography>
-              <Typography variant="caption" weight="bold" color="muted" style={{ width: 70, textAlign: 'right' }}>
+              <Typography
+                variant="caption"
+                weight="bold"
+                color="muted"
+                style={{ width: 70, textAlign: 'right' }}
+              >
                 RATE
               </Typography>
-              <Typography variant="caption" weight="bold" color="muted" style={{ width: 80, textAlign: 'right' }}>
+              <Typography
+                variant="caption"
+                weight="bold"
+                color="muted"
+                style={{ width: 80, textAlign: 'right' }}
+              >
                 AMOUNT
               </Typography>
             </Row>
 
-            <Row justify="space-between" align="center" style={{ paddingVertical: 10 }}>
+            <Row
+              justify="space-between"
+              align="center"
+              style={{ paddingVertical: theme.spacing.smd }}
+            >
               <Box style={{ flex: 2 }}>
                 <Typography variant="bodySmall" weight="bold" color="primary">
                   {invoice.productName}
@@ -199,14 +243,28 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   Unit: {invoice.outputUnit || 'bags'}
                 </Typography>
               </Box>
-              <Typography variant="bodySmall" weight="semibold" color="primary" style={{ width: 60, textAlign: 'center' }}>
+              <Typography
+                variant="bodySmall"
+                weight="semibold"
+                color="primary"
+                style={{ width: 60, textAlign: 'center' }}
+              >
                 {invoice.quantity || invoice.bagQuantity}
               </Typography>
-              <Typography variant="bodySmall" color="secondary" style={{ width: 70, textAlign: 'right' }}>
-                ₹{invoice.unitPrice.toLocaleString('en-IN')}
+              <Typography
+                variant="bodySmall"
+                color="secondary"
+                style={{ width: 70, textAlign: 'right' }}
+              >
+                {money(invoice.unitPrice)}
               </Typography>
-              <Typography variant="bodySmall" weight="bold" color="primary" style={{ width: 80, textAlign: 'right' }}>
-                ₹{invoice.subtotal.toLocaleString('en-IN')}
+              <Typography
+                variant="bodySmall"
+                weight="bold"
+                color="primary"
+                style={{ width: 80, textAlign: 'right' }}
+              >
+                {money(invoice.subtotal)}
               </Typography>
             </Row>
 
@@ -219,7 +277,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   Subtotal:
                 </Typography>
                 <Typography variant="caption" weight="semibold" color="primary">
-                  ₹{invoice.subtotal.toLocaleString('en-IN')}
+                  {money(invoice.subtotal)}
                 </Typography>
               </Row>
 
@@ -229,17 +287,17 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                     Discount Applied:
                   </Typography>
                   <Typography variant="caption" weight="bold" color="success">
-                    - ₹{invoice.discount.toLocaleString('en-IN')}
+                    - {money(invoice.discount)}
                   </Typography>
                 </Row>
               )}
 
-              <Row justify="space-between" style={{ paddingTop: 4 }}>
+              <Row justify="space-between" style={{ paddingTop: theme.spacing.xs }}>
                 <Typography variant="bodySmall" weight="bold" color="primary">
                   Total Invoiced:
                 </Typography>
                 <Typography variant="bodySmall" weight="bold" color="brandDeep">
-                  ₹{invoice.totalAmount.toLocaleString('en-IN')}
+                  {money(invoice.totalAmount)}
                 </Typography>
               </Row>
 
@@ -248,7 +306,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   Amount Paid:
                 </Typography>
                 <Typography variant="caption" weight="bold" color="success">
-                  ₹{invoice.amountPaid.toLocaleString('en-IN')}
+                  {money(invoice.amountPaid)}
                 </Typography>
               </Row>
 
@@ -262,8 +320,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   color={invoice.balanceDue > 0 ? 'warning' : 'success'}
                 >
                   {invoice.balanceDue > 0
-                    ? `₹${invoice.balanceDue.toLocaleString('en-IN')}`
-                    : 'Fully Paid (₹0)'}
+                    ? `${money(invoice.balanceDue)}`
+                    : `Fully Paid (${money(0)})`}
                 </Typography>
               </Row>
             </Stack>
@@ -275,7 +333,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               <Typography variant="caption" weight="bold" color="muted">
                 DISPATCH & PAYMENT NOTES
               </Typography>
-              <Typography variant="caption" color="secondary" style={{ marginTop: 2 }}>
+              <Typography
+                variant="caption"
+                color="secondary"
+                style={{ marginTop: theme.spacing.xxs }}
+              >
                 {invoice.notes}
               </Typography>
             </Card>

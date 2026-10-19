@@ -1,12 +1,8 @@
 import React from 'react';
-import {
-  StyleSheet,
-  ViewStyle,
-  View,
-} from 'react-native';
+import { StyleSheet, ViewStyle, View } from 'react-native';
 import { AnimatedPressable } from 'panelui-native';
-import * as Haptics from 'expo-haptics';
-import { theme } from '../../theme';
+import { tapLight } from '../../utils/haptics';
+import { theme, useColors } from '../../theme';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +14,9 @@ export type ButtonVariant =
   | 'ghost'
   | 'danger'
   | 'success'
-  | 'subtle';
+  | 'subtle'
+  | 'tonalWarning'
+  | 'warning';
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -49,13 +47,10 @@ export const Button: React.FC<ButtonProps> = ({
   className,
   style,
 }) => {
+  const colors = useColors();
   const handlePress = () => {
     if (disabled || loading) return;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      // Haptics optional on web / unsupported
-    }
+    tapLight();
     onPress();
   };
 
@@ -87,68 +82,84 @@ export const Button: React.FC<ButtonProps> = ({
     switch (variant) {
       case 'secondary':
         return {
-          bg: theme.colors.brand.deep,
-          text: theme.colors.text.onBrand,
-          border: theme.colors.brand.deep,
+          bg: colors.background.surface,
+          text: colors.text.primary,
+          border: colors.scheme === 'dark' ? colors.border.default : 'transparent',
+        };
+      case 'warning':
+        return {
+          bg: colors.accent.warning,
+          text: colors.onAccent.warning,
+          border: 'transparent',
+        };
+      case 'tonalWarning':
+        return {
+          bg: colors.background.surfaceTertiary,
+          text: colors.status.warning.text,
+          border: 'transparent',
         };
       case 'outline':
         return {
           bg: 'transparent',
-          text: theme.colors.brand.primary,
-          border: theme.colors.border.brand,
+          text: colors.brand.primary,
+          border: colors.border.brand,
         };
       case 'ghost':
         return {
           bg: 'transparent',
-          text: theme.colors.brand.primary,
+          text: colors.brand.primary,
           border: 'transparent',
         };
       case 'danger':
         return {
-          bg: theme.colors.status.error.bg,
-          text: theme.colors.status.error.text,
-          border: theme.colors.status.error.border,
+          bg: colors.status.error.bg,
+          text: colors.status.error.text,
+          border: colors.status.error.border,
         };
       case 'success':
         return {
-          bg: theme.colors.status.success.text,
-          text: theme.colors.text.onBrand,
-          border: theme.colors.status.success.text,
+          bg: colors.status.success.text,
+          text: colors.text.onBrand,
+          border: colors.status.success.text,
         };
       case 'subtle':
         return {
-          bg: theme.colors.background.surfaceSecondary,
-          text: theme.colors.text.primary,
-          border: theme.colors.border.subtle,
+          bg: colors.background.surfaceTertiary,
+          text: colors.brand.primary,
+          border: 'transparent',
         };
       case 'primary':
       default:
         return {
-          bg: theme.colors.brand.primary,
-          text: theme.colors.text.onBrand,
-          border: theme.colors.brand.primary,
+          bg: colors.brand.primary,
+          text: colors.text.onBrand,
+          border: colors.brand.primary,
         };
     }
   };
 
-  const colors = getColors();
+  const variantColors = getColors();
 
   return (
     <AnimatedPressable
       onPress={handlePress}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
       pressScale={0.97}
       pressOpacity={variant === 'ghost' ? 0.7 : 1}
-      className={`flex-row items-center justify-center rounded-md border ${fullWidth ? 'w-full' : ''} ${className || ''}`}
+      className={`flex-row items-center justify-center border ${fullWidth ? 'w-full' : ''} ${className || ''}`}
       style={[
         styles.button,
         {
           height: getHeight(),
           paddingHorizontal: getPaddingHorizontal(),
-          backgroundColor: disabled ? theme.colors.background.surfaceTertiary : colors.bg,
-          borderColor: disabled ? theme.colors.border.default : colors.border,
-          borderWidth: variant === 'ghost' ? 0 : 1,
-          borderRadius: theme.radii.sm,
+          backgroundColor: disabled ? colors.background.surfaceTertiary : variantColors.bg,
+          borderColor: disabled ? colors.border.default : variantColors.border,
+          borderWidth: variant === 'ghost' || variantColors.border === 'transparent' ? 0 : 1,
+          borderRadius: theme.radii.md,
+          ...(variant === 'primary' || variant === 'secondary' ? theme.shadows.card : {}),
           width: fullWidth ? '100%' : 'auto',
           minHeight: theme.spacing.layout.touchTargetMin,
         },
@@ -160,7 +171,7 @@ export const Button: React.FC<ButtonProps> = ({
           <Icon
             name={leftIcon}
             size={size === 'sm' ? 'xs' : 'sm'}
-            color={disabled ? theme.colors.text.subtle : colors.text}
+            color={disabled ? colors.text.subtle : variantColors.text}
             style={{ marginRight: theme.spacing.sm }}
           />
         )}
@@ -168,7 +179,7 @@ export const Button: React.FC<ButtonProps> = ({
           variant={size === 'sm' ? 'bodySmall' : size === 'lg' ? 'bodyLarge' : 'bodyMedium'}
           weight="semibold"
           style={{
-            color: disabled ? theme.colors.text.subtle : colors.text,
+            color: disabled ? colors.text.subtle : variantColors.text,
           }}
         >
           {label}
@@ -177,7 +188,7 @@ export const Button: React.FC<ButtonProps> = ({
           <Icon
             name={rightIcon}
             size={size === 'sm' ? 'xs' : 'sm'}
-            color={disabled ? theme.colors.text.subtle : colors.text}
+            color={disabled ? colors.text.subtle : variantColors.text}
             style={{ marginLeft: theme.spacing.sm }}
           />
         )}
@@ -200,4 +211,3 @@ const styles = StyleSheet.create({
 });
 
 export default Button;
-

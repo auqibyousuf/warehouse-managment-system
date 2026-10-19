@@ -1,8 +1,12 @@
 # Warehouse Management System (BatchIQ)
 
-An industrial-grade, multi-platform Warehouse and Manufacturing Operations Management System built with **React Native**, **Expo SDK 54**, **PanelUI Native**, and **Tailwind CSS (Uniwind)**.
+An industrial-grade, multi-platform Warehouse and Manufacturing Operations Management System built with **React Native**, **Expo SDK 58**, **PanelUI Native**, and **Tailwind CSS (Uniwind)**.
 
 Designed for manufacturing plants, feed processing factories, formulation mills, and multi-category warehouse operations to track production batches, raw material/packaging stock levels, purchases, sales invoices, and supplier/customer financial ledgers in real-time.
+
+> **Status:** prototype. Data is stored on this device (SQLite on phones, localStorage on web; a snapshot of the mock database in `src/services/api/mockDatabase.ts`), starts from sample data, and can be reset from Business > Settings. There is no server or sync yet. Native modules (`panelui-native`, `uniwind`, `react-native-worklets`) require a development build, not Expo Go.
+>
+> Checks: `npm run lint`, `npm run typecheck` and `npm test`. Product/architecture audit: see `AUDIT.md`.
 
 ---
 

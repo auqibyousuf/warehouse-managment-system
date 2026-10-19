@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Modal } from './Modal';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
@@ -29,6 +29,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isDestructive = false,
   loading = false,
 }) => {
+  const colors = useColors();
   return (
     <Modal
       visible={visible}
@@ -51,9 +52,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             style={[
               styles.iconWrapper,
               {
-                backgroundColor: isDestructive
-                  ? theme.colors.status.error.bg
-                  : theme.colors.brand.wash,
+                backgroundColor: isDestructive ? colors.status.error.bg : colors.brand.wash,
               },
             ]}
           >

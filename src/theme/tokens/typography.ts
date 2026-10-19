@@ -1,14 +1,53 @@
-/**
- * Cattle Feed Factory Management - Typography Tokens
- * Categorized tokens for clear operational readability and tabular numbers.
- */
-
 import { TextStyle } from 'react-native';
+
+/**
+ * BatchIQ - Typography Tokens
+ * Source of truth: Stitch design "BatchIQ Warehouse Operations Manager".
+ * Hanken Grotesk for headlines and reading text, JetBrains Mono for labels and figures.
+ * One type system for light and dark so switching appearance never reflows text.
+ * Custom fonts are chosen by family name per weight (fontWeight is ignored for them).
+ */
+export type FontWeightKey = 'regular' | 'medium' | 'semibold' | 'bold' | 'heavy';
 
 export const fontFamilies = {
   sans: 'System',
   mono: 'Courier',
+  body: {
+    regular: 'HankenGrotesk_400Regular',
+    medium: 'HankenGrotesk_500Medium',
+    semibold: 'HankenGrotesk_600SemiBold',
+    bold: 'HankenGrotesk_700Bold',
+    heavy: 'HankenGrotesk_700Bold',
+  } satisfies Record<FontWeightKey, string>,
+  display: {
+    regular: 'HankenGrotesk_500Medium',
+    medium: 'HankenGrotesk_500Medium',
+    semibold: 'HankenGrotesk_600SemiBold',
+    bold: 'HankenGrotesk_700Bold',
+    heavy: 'HankenGrotesk_700Bold',
+  } satisfies Record<FontWeightKey, string>,
+  data: {
+    regular: 'JetBrainsMono_500Medium',
+    medium: 'JetBrainsMono_500Medium',
+    semibold: 'JetBrainsMono_600SemiBold',
+    bold: 'JetBrainsMono_600SemiBold',
+    heavy: 'JetBrainsMono_600SemiBold',
+  } satisfies Record<FontWeightKey, string>,
 } as const;
+
+/** Variants set in the headline face. */
+export const displayVariants = new Set([
+  'display',
+  'h1',
+  'h2',
+  'h3',
+  'title',
+  'metric',
+  'metricSmall',
+]);
+
+/** Variants set in the monospace data face (labels, figures, codes). */
+export const dataVariants = new Set(['label', 'badgeText', 'dataLarge', 'dataMedium']);
 
 export const fontWeights: Record<string, TextStyle['fontWeight']> = {
   regular: '400',
@@ -18,18 +57,19 @@ export const fontWeights: Record<string, TextStyle['fontWeight']> = {
   heavy: '800',
 };
 
+/** Raw sizes from the Stitch scale (px). */
 export const fontSizes = {
   xxs: 10,
-  xs: 12,
-  sm: 13,
-  md: 14,
-  base: 15,
-  lg: 16,
-  xl: 18,
-  xxl: 20,
-  headingLg: 24,
-  headingXl: 28,
-  display: 34,
+  xs: 11, // label-caps
+  sm: 12, // body-sm
+  md: 14, // body-md, label-data-md
+  base: 14,
+  lg: 16, // body-lg, title-sm
+  xl: 18, // label-data-lg
+  xxl: 20, // headline-md
+  headingLg: 22, // headline-lg-mobile
+  headingXl: 28, // headline-xl-mobile
+  display: 36, // headline-xl (desktop/tablet)
 } as const;
 
 export const lineHeights = {
@@ -41,91 +81,118 @@ export const lineHeights = {
 } as const;
 
 export const letterSpacings = {
-  tighter: -0.5,
-  tight: -0.2,
+  tighter: -0.4, // headline-xl-mobile -0.015em at 28px
+  tight: -0.2, // headline-lg/md -0.01em
   normal: 0,
   wide: 0.3,
   wider: 0.6,
-  caps: 0.8,
+  caps: 0.66, // label-caps 0.06em at 11px
 } as const;
 
+/** Variants mirror Stitch tokens. Names in comments are the Stitch token names. */
 export const textVariants: Record<string, TextStyle> = {
   display: {
-    fontSize: fontSizes.display,
-    lineHeight: 40,
+    // headline-xl
+    fontSize: 36,
+    lineHeight: 44,
     fontWeight: fontWeights.bold,
-    letterSpacing: letterSpacings.tight,
+    letterSpacing: -0.72,
   },
   h1: {
-    fontSize: fontSizes.headingXl,
-    lineHeight: 34,
+    // headline-xl-mobile
+    fontSize: 28,
+    lineHeight: 36,
     fontWeight: fontWeights.bold,
-    letterSpacing: letterSpacings.tight,
+    letterSpacing: -0.42,
   },
   h2: {
-    fontSize: fontSizes.headingLg,
+    // headline-lg-mobile
+    fontSize: 22,
     lineHeight: 30,
-    fontWeight: fontWeights.bold,
-    letterSpacing: letterSpacings.tight,
+    fontWeight: fontWeights.semibold,
+    letterSpacing: -0.22,
   },
   h3: {
-    fontSize: fontSizes.xxl,
-    lineHeight: 26,
+    // headline-md
+    fontSize: 20,
+    lineHeight: 28,
     fontWeight: fontWeights.semibold,
-    letterSpacing: letterSpacings.tight,
+    letterSpacing: -0.2,
   },
   title: {
-    fontSize: fontSizes.xl,
+    // title-sm
+    fontSize: 16,
     lineHeight: 24,
     fontWeight: fontWeights.semibold,
+    letterSpacing: -0.08,
   },
   bodyLarge: {
-    fontSize: fontSizes.lg,
-    lineHeight: 22,
+    // body-lg
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: fontWeights.regular,
   },
   body: {
-    fontSize: fontSizes.base,
-    lineHeight: 21,
+    // body-md
+    fontSize: 14,
+    lineHeight: 20,
     fontWeight: fontWeights.regular,
   },
   bodyMedium: {
-    fontSize: fontSizes.md,
+    // body-md
+    fontSize: 14,
     lineHeight: 20,
     fontWeight: fontWeights.regular,
   },
   bodySmall: {
-    fontSize: fontSizes.sm,
-    lineHeight: 18,
+    // body-sm
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: fontWeights.regular,
   },
   caption: {
-    fontSize: fontSizes.xs,
+    // body-sm, medium weight
+    fontSize: 12,
     lineHeight: 16,
     fontWeight: fontWeights.medium,
   },
   label: {
-    fontSize: fontSizes.xs,
-    lineHeight: 15,
+    // label-caps
+    fontSize: 11,
+    lineHeight: 16,
     fontWeight: fontWeights.semibold,
-    letterSpacing: letterSpacings.wide,
+    letterSpacing: 0.66,
+    textTransform: 'uppercase',
+  },
+  dataLarge: {
+    // label-data-lg
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: fontWeights.semibold,
+  },
+  dataMedium: {
+    // label-data-md
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: fontWeights.medium,
   },
   metric: {
-    fontSize: fontSizes.headingLg,
+    // key figures: headline-lg-mobile size in the headline face
+    fontSize: 22,
     lineHeight: 30,
     fontWeight: fontWeights.bold,
-    letterSpacing: letterSpacings.tight,
+    letterSpacing: -0.22,
   },
   metricSmall: {
-    fontSize: fontSizes.xl,
+    fontSize: 18,
     lineHeight: 24,
     fontWeight: fontWeights.bold,
   },
   badgeText: {
-    fontSize: fontSizes.xxs,
+    fontSize: 10,
     lineHeight: 13,
-    fontWeight: fontWeights.bold,
-    letterSpacing: letterSpacings.caps,
+    fontWeight: fontWeights.semibold,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
 };

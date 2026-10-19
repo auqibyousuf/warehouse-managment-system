@@ -1,15 +1,18 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import { Card as PanelCard, AnimatedPressable } from 'panelui-native';
-import * as Haptics from 'expo-haptics';
-import { theme } from '../../theme';
+import { tapLight } from '../../utils/haptics';
+import { theme, useColors } from '../../theme';
 
 export type CardVariant = 'elevated' | 'outlined' | 'flat' | 'accent' | 'interactive';
 export type CardPadding = 'none' | 'compact' | 'normal' | 'spacious';
+export type CardTone = 'warning' | 'success' | 'danger' | 'info';
 
 export interface CardProps {
   variant?: CardVariant;
   padding?: CardPadding;
+  /** Tinted card for alerts and highlights (no border), e.g. a low-stock warning. */
+  tone?: CardTone;
   onPress?: () => void;
   className?: string;
   style?: ViewStyle | (ViewStyle | undefined)[];
@@ -19,11 +22,13 @@ export interface CardProps {
 export const CardComponent: React.FC<CardProps> = ({
   variant = 'elevated',
   padding = 'normal',
+  tone,
   onPress,
   className,
   style,
   children,
 }) => {
+  const colors = useColors();
   const getPadding = () => {
     switch (padding) {
       case 'none':
@@ -42,58 +47,67 @@ export const CardComponent: React.FC<CardProps> = ({
     switch (variant) {
       case 'outlined':
         return {
-          backgroundColor: theme.colors.background.surface,
-          borderColor: theme.colors.border.default,
+          backgroundColor: colors.background.surface,
+          borderColor: colors.border.default,
           borderWidth: 1,
           ...theme.shadows.none,
         };
       case 'flat':
         return {
-          backgroundColor: theme.colors.background.surfaceSecondary,
+          backgroundColor: colors.background.surfaceSecondary,
           borderColor: 'transparent',
           borderWidth: 0,
           ...theme.shadows.none,
         };
       case 'accent':
         return {
-          backgroundColor: theme.colors.brand.wash,
-          borderColor: theme.colors.brand.subtle,
-          borderWidth: 1,
+          backgroundColor: colors.brand.wash,
+          borderColor: 'transparent',
+          borderWidth: 0,
           ...theme.shadows.none,
         };
       case 'interactive':
       case 'elevated':
       default:
+        // Stitch: white card, no border, soft shadow. Dark mode keeps a hairline since shadows vanish.
         return {
-          backgroundColor: theme.colors.background.surface,
-          borderColor: theme.colors.border.subtle,
-          borderWidth: 1,
+          backgroundColor: colors.background.surface,
+          borderColor: colors.border.subtle,
+          borderWidth: colors.scheme === 'dark' ? 1 : 0,
           ...theme.shadows.card,
         };
     }
   };
 
+  const toneColors = tone ? colors.status[tone === 'danger' ? 'error' : tone] : null;
+  const toneStyles = toneColors
+    ? {
+        backgroundColor: toneColors.bg,
+        borderColor: toneColors.border,
+        borderWidth: colors.scheme === 'dark' ? 1 : 0,
+        ...theme.shadows.none,
+      }
+    : null;
+
   const baseCardStyle: ViewStyle = {
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.xl,
     padding: getPadding(),
     overflow: 'hidden',
     ...getVariantStyles(),
+    ...(toneStyles ?? {}),
   };
 
-  const combinedStyle = Array.isArray(style)
-    ? [baseCardStyle, ...style]
-    : [baseCardStyle, style];
+  const combinedStyle = Array.isArray(style) ? [baseCardStyle, ...style] : [baseCardStyle, style];
 
   if (onPress || variant === 'interactive') {
     return (
       <AnimatedPressable
-        className={`rounded-lg overflow-hidden ${className || ''}`}
+        className={className}
+        accessibilityRole="button"
         pressScale={0.98}
         pressOpacity={0.92}
         onPress={() => {
-          try {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          } catch {}
+          tapLight();
           if (onPress) onPress();
         }}
         style={combinedStyle}
@@ -104,10 +118,7 @@ export const CardComponent: React.FC<CardProps> = ({
   }
 
   return (
-    <PanelCard
-      className={`rounded-lg overflow-hidden ${className || ''}`}
-      style={combinedStyle}
-    >
+    <PanelCard className={className} style={combinedStyle}>
       {children}
     </PanelCard>
   );
@@ -122,4 +133,3 @@ export const Card = Object.assign(CardComponent, {
 });
 
 export default Card;
-

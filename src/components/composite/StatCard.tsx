@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Card } from '../primitives/Card';
@@ -28,47 +28,48 @@ export const StatCard: React.FC<StatCardProps> = ({
   onPress,
   style,
 }) => {
+  const colors = useColors();
   const getThemeStyles = () => {
     switch (variant) {
       case 'forest':
         return {
-          cardBg: theme.colors.brand.wash,
-          borderColor: theme.colors.brand.subtle,
-          iconBg: theme.colors.brand.subtle,
-          iconColor: theme.colors.brand.deep,
+          cardBg: colors.brand.wash,
+          borderColor: colors.brand.subtle,
+          iconBg: colors.brand.subtle,
+          iconColor: colors.brand.deep,
           valueColor: 'brandDeep' as const,
         };
       case 'warning':
         return {
-          cardBg: theme.colors.status.warning.bg,
-          borderColor: theme.colors.status.warning.border,
-          iconBg: theme.colors.palette.amberLight,
-          iconColor: theme.colors.status.warning.icon,
+          cardBg: colors.status.warning.bg,
+          borderColor: colors.status.warning.border,
+          iconBg: colors.status.warning.border,
+          iconColor: colors.status.warning.icon,
           valueColor: 'warning' as const,
         };
       case 'danger':
         return {
-          cardBg: theme.colors.status.error.bg,
-          borderColor: theme.colors.status.error.border,
-          iconBg: theme.colors.palette.redLight,
-          iconColor: theme.colors.status.error.icon,
+          cardBg: colors.status.error.bg,
+          borderColor: colors.status.error.border,
+          iconBg: colors.status.error.border,
+          iconColor: colors.status.error.icon,
           valueColor: 'error' as const,
         };
       case 'success':
         return {
-          cardBg: theme.colors.status.success.bg,
-          borderColor: theme.colors.status.success.border,
-          iconBg: theme.colors.palette.greenLight,
-          iconColor: theme.colors.status.success.icon,
+          cardBg: colors.status.success.bg,
+          borderColor: colors.status.success.border,
+          iconBg: colors.status.success.border,
+          iconColor: colors.status.success.icon,
           valueColor: 'success' as const,
         };
       case 'default':
       default:
         return {
-          cardBg: theme.colors.background.surface,
-          borderColor: theme.colors.border.subtle,
-          iconBg: theme.colors.background.surfaceSecondary,
-          iconColor: theme.colors.brand.primary,
+          cardBg: colors.background.surface,
+          borderColor: colors.border.subtle,
+          iconBg: colors.background.surfaceSecondary,
+          iconColor: colors.brand.primary,
           valueColor: 'primary' as const,
         };
     }
@@ -83,6 +84,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       onPress={onPress}
       style={[
         {
+          flex: 1,
           backgroundColor: currentTheme.cardBg,
           borderColor: currentTheme.borderColor,
           borderWidth: 1,
@@ -91,7 +93,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       ]}
     >
       <Row justify="space-between" align="flex-start" style={styles.topRow}>
-        <Typography variant="label" color="muted" numberOfLines={1} style={{ flex: 1 }}>
+        <Typography variant="label" color="muted" style={styles.label}>
           {label}
         </Typography>
         {icon && (
@@ -105,13 +107,16 @@ export const StatCard: React.FC<StatCardProps> = ({
         variant="metric"
         color={currentTheme.valueColor}
         tabular
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
         style={styles.metricText}
       >
         {value}
       </Typography>
 
       {subtitle && (
-        <Typography variant="caption" color="muted" numberOfLines={1} style={styles.subtitleText}>
+        <Typography variant="caption" color="muted" style={styles.subtitleText}>
           {subtitle}
         </Typography>
       )}
@@ -120,13 +125,17 @@ export const StatCard: React.FC<StatCardProps> = ({
 };
 
 const styles = StyleSheet.create({
+  label: {
+    flex: 1,
+    flexShrink: 1,
+  },
   topRow: {
     marginBottom: theme.spacing.xs,
   },
   iconWrapper: {
-    width: 26,
-    height: 26,
-    borderRadius: theme.radii.xs,
+    width: 32,
+    height: 32,
+    borderRadius: theme.radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: theme.spacing.xs,
