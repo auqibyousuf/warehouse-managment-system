@@ -67,7 +67,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
   );
   const [targetUnits, setTargetUnits] = useState('');
   const [lines, setLines] = useState<Line[]>([]);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(true);
   const [newMaterial, setNewMaterial] = useState(false);
   const [error, setError] = useState('');
 
@@ -281,7 +281,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
             {view.length === 0 && (
               <EmptyState
                 title="No items yet"
-                description="Tap Add from stock and pick the materials this recipe uses."
+                description="Pick every material that goes into the mixer from your stock below."
               />
             )}
             <Stack gap="sm">
@@ -323,7 +323,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
             {adding && (
               <>
                 <Typography variant="label" color="muted">
-                  Your stock
+                  Tap each item to add it. Add as many as the mixer uses.
                 </Typography>
                 <ChipPicker
                   options={usable
