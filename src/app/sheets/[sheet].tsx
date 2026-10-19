@@ -1,14 +1,14 @@
 import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { closeSheet, SheetName, SheetParams } from '../../navigation/sheets';
-import { StartRunModal } from '../../modules/production/components/StartRunModal';
+import { StartBatchPage } from '../../modules/production/components/StartBatchPage';
 import { CreateSetupModal } from '../../modules/production/components/CreateSetupModal';
-import { RecordPurchaseModal } from '../../modules/inventory/components/RecordPurchaseModal';
+import { AddStockPage } from '../../modules/inventory/components/AddStockPage';
 import { AdjustStockModal } from '../../modules/inventory/components/AdjustStockModal';
 import { CreateIngredientModal } from '../../modules/inventory/components/CreateIngredientModal';
 import { CreateSupplierModal } from '../../modules/inventory/components/CreateSupplierModal';
 import { PurchaseDetailModal } from '../../modules/inventory/components/PurchaseDetailModal';
-import { CreateSaleModal } from '../../modules/sales/components/CreateSaleModal';
+import { CreateInvoicePage } from '../../modules/sales/components/CreateInvoicePage';
 import { RecordPaymentModal } from '../../modules/sales/components/RecordPaymentModal';
 import { InvoiceDetailModal } from '../../modules/sales/components/InvoiceDetailModal';
 import { CreateCustomerModal } from '../../modules/customers/components/CreateCustomerModal';
@@ -17,7 +17,7 @@ import { RecordExpenseModal } from '../../modules/expenses/components/RecordExpe
 import { EditSupplierModal } from '../../modules/inventory/components/EditSupplierModal';
 import { EditProductModal } from '../../modules/inventory/components/EditProductModal';
 import { EditCustomerModal } from '../../modules/customers/components/EditCustomerModal';
-import { UseStockModal } from '../../modules/inventory/components/UseStockModal';
+import { UseStockPage } from '../../modules/inventory/components/UseStockPage';
 import { BatchDetailModal } from '../../modules/details/BatchDetailModal';
 import { ProfitDetailModal } from '../../modules/details/ProfitDetailModal';
 import { StockDetailModal } from '../../modules/details/StockDetailModal';
@@ -28,16 +28,11 @@ import { CompanyProfileModal } from '../../modules/business/components/CompanyPr
 const onClose = closeSheet;
 
 const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
-  start_batch: (p) => (
-    <StartRunModal visible onClose={onClose} preselectedSetupId={p.setupId ?? null} />
-  ),
+  start_batch: (p) => <StartBatchPage onClose={onClose} preselectedSetupId={p.setupId ?? null} />,
   create_setup: () => <CreateSetupModal visible onClose={onClose} />,
-  record_purchase: (p) => (
-    <RecordPurchaseModal visible onClose={onClose} preselectedItemId={p.itemId ?? null} />
-  ),
+  record_purchase: (p) => <AddStockPage onClose={onClose} preselectedItemId={p.itemId ?? null} />,
   use_stock: (p) => (
-    <UseStockModal
-      visible
+    <UseStockPage
       onClose={onClose}
       itemId={p.itemId ?? null}
       kind={p.kind === 'waste' ? 'waste' : 'usage'}
@@ -49,7 +44,7 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   purchase_detail: (p) => (
     <PurchaseDetailModal visible onClose={onClose} purchaseId={p.purchaseId ?? null} />
   ),
-  create_sale: () => <CreateSaleModal visible onClose={onClose} />,
+  create_sale: () => <CreateInvoicePage onClose={onClose} />,
   record_payment: (p) => (
     <RecordPaymentModal
       visible

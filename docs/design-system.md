@@ -139,3 +139,13 @@ Sheets are routes: `/sheets/<name>?<params>`. Manage screens are stack routes wi
 Equipment and machinery, facility and shifts, storage bins and pallets, barcode and bin scanning,
 live line telemetry, QA gates, operator checklists, named staff greetings, production goals, carrier
 and driver allocation on invoices. Add them only together with the data model and workflow behind them.
+
+## Full-page action flows (Lite)
+
+The four main actions are full pages, not modals: **Add Stock**, **Use Stock**, **Start Batch**, **Create Invoice** (`/sheets/<name>`, built from `src/components/flow/`).
+
+- `FlowPage`: back arrow, BATCHIQ label, title, scrolling card stack.
+- `FlowHeaderCard`, `FlowSection` (labelled card, optional right action link), `SelectedCard`, `QuantityStepper`, `OptionGrid`.
+- One primary button at the bottom, with Cancel below. Amber (`warning`) tone is used only for stock going out.
+- Defaults come from data (first active recipe or product); customers and materials are chosen explicitly. Nothing is hard-coded.
+- Create Invoice supports payment terms (Immediate, Net 7/15/30), which sets `dueDate` on credit invoices.

@@ -140,6 +140,29 @@ describe('production', () => {
   });
 });
 
+describe('payment terms', () => {
+  it('sets a due date only for credit invoices', async () => {
+    const base = {
+      customerId: 'cust-1',
+      productId: 'prod-1',
+      quantity: 1,
+      unitPrice: 100,
+      date: '2026-01-30',
+      paymentTermDays: 15,
+    };
+    const credit = await salesService.createInvoice({
+      ...base,
+      amountPaidNow: 0,
+    });
+    expect(credit.dueDate).toBe('2026-02-14');
+    const paid = await salesService.createInvoice({
+      ...base,
+      amountPaidNow: 100,
+    });
+    expect(paid.dueDate).toBeUndefined();
+  });
+});
+
 describe('editing master data', () => {
   it('updates a customer without touching the money balances', async () => {
     const before = { ...customer() };
@@ -155,13 +178,20 @@ describe('editing master data', () => {
 
   it('keeps issued invoices as they were when a customer is renamed', async () => {
     const invoiceName = getDB().invoices[0].customerName;
-    await customerService.updateCustomer('cust-1', { name: 'Renamed', phone: '1', address: 'x' });
+    await customerService.updateCustomer('cust-1', {
+      name: 'Renamed',
+      phone: '1',
+      address: 'x',
+    });
     expect(getDB().invoices[0].customerName).toBe(invoiceName);
   });
 
   it('updates a supplier and a product price', async () => {
     const supplier = getDB().suppliers[0];
-    await inventoryService.updateSupplier(supplier.id, { name: 'New Vendor', phone: '123' });
+    await inventoryService.updateSupplier(supplier.id, {
+      name: 'New Vendor',
+      phone: '123',
+    });
     expect(getDB().suppliers[0].name).toBe('New Vendor');
 
     await inventoryService.updateProduct('prod-1', {
@@ -174,7 +204,10 @@ describe('editing master data', () => {
 
   it('rejects edits to records that do not exist', async () => {
     await expect(
-      inventoryService.updateProduct('nope', { name: 'x', sellingPricePerUnit: 1 }),
+      inventoryService.updateProduct('nope', {
+        name: 'x',
+        sellingPricePerUnit: 1,
+      }),
     ).rejects.toThrow(/not found/);
   });
 });
@@ -207,23 +240,39 @@ describe('using stock outside a batch', () => {
     expect(ingredient('ing-1').currentStock).toBe(before - 25);
     const last = getDB().movements[0];
     expect(getDB().movements.length).toBe(movements + 1);
-    expect(last).toMatchObject({ movementType: 'stock_waste', direction: 'out', quantity: 25 });
+    expect(last).toMatchObject({
+      movementType: 'stock_waste',
+      direction: 'out',
+      quantity: 25,
+    });
   });
 
   it('refuses to use more than is in stock, or zero', async () => {
     const before = ingredient('ing-1').currentStock;
     await expect(
-      inventoryService.recordUsage({ itemId: 'ing-1', quantity: before + 1, kind: 'usage' }),
+      inventoryService.recordUsage({
+        itemId: 'ing-1',
+        quantity: before + 1,
+        kind: 'usage',
+      }),
     ).rejects.toThrow(/Only/);
     await expect(
-      inventoryService.recordUsage({ itemId: 'ing-1', quantity: 0, kind: 'usage' }),
+      inventoryService.recordUsage({
+        itemId: 'ing-1',
+        quantity: 0,
+        kind: 'usage',
+      }),
     ).rejects.toThrow(/above 0/);
     expect(ingredient('ing-1').currentStock).toBe(before);
   });
 
   it('does not allow finished goods to be used this way', async () => {
     await expect(
-      inventoryService.recordUsage({ itemId: 'prod-1', quantity: 1, kind: 'usage' }),
+      inventoryService.recordUsage({
+        itemId: 'prod-1',
+        quantity: 1,
+        kind: 'usage',
+      }),
     ).rejects.toThrow(/raw materials/);
   });
 });

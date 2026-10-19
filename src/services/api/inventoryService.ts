@@ -220,7 +220,12 @@ export const inventoryService = {
 
   updateSupplier: async (
     id: string,
-    input: { name: string; phone: string; address?: string; gstNumber?: string },
+    input: {
+      name: string;
+      phone: string;
+      address?: string;
+      gstNumber?: string;
+    },
   ) => {
     return simulateNetwork(() => {
       const supplier = getDB().suppliers.find((s) => s.id === id);

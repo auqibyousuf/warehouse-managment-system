@@ -7,6 +7,12 @@ import { getDB } from './mockDatabase';
 import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import { SaleInvoice, CustomerPayment, InvoiceStatus } from '../../types';
 
+const addDays = (isoDate: string, days: number) => {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().split('T')[0];
+};
+
 export interface CreateSaleInput {
   customerId: string;
   productId: string;
@@ -18,6 +24,8 @@ export interface CreateSaleInput {
   amountPaidNow: number;
   paymentMethod?: 'cash' | 'upi' | 'bank_transfer' | 'cheque';
   date: string;
+  /** Days after the invoice date the balance is due; 0 or omitted means due immediately. */
+  paymentTermDays?: number;
   notes?: string;
 }
 
@@ -126,6 +134,9 @@ export const salesService = {
         balanceDue,
         paymentStatus,
         isCredit,
+        ...(isCredit && input.paymentTermDays
+          ? { dueDate: addDays(input.date, input.paymentTermDays) }
+          : {}),
       };
 
       db.invoices.unshift(newInvoice);
