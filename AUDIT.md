@@ -12,7 +12,7 @@ Status: items marked **Fixed** are in this change; the rest are recommendations.
 - The dashboard invented a 334 average cost per unit when no batches exist. A made-up number in a finance view erodes trust. **Fixed** (shows 0).
 - A new sale defaulted to 20 units and silently sold 20 when the quantity was empty. That is a feed-factory assumption in a generic product. **Fixed** (default 1, no silent fallback).
 - Document numbers (invoice, receipt, purchase, batch, expense) came from `list.length + 1` with a hardcoded year. Deleting or cancelling a record could produce duplicates, which is an accounting risk. **Fixed** (next number from the highest existing, current year).
-- Must have next: real persistence, because data is lost on reload. Should have: roles and permissions (owner vs. staff), because the product has no auth and every user can reverse batches and cancel invoices. Won't have now: more modules.
+- Persistence: **done (local-first)**. The database is saved on the device (`expo-sqlite/kv-store`, versioned snapshot, debounced after each API call) and restored at startup. Business, Sample Data, has a confirmed "Reset to Sample Data". Still needed for multi-user: a real backend behind `services/api` (the service layer is unchanged, so it can be swapped). Must have next after that: Should have: roles and permissions (owner vs. staff), because the product has no auth and every user can reverse batches and cancel invoices. Won't have now: more modules.
 - Success metrics to track: time to record a purchase or sale, batch-reversal rate, and stock-adjustment frequency (a proxy for ledger trust).
 
 ## 2. Head of Product Design

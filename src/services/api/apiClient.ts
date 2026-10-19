@@ -4,6 +4,8 @@
  * and server-side authoritative business rules with latency.
  */
 
+import { persistDB } from './mockDatabase';
+
 export interface ApiResponse<T> {
   data: T;
   success: boolean;
@@ -15,7 +17,9 @@ const SIMULATED_LATENCY_MS = 150;
 
 export const simulateNetwork = async <T>(resolver: () => T | Promise<T>): Promise<T> => {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
-  return resolver();
+  const result = await resolver();
+  persistDB();
+  return result;
 };
 
 export const generateId = (prefix: string = 'id'): string => {

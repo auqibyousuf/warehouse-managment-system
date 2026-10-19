@@ -1,6 +1,8 @@
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { resetDB } from '../../services/api/mockDatabase';
 import { useCustomers } from '../../hooks/api/useCustomers';
 import { useExpenses } from '../../hooks/api/useExpenses';
 import { useFactorySettings } from '../../hooks/api/useDashboard';
@@ -20,6 +22,7 @@ import {
   LoadingState,
   EmptyState,
   ScreenList,
+  ConfirmDialog,
 } from '../../components';
 import { Customer } from '../../types';
 
@@ -38,11 +41,25 @@ export const BusinessScreen: React.FC = () => {
     openSheet('record_payment', { customerId: customer.id });
   };
 
+  const queryClient = useQueryClient();
+  const [confirmResetVisible, setConfirmResetVisible] = useState(false);
+
+  const handleResetData = () => {
+    resetDB();
+    queryClient.invalidateQueries();
+    setConfirmResetVisible(false);
+    setBannerAlert({
+      title: 'Demo data restored',
+      message: 'All records were reset to the sample data.',
+      variant: 'info',
+    });
+  };
+
   const handleExportCSV = () => {
     setBannerAlert({
-      title: 'Export Ready',
-      message: 'Factory batch, inventory, and sales records exported successfully to CSV.',
-      variant: 'success',
+      title: 'Export coming soon',
+      message: 'CSV export is not available yet. Your records are saved on this device.',
+      variant: 'info',
     });
   };
 
@@ -421,6 +438,41 @@ export const BusinessScreen: React.FC = () => {
                 onPress={handleExportCSV}
               />
             </Card>
+
+            <Card variant="elevated" padding="normal">
+              <Typography
+                variant="title"
+                weight="bold"
+                color="primary"
+                style={{ marginBottom: theme.spacing.xsm }}
+              >
+                Sample Data
+              </Typography>
+              <Typography
+                variant="bodySmall"
+                color="secondary"
+                style={{ marginBottom: theme.spacing.md }}
+              >
+                Your records are saved on this device. Reset to replace everything with the sample
+                data. This cannot be undone.
+              </Typography>
+              <Button
+                label="Reset to Sample Data"
+                variant="danger"
+                leftIcon="refresh-outline"
+                onPress={() => setConfirmResetVisible(true)}
+              />
+            </Card>
+
+            <ConfirmDialog
+              visible={confirmResetVisible}
+              onClose={() => setConfirmResetVisible(false)}
+              onConfirm={handleResetData}
+              title="Reset all data?"
+              message="Every recipe, batch, stock level, invoice, customer and expense on this device will be replaced with the sample data."
+              confirmLabel="Reset Data"
+              isDestructive
+            />
           </Stack>
         )}
       </Stack>
