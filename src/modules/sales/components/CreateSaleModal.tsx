@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -122,7 +123,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
       <Stack gap="md">
         {/* Customer Selector */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
             Select Customer / Buyer
           </Typography>
           <Row gap="xs" wrap>
@@ -143,7 +144,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
 
         {/* Product Selector */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
             Select Product
           </Typography>
           <Row gap="xs" wrap>
@@ -261,7 +262,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
         {/* Payment Method Selector if payment > 0 */}
         {watchedAmountPaidNow > 0 && (
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
               Payment Mode Received
             </Typography>
             <Row gap="xs" wrap>
@@ -283,7 +284,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
 
         {/* Financial Calculation Summary */}
         <Card variant="accent" padding="compact">
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
               Subtotal ({watchedQuantity} {currentOutputUnit} × ₹{watchedUnitPrice}):
             </Typography>
@@ -292,7 +293,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
             </Typography>
           </Row>
           {watchedDiscount > 0 && (
-            <Row justify="space-between" style={{ marginVertical: 2 }}>
+            <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
               <Typography variant="bodySmall" color="secondary">
                 Discount Deducted:
               </Typography>
@@ -301,7 +302,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               </Typography>
             </Row>
           )}
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" weight="bold" color="brandDeep">
               Total Invoice Amount:
             </Typography>
@@ -310,7 +311,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
             </Typography>
           </Row>
           <Divider variant="brand" spacing="xxs" />
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
               Cash Collected Now:
             </Typography>
@@ -318,7 +319,7 @@ export const CreateSaleModal: React.FC<CreateSaleModalProps> = ({ visible, onClo
               ₹{watchedAmountPaidNow.toLocaleString('en-IN')}
             </Typography>
           </Row>
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodyMedium" weight="bold" color="brandDeep">
               Balance Due (Credit):
             </Typography>

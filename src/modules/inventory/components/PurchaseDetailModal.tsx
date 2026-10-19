@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { usePurchases } from '../../../hooks/api/useInventory';
 import { useFactorySettings } from '../../../hooks/api/useDashboard';
@@ -106,19 +107,19 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
 
         {/* Supplier Details */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 4 }}>
+          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xs }}>
             Supplier Information
           </Typography>
           <Typography variant="bodyMedium" weight="semibold" color="secondary">
             {purchase.supplierName}
           </Typography>
           {purchase.supplierPhone && (
-            <Typography variant="caption" color="muted" style={{ marginTop: 2 }}>
+            <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xxs }}>
               Phone: {purchase.supplierPhone}
             </Typography>
           )}
           {purchase.billNumber && (
-            <Typography variant="caption" weight="semibold" color="primary" style={{ marginTop: 2 }}>
+            <Typography variant="caption" weight="semibold" color="primary" style={{ marginTop: theme.spacing.xxs }}>
               Supplier Invoice / Challan: #{purchase.billNumber}
             </Typography>
           )}
@@ -126,11 +127,11 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
 
         {/* Item Inward Details */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 8 }}>
+          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.sm }}>
             Material Inward Summary
           </Typography>
 
-          <Row justify="space-between" align="center" style={{ paddingVertical: 8 }}>
+          <Row justify="space-between" align="center" style={{ paddingVertical: theme.spacing.sm }}>
             <Box style={{ flex: 1 }}>
               <Typography variant="bodySmall" weight="bold" color="primary">
                 {purchase.itemName}
@@ -185,7 +186,7 @@ export const PurchaseDetailModal: React.FC<PurchaseDetailModalProps> = ({
             <Typography variant="caption" weight="bold" color="muted">
               DELIVERY & QUALITY NOTES
             </Typography>
-            <Typography variant="caption" color="secondary" style={{ marginTop: 2 }}>
+            <Typography variant="caption" color="secondary" style={{ marginTop: theme.spacing.xxs }}>
               {purchase.notes}
             </Typography>
           </Card>

@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -127,16 +128,16 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
       });
 
       setBannerAlert({
-        title: 'Production Setup Created',
-        message: `Setup "${data.name}" configured for ${data.targetUnits} ${data.outputUnit} (${data.unitSize} ${data.baseUnit} each) with ${data.recipeItems.length} custom ingredients.`,
+        title: 'Recipe Created',
+        message: `Recipe "${data.name}" configured for ${data.targetUnits} ${data.outputUnit} (${data.unitSize} ${data.baseUnit} each) with ${data.recipeItems.length} custom ingredients.`,
         variant: 'success',
       });
       reset();
       onClose();
     } catch (err: any) {
       setBannerAlert({
-        title: 'Setup Error',
-        message: err.message || 'Failed to create setup',
+        title: 'Recipe Error',
+        message: err.message || 'Failed to create recipe',
         variant: 'danger',
       });
     }
@@ -146,10 +147,10 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
     <Modal
       visible={visible}
       onClose={onClose}
-      title="New Production Setup"
-      subtitle="Define recipe formulation, custom ingredients & output units"
+      title="New Recipe"
+      subtitle="Define ingredients, quantities & output units"
       primaryAction={{
-        label: 'Save & Activate Setup',
+        label: 'Save & Activate Recipe',
         onPress: handleSubmit(onSubmit),
         loading: createSetupMutation.isPending,
       }}
@@ -165,7 +166,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
           name="name"
           render={({ field: { onChange, value } }) => (
             <TextInput
-              label="Setup / Recipe Name"
+              label="Recipe Name"
               placeholder="e.g. Daily Standard Mix, Batch 500L, Pack Line 1"
               value={value}
               onChangeText={onChange}
@@ -196,7 +197,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
 
           {products.length > 0 && (
             <Box marginTop="xs">
-              <Typography variant="caption" color="muted" style={{ marginBottom: 4 }}>
+              <Typography variant="caption" color="muted" style={{ marginBottom: theme.spacing.xs }}>
                 Or pick an existing product template:
               </Typography>
               <Row gap="xs" wrap>
@@ -228,14 +229,14 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
 
         {/* Production Packaging / Output Unit Configuration */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 4 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xs }}>
             Production Packaging / Output Unit
           </Typography>
-          <Typography variant="caption" color="muted" style={{ marginBottom: 8 }}>
+          <Typography variant="caption" color="muted" style={{ marginBottom: theme.spacing.sm }}>
             Choose a preset or type any custom unit (e.g. bottles, drums, cans, cartons, boxes, bags, units)
           </Typography>
 
-          <Row gap="xs" wrap style={{ marginBottom: 8 }}>
+          <Row gap="xs" wrap style={{ marginBottom: theme.spacing.sm }}>
             {COMMON_OUTPUT_UNITS.map((unit) => {
               const isSelected = watchedOutputUnit.toLowerCase() === unit;
               return (
@@ -337,7 +338,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
 
         {/* DYNAMIC RECIPE INGREDIENTS LIST */}
         <Box>
-          <Row justify="space-between" align="center" style={{ marginBottom: 6 }}>
+          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.xsm }}>
             <Box flex={1}>
               <Typography variant="label" color="primary">
                 RECIPE INGREDIENTS FORMULATION
@@ -482,7 +483,7 @@ export const CreateSetupModal: React.FC<CreateSetupModalProps> = ({ visible, onC
 
         {/* Live Formulation Balance Summary */}
         <Card variant="flat" padding="compact">
-          <Typography variant="label" color="muted" style={{ marginBottom: 4 }}>
+          <Typography variant="label" color="muted" style={{ marginBottom: theme.spacing.xs }}>
             BATCH FORMULATION BALANCE
           </Typography>
           <Row justify="space-between">

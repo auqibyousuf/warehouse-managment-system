@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -166,7 +167,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
     <Modal
       visible={visible}
       onClose={onClose}
-      title="Start Production Run"
+      title="Start Batch"
       subtitle={
         selectedSetup
           ? `Setup: ${selectedSetup.name} (v${selectedSetup.version})`
@@ -177,7 +178,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
       primaryAction={
         activeSetups.length > 0
           ? {
-              label: 'Confirm Run & Update Stock',
+              label: 'Confirm Batch & Update Stock',
               onPress: handleSubmit(onSubmit),
               loading: createBatchMutation.isPending,
               variant: 'primary',
@@ -194,13 +195,13 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
           <Card variant="accent" padding="normal">
             <Stack gap="md" align="center">
               <Typography variant="title" weight="bold" color="brandDeep" align="center">
-                No Production Setup Available
+                No Recipe Available
               </Typography>
               <Typography variant="bodySmall" color="secondary" align="center">
                 You must configure a production setup first to define the product, packaging units, and custom recipe formulation.
               </Typography>
               <Button
-                label="+ Create Production Setup Now"
+                label="+ Create Recipe Now"
                 variant="primary"
                 leftIcon="construct-outline"
                 onPress={() => {
@@ -214,7 +215,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
           <>
             {/* Setup Selection Pills */}
             <Box>
-              <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+              <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
                 Select Active Setup
               </Typography>
               <Row gap="xs" wrap>
@@ -269,13 +270,13 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
 
         {/* Generalized Production Output Unit Configuration */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 4 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xs }}>
             Production Packaging / Output Unit
           </Typography>
-          <Typography variant="caption" color="muted" style={{ marginBottom: 8 }}>
+          <Typography variant="caption" color="muted" style={{ marginBottom: theme.spacing.sm }}>
             Choose a preset or type any custom unit (e.g. bags, bottles, drums, cans, cartons, units)
           </Typography>
-          <Row gap="xs" wrap style={{ marginBottom: 8 }}>
+          <Row gap="xs" wrap style={{ marginBottom: theme.spacing.sm }}>
             {COMMON_OUTPUT_UNITS.map((u) => (
               <Button
                 key={u}
@@ -397,10 +398,10 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
 
         {/* Live Cost Calculation Card */}
         <Card variant="accent" padding="compact">
-          <Typography variant="label" color="brandDeep" style={{ marginBottom: 4 }}>
+          <Typography variant="label" color="brandDeep" style={{ marginBottom: theme.spacing.xs }}>
             AUTHORITATIVE BATCH COST PREVIEW
           </Typography>
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
               Raw Ingredients Cost:
             </Typography>
@@ -408,7 +409,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
               ₹{ingredientCost.toLocaleString('en-IN')}
             </Typography>
           </Row>
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
               Packaging Cost ({watchedUnits} {watchedOutputUnit} @ ₹{packagingUnitCost}):
             </Typography>
@@ -417,7 +418,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
             </Typography>
           </Row>
           <Divider variant="brand" spacing="xxs" />
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodyMedium" weight="bold" color="brandDeep">
               Total Direct Batch Cost:
             </Typography>
@@ -425,7 +426,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
               ₹{estimatedBatchCost.toLocaleString('en-IN')}
             </Typography>
           </Row>
-          <Row justify="space-between" style={{ marginTop: 4 }}>
+          <Row justify="space-between" style={{ marginTop: theme.spacing.xs }}>
             <Badge
               label={`₹${estimatedCostPerUnit.toFixed(2)} / ${watchedOutputUnit}`}
               variant="forest"
@@ -445,7 +446,7 @@ export const StartRunModal: React.FC<StartRunModalProps> = ({
           name="notes"
           render={({ field: { onChange, value } }) => (
             <TextInput
-              label="Production Run Notes (Optional)"
+              label="Batch Notes (Optional)"
               value={value || ''}
               onChangeText={onChange}
               placeholder="e.g. Line speeds, operator shift, moisture readings..."

@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React from 'react';
 import { useCustomers } from '../../../hooks/api/useCustomers';
 import { useSalesInvoices, useCustomerPayments } from '../../../hooks/api/useSales';
@@ -91,7 +92,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
         {/* Customer Profile Details */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 6 }}>
+          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xsm }}>
             Account Profile & Contact
           </Typography>
           <Stack gap="xs">
@@ -161,7 +162,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
 
         {/* Financial Summary */}
         <Card variant="elevated" padding="normal">
-          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 6 }}>
+          <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xsm }}>
             Lifetime Statistics
           </Typography>
           <Row justify="space-between">
@@ -193,7 +194,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         </Card>
 
         {/* Linked Invoices */}
-        <Typography variant="title" weight="bold" color="primary" style={{ marginTop: 4 }}>
+        <Typography variant="title" weight="bold" color="primary" style={{ marginTop: theme.spacing.xs }}>
           Linked Invoices ({customerInvoices.length})
         </Typography>
         {customerInvoices.length === 0 ? (
@@ -246,7 +247,7 @@ export const CustomerDetailModal: React.FC<CustomerDetailModalProps> = ({
         )}
 
         {/* Linked Receipts */}
-        <Typography variant="title" weight="bold" color="primary" style={{ marginTop: 4 }}>
+        <Typography variant="title" weight="bold" color="primary" style={{ marginTop: theme.spacing.xs }}>
           Payment Receipts ({customerPayments.length})
         </Typography>
         {customerPayments.length === 0 ? (

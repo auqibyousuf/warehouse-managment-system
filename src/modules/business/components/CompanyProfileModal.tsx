@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -97,7 +98,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
     <Modal
       visible={visible}
       onClose={onClose}
-      title="Company Profile & Billing Setup"
+      title="Company Profile & Billing"
       subtitle="Details stamped on invoices, purchase bills, and PDF vouchers"
       primaryAction={{
         label: 'Save Profile Changes',
@@ -214,7 +215,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
         />
 
         {/* Bank & Remittance Information */}
-        <Typography variant="bodyMedium" weight="bold" color="primary" style={{ marginTop: 8 }}>
+        <Typography variant="bodyMedium" weight="bold" color="primary" style={{ marginTop: theme.spacing.sm }}>
           Bank & Remittance Details (For Invoice Remittance)
         </Typography>
 
@@ -265,7 +266,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({
         />
 
         {/* Invoice Terms */}
-        <Typography variant="bodyMedium" weight="bold" color="primary" style={{ marginTop: 8 }}>
+        <Typography variant="bodyMedium" weight="bold" color="primary" style={{ marginTop: theme.spacing.sm }}>
           Standard Terms & Conditions
         </Typography>
 

@@ -37,7 +37,7 @@ export const TextInput: React.FC<FormTextInputProps> = ({
   ...rest
 }) => {
   const startContent = (prefix || leftIcon) ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
       {leftIcon && <Icon name={leftIcon} size="sm" color="muted" />}
       {prefix && (
         <Typography variant="bodyMedium" weight="semibold" color="muted">
@@ -48,7 +48,7 @@ export const TextInput: React.FC<FormTextInputProps> = ({
   ) : undefined;
 
   const endContent = (suffix || rightIcon) ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
       {suffix && (
         <Typography variant="bodySmall" weight="medium" color="muted">
           {suffix}

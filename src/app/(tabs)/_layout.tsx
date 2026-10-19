@@ -18,7 +18,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="production" />
       <Tabs.Screen name="inventory" />
       <Tabs.Screen name="sales" />
-      <Tabs.Screen name="more" />
+      <Tabs.Screen name="business" />
     </Tabs>
   );
 }

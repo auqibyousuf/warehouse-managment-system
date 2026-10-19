@@ -79,7 +79,7 @@ export const ChipPicker = <T extends string | number>({
                   variant="caption"
                   weight="bold"
                   style={{
-                    fontSize: 10,
+                    fontSize: theme.typography.fontSizes.xxs,
                     color: isSelected ? theme.colors.text.onBrand : theme.colors.text.muted,
                   }}
                 >
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
   countBadge: {
     paddingHorizontal: theme.spacing.xs,
-    paddingVertical: 1,
+    paddingVertical: theme.spacing.hairline,
     borderRadius: theme.radii.xs,
     marginLeft: theme.spacing.xs,
   },

@@ -1,3 +1,4 @@
+import { theme } from '../../theme';
 import React from 'react';
 import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
 import { useProductionBatches } from '../../hooks/api/useProduction';
@@ -83,12 +84,12 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Quick Operational Actions Bar */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 8 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.sm }}>
             QUICK ACTIONS
           </Typography>
           <Row gap="xs" wrap>
             <Button
-              label="+ Run Batch"
+              label="+ Start Batch"
               variant="primary"
               size="sm"
               leftIcon="construct-outline"
@@ -177,7 +178,7 @@ export const DashboardScreen: React.FC = () => {
               subtitle="Receivables pending"
               icon="alert-circle-outline"
               variant={metrics && metrics.sales.outstandingDues > 0 ? 'warning' : 'default'}
-              onPress={() => goToTab('more')}
+              onPress={() => goToTab('business')}
             />
           </Box>
           <Box flex={1}>
@@ -194,7 +195,7 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Authoritative Financial & Estimated Profit Card (PRD Section 3.4 & 5.4) */}
         <Card variant="accent" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: 8 }}>
+          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.sm }}>
             <Typography variant="label" color="brandDeep">
               ESTIMATED OPERATING PROFIT
             </Typography>
@@ -205,7 +206,7 @@ export const DashboardScreen: React.FC = () => {
             variant="display"
             weight="bold"
             color={(metrics?.financial.estimatedOperatingProfit || 0) >= 0 ? 'brandDeep' : 'error'}
-            style={{ marginBottom: 12 }}
+            style={{ marginBottom: theme.spacing.md }}
           >
             ₹{(metrics?.financial.estimatedOperatingProfit || 0).toLocaleString('en-IN')}
           </Typography>
@@ -248,7 +249,7 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Recent Production Batches */}
         <Card variant="elevated" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: 8 }}>
+          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.sm }}>
             <Typography variant="title" weight="bold" color="primary">
               Recent Production Batches
             </Typography>
@@ -281,7 +282,7 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Recent Sales Dispatches */}
         <Card variant="elevated" padding="normal">
-          <Row justify="space-between" align="center" style={{ marginBottom: 8 }}>
+          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.sm }}>
             <Typography variant="title" weight="bold" color="primary">
               Recent Invoices & Dispatches
             </Typography>

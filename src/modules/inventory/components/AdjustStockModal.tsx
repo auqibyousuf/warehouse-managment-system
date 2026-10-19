@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -101,7 +102,7 @@ export const AdjustStockModal: React.FC<AdjustStockModalProps> = ({
       <Stack gap="md">
         {/* Item Selector */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
             Select Stock Item to Reconcile
           </Typography>
           <Row gap="xs" wrap>

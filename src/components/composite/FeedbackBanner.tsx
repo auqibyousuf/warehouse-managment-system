@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.xs,
   },
   icon: {
-    marginTop: 2,
+    marginTop: theme.spacing.xxs,
   },
 });
 

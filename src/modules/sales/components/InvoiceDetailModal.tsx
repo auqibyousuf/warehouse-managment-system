@@ -147,14 +147,14 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Customer Details */}
           <Card variant="elevated" padding="normal">
-            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 6 }}>
+            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xsm }}>
               Billed To (Customer)
             </Typography>
             <Typography variant="bodyMedium" weight="semibold" color="secondary">
               {invoice.customerName}
             </Typography>
             {invoice.customerAddress && (
-              <Typography variant="caption" color="muted" style={{ marginTop: 2 }}>
+              <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xxs }}>
                 Address: {invoice.customerAddress}
               </Typography>
             )}
@@ -164,7 +164,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               </Typography>
             )}
             {invoice.customerGstin && (
-              <Typography variant="caption" weight="semibold" color="secondary" style={{ marginTop: 2 }}>
+              <Typography variant="caption" weight="semibold" color="secondary" style={{ marginTop: theme.spacing.xxs }}>
                 GSTIN: {invoice.customerGstin}
               </Typography>
             )}
@@ -172,11 +172,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Itemized Line Items Table */}
           <Card variant="elevated" padding="normal">
-            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: 8 }}>
+            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.sm }}>
               Itemized Breakdown
             </Typography>
 
-            <Row justify="space-between" style={{ paddingBottom: 6, borderBottomWidth: 1, borderColor: theme.colors.border.default }}>
+            <Row justify="space-between" style={{ paddingBottom: theme.spacing.xsm, borderBottomWidth: 1, borderColor: theme.colors.border.default }}>
               <Typography variant="caption" weight="bold" color="muted" style={{ flex: 2 }}>
                 ITEM DESCRIPTION
               </Typography>
@@ -191,7 +191,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               </Typography>
             </Row>
 
-            <Row justify="space-between" align="center" style={{ paddingVertical: 10 }}>
+            <Row justify="space-between" align="center" style={{ paddingVertical: theme.spacing.smd }}>
               <Box style={{ flex: 2 }}>
                 <Typography variant="bodySmall" weight="bold" color="primary">
                   {invoice.productName}
@@ -235,7 +235,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 </Row>
               )}
 
-              <Row justify="space-between" style={{ paddingTop: 4 }}>
+              <Row justify="space-between" style={{ paddingTop: theme.spacing.xs }}>
                 <Typography variant="bodySmall" weight="bold" color="primary">
                   Total Invoiced:
                 </Typography>
@@ -276,7 +276,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               <Typography variant="caption" weight="bold" color="muted">
                 DISPATCH & PAYMENT NOTES
               </Typography>
-              <Typography variant="caption" color="secondary" style={{ marginTop: 2 }}>
+              <Typography variant="caption" color="secondary" style={{ marginTop: theme.spacing.xxs }}>
                 {invoice.notes}
               </Typography>
             </Card>

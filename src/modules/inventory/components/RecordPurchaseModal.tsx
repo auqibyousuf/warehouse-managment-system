@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -116,7 +117,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
       <Stack gap="md">
         {/* Supplier Picker */}
         <Box>
-          <Row justify="space-between" align="center" style={{ marginBottom: 6 }}>
+          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.xsm }}>
             <Typography variant="label" color="secondary">
               Select Supplier / Vendor
             </Typography>
@@ -152,7 +153,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
 
         {/* Material Picker */}
         <Box>
-          <Row justify="space-between" align="center" style={{ marginBottom: 6 }}>
+          <Row justify="space-between" align="center" style={{ marginBottom: theme.spacing.xsm }}>
             <Typography variant="label" color="secondary">
               Select Material / Packaging to Inward
             </Typography>
@@ -261,7 +262,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
 
         {/* Summary Card */}
         <Card variant="accent" padding="compact">
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
               Total Purchase Bill:
             </Typography>
@@ -269,7 +270,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
               ₹{totalBill.toLocaleString('en-IN')}
             </Typography>
           </Row>
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodySmall" color="secondary">
               Amount Paid Now:
             </Typography>
@@ -278,7 +279,7 @@ export const RecordPurchaseModal: React.FC<RecordPurchaseModalProps> = ({
             </Typography>
           </Row>
           <Divider variant="brand" spacing="xxs" />
-          <Row justify="space-between" style={{ marginVertical: 2 }}>
+          <Row justify="space-between" style={{ marginVertical: theme.spacing.xxs }}>
             <Typography variant="bodyMedium" weight="bold" color="brandDeep">
               Outstanding Supplier Balance:
             </Typography>

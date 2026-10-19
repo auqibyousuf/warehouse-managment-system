@@ -11,7 +11,7 @@ import { RecordPaymentModal } from '../modules/sales/components/RecordPaymentMod
 import { CreateCustomerModal } from '../modules/customers/components/CreateCustomerModal';
 import { RecordExpenseModal } from '../modules/expenses/components/RecordExpenseModal';
 import { InvoiceDetailModal } from '../modules/sales/components/InvoiceDetailModal';
-import { CompanyProfileModal } from '../modules/more/components/CompanyProfileModal';
+import { CompanyProfileModal } from '../modules/business/components/CompanyProfileModal';
 import { CustomerDetailModal } from '../modules/customers/components/CustomerDetailModal';
 import { PurchaseDetailModal } from '../modules/inventory/components/PurchaseDetailModal';
 

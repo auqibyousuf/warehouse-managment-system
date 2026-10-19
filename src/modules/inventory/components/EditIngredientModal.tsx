@@ -139,7 +139,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Category Toggle */}
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
               Item Category
             </Typography>
             <Row gap="xs">
@@ -170,10 +170,10 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
 
           {/* Custom Unit Selector */}
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
               Measurement Unit
             </Typography>
-            <Row gap="xs" wrap style={{ marginBottom: 8 }}>
+            <Row gap="xs" wrap style={{ marginBottom: theme.spacing.sm }}>
               {COMMON_RAW_UNITS.map((u) => (
                 <Button
                   key={u}
@@ -225,8 +225,8 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
           {/* Danger Zone: Delete item */}
           <Box
             style={{
-              marginTop: 12,
-              paddingTop: 16,
+              marginTop: theme.spacing.md,
+              paddingTop: theme.spacing.base,
               borderTopWidth: 1,
               borderTopColor: theme.colors.border.subtle,
             }}
@@ -255,7 +255,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
       <ConfirmDialog
         visible={confirmDeleteVisible}
         title="Delete Stock Item?"
-        message={`Are you sure you want to delete "${item.name}"? If it is used in active production formulas, the deletion will be blocked.`}
+        message={`Are you sure you want to delete "${item.name}"? If it is used in active recipes, the deletion will be blocked.`}
         confirmLabel="Yes, Delete Item"
         isDestructive={true}
         loading={deleteMutation.isPending}

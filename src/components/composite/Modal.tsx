@@ -86,7 +86,7 @@ export const Modal: React.FC<ModalProps> = ({
                 {title}
               </Typography>
               {subtitle && (
-                <Typography variant="caption" color="muted" style={{ marginTop: 2 }}>
+                <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xxs }}>
                   {subtitle}
                 </Typography>
               )}

@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -113,7 +114,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
       <Stack gap="md">
         {/* Customer Selector */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
             Select Customer
           </Typography>
           <Row gap="xs" wrap>
@@ -152,7 +153,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         {/* Invoice Allocation if any unpaid invoices exist */}
         {customerInvoices.length > 0 && (
           <Box>
-            <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+            <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
               Allocate to Specific Unpaid Invoice (Optional)
             </Typography>
             <Row gap="xs" wrap>
@@ -212,7 +213,7 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
         {/* Payment Method Selector */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
             Payment Channel / Mode
           </Typography>
           <Row gap="xs" wrap>

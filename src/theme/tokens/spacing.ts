@@ -5,9 +5,12 @@
 
 export const spacingScale = {
   none: 0,
+  hairline: 1,
   xxs: 2,
   xs: 4,
+  xsm: 6,
   sm: 8,
+  smd: 10,
   md: 12,
   base: 16,
   lg: 20,

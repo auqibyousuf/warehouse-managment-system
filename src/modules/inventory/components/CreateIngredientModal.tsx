@@ -1,3 +1,4 @@
+import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useCreateIngredient } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
@@ -67,7 +68,7 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
 
       setBannerAlert({
         title: 'Raw Material Created',
-        message: `${created.name} (${created.unit}) added to inventory. Ready for production setups!`,
+        message: `${created.name} (${created.unit}) added to inventory. Ready for recipes!`,
         variant: 'success',
       });
 
@@ -109,7 +110,7 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
 
         {/* Category Toggle */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xsm }}>
             Item Category
           </Typography>
           <Row gap="xs">
@@ -142,10 +143,10 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
 
         {/* Unit Selector & Custom Input */}
         <Box>
-          <Typography variant="label" color="secondary" style={{ marginBottom: 4 }}>
+          <Typography variant="label" color="secondary" style={{ marginBottom: theme.spacing.xs }}>
             Unit of Measurement
           </Typography>
-          <Row gap="xs" wrap style={{ marginBottom: 8 }}>
+          <Row gap="xs" wrap style={{ marginBottom: theme.spacing.sm }}>
             {COMMON_RAW_UNITS.map((u) => (
               <Button
                 key={u}

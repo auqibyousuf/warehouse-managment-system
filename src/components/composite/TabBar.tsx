@@ -7,7 +7,7 @@ import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Ionicons } from '@expo/vector-icons';
 
-export type NavTabId = 'dashboard' | 'production' | 'inventory' | 'sales' | 'more';
+export type NavTabId = 'dashboard' | 'production' | 'inventory' | 'sales' | 'business';
 
 export interface TabItem {
   id: NavTabId;
@@ -27,7 +27,7 @@ export const defaultTabs: TabItem[] = [
   { id: 'production', label: 'Production', icon: 'construct-outline' },
   { id: 'inventory', label: 'Stock', icon: 'cube-outline' },
   { id: 'sales', label: 'Sales', icon: 'receipt-outline' },
-  { id: 'more', label: 'More', icon: 'ellipsis-horizontal-circle-outline' },
+  { id: 'business', label: 'Business', icon: 'briefcase-outline' },
 ];
 
 export const TabBar: React.FC<TabBarProps> = ({
@@ -83,7 +83,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 weight={isActive ? 'bold' : 'medium'}
                 style={{
                   color: isActive ? theme.colors.brand.primary : theme.colors.text.muted,
-                  marginTop: 2,
+                  marginTop: theme.spacing.xxs,
                 }}
               >
                 {tab.label}
@@ -131,11 +131,11 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.status.error.text,
     borderWidth: 1,
     borderRadius: theme.radii.full,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.hairline,
   },
   badgeText: {
-    fontSize: 9,
+    fontSize: theme.typography.fontSizes.xxs,
   },
   activeIndicator: {
     position: 'absolute',
