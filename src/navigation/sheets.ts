@@ -19,7 +19,12 @@ export type SheetName =
   | 'edit_customer'
   | 'edit_supplier'
   | 'edit_product'
-  | 'use_stock';
+  | 'use_stock'
+  | 'batch_detail'
+  | 'profit_detail'
+  | 'stock_detail'
+  | 'recipe_detail'
+  | 'supplier_detail';
 
 export interface SheetParams {
   setupId?: string;
@@ -30,6 +35,8 @@ export interface SheetParams {
   productId?: string;
   itemId?: string;
   kind?: string;
+  batchId?: string;
+  period?: string;
 }
 
 interface OpenOptions {

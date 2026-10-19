@@ -19,10 +19,8 @@ import {
   SearchField,
   Icon,
 } from '../../components';
-import { UnifiedStockItem } from '../../services/api/inventoryService';
-import { EditIngredientModal } from '../inventory/components/EditIngredientModal';
 
-type CategoryFilter = 'all' | 'raw_material' | 'packaging' | 'finished_feed';
+type CategoryFilter = 'all' | 'raw_material' | 'packaging' | 'finished_feed' | 'low';
 
 /** Stock & Materials: add or use stock in one tap, see what is low. */
 export const StockScreen: React.FC = () => {
@@ -30,7 +28,6 @@ export const StockScreen: React.FC = () => {
   const money = useMoney();
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [query, setQuery] = useState('');
-  const [itemToEdit, setItemToEdit] = useState<UnifiedStockItem | null>(null);
 
   const { data: stockItems = [], isLoading, refetch, isRefetching } = useInventoryItems();
 
@@ -40,6 +37,7 @@ export const StockScreen: React.FC = () => {
       raw_material: stockItems.filter((i) => i.type === 'raw_material').length,
       packaging: stockItems.filter((i) => i.type === 'packaging').length,
       finished_feed: stockItems.filter((i) => i.type === 'finished_feed').length,
+      low: stockItems.filter((i) => i.isLowStock).length,
     }),
     [stockItems],
   );
@@ -57,14 +55,14 @@ export const StockScreen: React.FC = () => {
     return stockItems
       .filter(
         (item) =>
-          (category === 'all' || item.type === category) &&
+          (category === 'all' || (category === 'low' ? item.isLowStock : item.type === category)) &&
           (!needle || item.name.toLowerCase().includes(needle)),
       )
       .sort((a, b) => Number(b.isLowStock) - Number(a.isLowStock));
   }, [stockItems, category, query]);
 
   const header = (
-    <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
+    <Stack gap="md" style={{ marginBottom: theme.spacing.md }}>
       <Row gap="sm" align="stretch">
         <Pressable
           onPress={() => openSheet('record_purchase')}
@@ -115,6 +113,7 @@ export const StockScreen: React.FC = () => {
           { value: 'raw_material', label: 'Raw', count: counts.raw_material },
           { value: 'packaging', label: 'Packaging', count: counts.packaging },
           { value: 'finished_feed', label: 'Finished', count: counts.finished_feed },
+          ...(counts.low > 0 ? [{ value: 'low', label: 'Low stock', count: counts.low }] : []),
         ]}
         selected={category}
         onSelect={(value) => setCategory(value as CategoryFilter)}
@@ -144,39 +143,34 @@ export const StockScreen: React.FC = () => {
         }
         renderItem={({ item }) => {
           const isFinished = item.type === 'finished_feed';
-          const quantityColor = item.isLowStock ? 'warning' : 'primary';
+          const low = item.isLowStock;
           return (
-            <Card variant={item.isLowStock ? 'accent' : 'elevated'} padding="normal">
-              <Stack gap="md">
+            <Card
+              variant="elevated"
+              padding="compact"
+              onPress={() => openSheet('stock_detail', { itemId: item.id })}
+            >
+              <Stack gap="sm">
                 <Row justify="space-between" align="flex-start" gap="sm">
-                  <Pressable
-                    style={{ flex: 1 }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Edit ${item.name}`}
-                    onPress={() =>
-                      isFinished
-                        ? openSheet('edit_product', { productId: item.id })
-                        : setItemToEdit(item)
-                    }
-                  >
+                  <Box flex={1}>
                     <Typography variant="title" color="primary" numberOfLines={2}>
                       {item.name}
                     </Typography>
-                    <Typography variant="caption" color="muted">
+                    <Typography variant="bodySmall" color="muted">
                       {isFinished
                         ? 'Finished goods'
                         : item.type === 'packaging'
                           ? 'Packaging'
-                          : 'Raw material'}{' '}
-                      • {money(item.unitCostOrPrice)} / {item.unit}
+                          : 'Raw material'}
                     </Typography>
-                  </Pressable>
-                  {item.isLowStock ? (
+                  </Box>
+                  {low ? (
                     <Badge
                       label={`Min: ${item.minThreshold} ${item.unit}`}
                       variant="warning"
                       icon="warning-outline"
                       size="sm"
+                      soft
                     />
                   ) : (
                     <Badge
@@ -184,30 +178,35 @@ export const StockScreen: React.FC = () => {
                       variant="success"
                       icon="checkmark-circle-outline"
                       size="sm"
+                      soft
                     />
                   )}
                 </Row>
 
                 <Row justify="space-between" align="flex-end" gap="sm">
-                  <Box flex={1}>
-                    <Typography variant="label" color={item.isLowStock ? 'warning' : 'muted'}>
-                      {item.isLowStock
+                  <Box>
+                    <Typography variant="label" color={low ? 'warning' : 'muted'}>
+                      {low
                         ? 'Low stock level'
                         : isFinished
                           ? 'Ready to ship'
                           : 'Available quantity'}
                     </Typography>
                     <Row gap="xs" align="flex-end">
-                      <Typography variant="display" color={quantityColor} tabular>
+                      <Typography variant="h1" color={low ? 'warning' : 'primary'} tabular>
                         {item.currentStock.toLocaleString('en-IN')}
                       </Typography>
-                      <Typography variant="bodyLarge" color="secondary" style={{ marginBottom: 6 }}>
+                      <Typography
+                        variant="dataMedium"
+                        color="secondary"
+                        style={{ marginBottom: 4 }}
+                      >
                         {item.unit}
                       </Typography>
                     </Row>
                   </Box>
 
-                  <Row gap="sm">
+                  <Row gap="xs">
                     {isFinished ? (
                       <Button
                         label="Create Invoice"
@@ -218,27 +217,31 @@ export const StockScreen: React.FC = () => {
                       />
                     ) : (
                       <>
-                        {item.isLowStock && (
+                        {low && (
                           <Button
                             label="Reorder"
-                            variant="primary"
+                            variant="warning"
                             size="sm"
                             leftIcon="cart-outline"
                             onPress={() => openSheet('record_purchase', { itemId: item.id })}
                           />
                         )}
                         <Button
-                          label="+ Add"
-                          variant="secondary"
+                          label="Add"
+                          variant="subtle"
                           size="sm"
+                          leftIcon="add"
                           onPress={() => openSheet('record_purchase', { itemId: item.id })}
                         />
-                        <Button
-                          label="− Use"
-                          variant="secondary"
-                          size="sm"
-                          onPress={() => openSheet('use_stock', { itemId: item.id })}
-                        />
+                        {!low && (
+                          <Button
+                            label="Use"
+                            variant="tonalWarning"
+                            size="sm"
+                            leftIcon="remove"
+                            onPress={() => openSheet('use_stock', { itemId: item.id })}
+                          />
+                        )}
                       </>
                     )}
                   </Row>
@@ -250,11 +253,6 @@ export const StockScreen: React.FC = () => {
         refreshing={isRefetching}
         onRefresh={refetch}
       />
-      <EditIngredientModal
-        visible={itemToEdit !== null}
-        item={itemToEdit}
-        onClose={() => setItemToEdit(null)}
-      />
     </>
   );
 };
@@ -263,7 +261,7 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     padding: theme.spacing.base,
-    borderRadius: theme.radii.xl,
+    borderRadius: theme.radii.md,
     minHeight: 124,
     justifyContent: 'space-between',
   },

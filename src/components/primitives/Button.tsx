@@ -14,7 +14,9 @@ export type ButtonVariant =
   | 'ghost'
   | 'danger'
   | 'success'
-  | 'subtle';
+  | 'subtle'
+  | 'tonalWarning'
+  | 'warning';
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -82,7 +84,19 @@ export const Button: React.FC<ButtonProps> = ({
         return {
           bg: colors.background.surface,
           text: colors.text.primary,
-          border: colors.border.default,
+          border: colors.scheme === 'dark' ? colors.border.default : 'transparent',
+        };
+      case 'warning':
+        return {
+          bg: colors.accent.warning,
+          text: colors.onAccent.warning,
+          border: 'transparent',
+        };
+      case 'tonalWarning':
+        return {
+          bg: colors.background.surfaceTertiary,
+          text: colors.status.warning.text,
+          border: 'transparent',
         };
       case 'outline':
         return {
@@ -110,9 +124,9 @@ export const Button: React.FC<ButtonProps> = ({
         };
       case 'subtle':
         return {
-          bg: colors.background.surfaceSecondary,
-          text: colors.text.primary,
-          border: colors.border.subtle,
+          bg: colors.background.surfaceTertiary,
+          text: colors.brand.primary,
+          border: 'transparent',
         };
       case 'primary':
       default:
@@ -143,8 +157,9 @@ export const Button: React.FC<ButtonProps> = ({
           paddingHorizontal: getPaddingHorizontal(),
           backgroundColor: disabled ? colors.background.surfaceTertiary : variantColors.bg,
           borderColor: disabled ? colors.border.default : variantColors.border,
-          borderWidth: variant === 'ghost' ? 0 : 1,
+          borderWidth: variant === 'ghost' || variantColors.border === 'transparent' ? 0 : 1,
           borderRadius: theme.radii.md,
+          ...(variant === 'primary' || variant === 'secondary' ? theme.shadows.card : {}),
           width: fullWidth ? '100%' : 'auto',
           minHeight: theme.spacing.layout.touchTargetMin,
         },

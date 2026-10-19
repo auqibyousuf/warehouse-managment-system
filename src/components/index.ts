@@ -48,3 +48,4 @@ export * from './composite/ProgressBar';
 export * from './composite/InsetStats';
 export * from './composite/SearchField';
 export * from './composite/StackScreen';
+export * from './composite/IconTile';

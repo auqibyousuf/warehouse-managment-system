@@ -6,10 +6,13 @@ import { theme, useColors } from '../../theme';
 
 export type CardVariant = 'elevated' | 'outlined' | 'flat' | 'accent' | 'interactive';
 export type CardPadding = 'none' | 'compact' | 'normal' | 'spacious';
+export type CardTone = 'warning' | 'success' | 'danger' | 'info';
 
 export interface CardProps {
   variant?: CardVariant;
   padding?: CardPadding;
+  /** Tinted card for alerts and highlights (no border), e.g. a low-stock warning. */
+  tone?: CardTone;
   onPress?: () => void;
   className?: string;
   style?: ViewStyle | (ViewStyle | undefined)[];
@@ -19,6 +22,7 @@ export interface CardProps {
 export const CardComponent: React.FC<CardProps> = ({
   variant = 'elevated',
   padding = 'normal',
+  tone,
   onPress,
   className,
   style,
@@ -58,27 +62,39 @@ export const CardComponent: React.FC<CardProps> = ({
       case 'accent':
         return {
           backgroundColor: colors.brand.wash,
-          borderColor: colors.brand.subtle,
-          borderWidth: 1,
+          borderColor: 'transparent',
+          borderWidth: 0,
           ...theme.shadows.none,
         };
       case 'interactive':
       case 'elevated':
       default:
+        // Stitch: white card, no border, soft shadow. Dark mode keeps a hairline since shadows vanish.
         return {
           backgroundColor: colors.background.surface,
           borderColor: colors.border.subtle,
-          borderWidth: 1,
+          borderWidth: colors.scheme === 'dark' ? 1 : 0,
           ...theme.shadows.card,
         };
     }
   };
 
+  const toneColors = tone ? colors.status[tone === 'danger' ? 'error' : tone] : null;
+  const toneStyles = toneColors
+    ? {
+        backgroundColor: toneColors.bg,
+        borderColor: toneColors.border,
+        borderWidth: colors.scheme === 'dark' ? 1 : 0,
+        ...theme.shadows.none,
+      }
+    : null;
+
   const baseCardStyle: ViewStyle = {
-    borderRadius: theme.radii.md,
+    borderRadius: theme.radii.xl,
     padding: getPadding(),
     overflow: 'hidden',
     ...getVariantStyles(),
+    ...(toneStyles ?? {}),
   };
 
   const combinedStyle = Array.isArray(style) ? [baseCardStyle, ...style] : [baseCardStyle, style];

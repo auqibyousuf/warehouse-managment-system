@@ -14,6 +14,8 @@ export interface BadgeProps {
   variant?: BadgeVariant;
   size?: BadgeSize;
   dot?: boolean;
+  /** Stitch uses 2px chips for status and 12px pills for health labels. */
+  soft?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
   className?: string;
   style?: ViewStyle;
@@ -24,6 +26,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = 'neutral',
   size = 'md',
   dot = false,
+  soft = false,
   icon,
   className,
   style,
@@ -94,7 +97,7 @@ export const Badge: React.FC<BadgeProps> = ({
           borderColor: variantStyles.border,
           height: isSm ? theme.spacing.layout.badgeHeightSm : theme.spacing.layout.badgeHeightMd,
           paddingHorizontal: isSm ? theme.spacing.xs : theme.spacing.sm,
-          borderRadius: theme.radii.sm,
+          borderRadius: soft ? theme.radii.xl : theme.radii.xs,
         },
         style,
       ]}

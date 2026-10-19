@@ -16,13 +16,8 @@ export const SearchField: React.FC<SearchFieldProps> = ({
 }) => {
   const colors = useColors();
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: colors.background.surface, borderColor: colors.border.default },
-      ]}
-    >
-      <Icon name="search" size="sm" color="muted" />
+    <View style={[styles.container, { backgroundColor: colors.background.surfaceSecondary }]}>
+      <Icon name="search" size={22} color="muted" />
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -56,7 +51,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     height: 44,
     borderRadius: theme.radii.md,
-    borderWidth: 1,
+    ...theme.shadows.card,
   },
   input: { flex: 1, fontSize: 14, height: '100%' },
 });

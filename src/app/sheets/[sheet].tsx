@@ -18,6 +18,11 @@ import { EditSupplierModal } from '../../modules/inventory/components/EditSuppli
 import { EditProductModal } from '../../modules/inventory/components/EditProductModal';
 import { EditCustomerModal } from '../../modules/customers/components/EditCustomerModal';
 import { UseStockModal } from '../../modules/inventory/components/UseStockModal';
+import { BatchDetailModal } from '../../modules/details/BatchDetailModal';
+import { ProfitDetailModal } from '../../modules/details/ProfitDetailModal';
+import { StockDetailModal } from '../../modules/details/StockDetailModal';
+import { RecipeDetailModal } from '../../modules/details/RecipeDetailModal';
+import { SupplierDetailModal } from '../../modules/details/SupplierDetailModal';
 import { CompanyProfileModal } from '../../modules/business/components/CompanyProfileModal';
 
 const onClose = closeSheet;
@@ -62,6 +67,13 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   ),
   create_expense: () => <RecordExpenseModal visible onClose={onClose} />,
   company_profile: () => <CompanyProfileModal visible onClose={onClose} />,
+  batch_detail: (p) => <BatchDetailModal visible onClose={onClose} batchId={p.batchId ?? null} />,
+  profit_detail: (p) => <ProfitDetailModal visible onClose={onClose} period={p.period ?? null} />,
+  stock_detail: (p) => <StockDetailModal visible onClose={onClose} itemId={p.itemId ?? null} />,
+  recipe_detail: (p) => <RecipeDetailModal visible onClose={onClose} setupId={p.setupId ?? null} />,
+  supplier_detail: (p) => (
+    <SupplierDetailModal visible onClose={onClose} supplierId={p.supplierId ?? null} />
+  ),
   edit_customer: (p) => (
     <EditCustomerModal visible onClose={onClose} customerId={p.customerId ?? null} />
   ),

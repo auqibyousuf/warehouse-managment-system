@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Linking, Share } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { useMoney } from '../../hooks/useMoney';
 import { useSalesInvoices } from '../../hooks/api/useSales';
 import { useFactorySettings } from '../../hooks/api/useDashboard';
@@ -19,7 +19,7 @@ import {
   LoadingState,
   EmptyState,
   ScreenList,
-  InsetStats,
+  Icon,
 } from '../../components';
 import { SaleInvoice } from '../../types';
 
@@ -34,6 +34,7 @@ const daysUntil = (isoDate: string) =>
 /** Invoices & Receipts: bill a customer, share it, remind, record the payment. */
 export const InvoicesScreen: React.FC = () => {
   const money = useMoney();
+  const colors = useColors();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
   const { data: settings } = useFactorySettings();
   const { data: invoices = [], isLoading, refetch, isRefetching } = useSalesInvoices();
@@ -134,42 +135,99 @@ export const InvoicesScreen: React.FC = () => {
   };
 
   const header = (
-    <Stack gap="lg" style={{ marginBottom: theme.spacing.md }}>
-      <Card variant="elevated" padding="normal">
-        <Row justify="space-between" align="center">
-          <Typography variant="title" color="primary">
-            This month
-          </Typography>
-          <Typography variant="label" color="muted">
+    <Stack gap="md" style={{ marginBottom: theme.spacing.md }}>
+      <Card variant="elevated" padding="none">
+        <Row
+          justify="space-between"
+          align="center"
+          style={{
+            paddingHorizontal: theme.spacing.base,
+            paddingVertical: theme.spacing.sm,
+            backgroundColor: colors.background.surfaceSecondary,
+          }}
+        >
+          <Row gap="xs" align="center">
+            <Icon name="calendar-outline" size={18} color="brandPrimary" />
+            <Typography variant="title" color="primary">
+              This month overview
+            </Typography>
+          </Row>
+          <Typography variant="label" color="success">
             {monthLabel}
           </Typography>
         </Row>
-        <Row justify="space-between" align="center" style={{ marginVertical: theme.spacing.md }}>
-          <Typography variant="bodyMedium" color="secondary">
-            Total billed sales
-          </Typography>
-          <Typography variant="h2" color="primary" tabular>
-            {money(billed)}
-          </Typography>
-        </Row>
-        <InsetStats
-          stats={[
-            {
-              label: 'Awaiting payment',
-              value: money(awaiting),
-              valueColor: awaiting > 0 ? 'warning' : 'primary',
-            },
-            { label: 'Received', value: money(received), valueColor: 'success' },
-          ]}
-        />
-        <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xs }}>
-          {unpaidCount} invoice{unpaidCount === 1 ? '' : 's'} pending • {monthInvoices.length} this
-          month
-        </Typography>
+        <Stack gap="sm" style={{ padding: theme.spacing.base }}>
+          <Row justify="space-between" align="center">
+            <Typography variant="bodyMedium" color="secondary">
+              Total billed sales
+            </Typography>
+            <Typography variant="h1" color="primary" tabular>
+              {money(billed)}
+            </Typography>
+          </Row>
+          <Row gap="sm" align="stretch">
+            <Box
+              flex={1}
+              style={{
+                padding: theme.spacing.sm,
+                borderRadius: theme.radii.sm,
+                backgroundColor: colors.background.surfaceSecondary,
+              }}
+            >
+              <Row gap="xxs" align="center">
+                <Box
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: colors.accent.warning,
+                  }}
+                />
+                <Typography variant="label" color="secondary">
+                  Awaiting payment
+                </Typography>
+              </Row>
+              <Typography variant="dataLarge" color="warning" tabular>
+                {money(awaiting)}
+              </Typography>
+              <Typography variant="bodySmall" color="secondary">
+                {unpaidCount} invoice{unpaidCount === 1 ? '' : 's'} pending
+              </Typography>
+            </Box>
+            <Box
+              flex={1}
+              style={{
+                padding: theme.spacing.sm,
+                borderRadius: theme.radii.sm,
+                backgroundColor: colors.background.surfaceSecondary,
+              }}
+            >
+              <Row gap="xxs" align="center">
+                <Box
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: colors.accent.success,
+                  }}
+                />
+                <Typography variant="label" color="secondary">
+                  Received
+                </Typography>
+              </Row>
+              <Typography variant="dataLarge" color="success" tabular>
+                {money(received)}
+              </Typography>
+              <Typography variant="bodySmall" color="secondary">
+                {monthInvoices.length - unpaidCount} cleared
+              </Typography>
+            </Box>
+          </Row>
+        </Stack>
       </Card>
 
       <Button
-        label="New Invoice / Dispatch Bill"
+        label="+ New Invoice / Dispatch Bill"
         variant="primary"
         size="lg"
         leftIcon="document-text-outline"
@@ -178,6 +236,7 @@ export const InvoicesScreen: React.FC = () => {
       />
 
       <ChipPicker
+        variant="segmented"
         options={[
           { value: 'all', label: 'All', count: counts.all },
           { value: 'unpaid', label: 'Unpaid', count: counts.unpaid },
@@ -209,83 +268,103 @@ export const InvoicesScreen: React.FC = () => {
       renderItem={({ item: invoice }) => {
         const unpaid = invoice.paymentStatus !== 'cancelled' && invoice.balanceDue > 0;
         return (
-          <Card variant="elevated" padding="normal">
-            <Stack gap="md">
-              <Row justify="space-between" align="flex-start" gap="sm">
-                <Box flex={1}>
-                  <Typography variant="title" color="primary" numberOfLines={2}>
-                    {invoice.customerName}
+          <Card
+            variant="elevated"
+            padding="none"
+            onPress={() => openSheet('invoice_detail', { invoiceId: invoice.id })}
+          >
+            <Row
+              justify="space-between"
+              align="flex-start"
+              gap="sm"
+              style={{ padding: theme.spacing.base, paddingBottom: theme.spacing.xs }}
+            >
+              <Box flex={1}>
+                <Typography variant="title" color="primary" numberOfLines={1}>
+                  {invoice.customerName}
+                </Typography>
+                <Row gap="xs" align="center" style={{ marginTop: 2 }}>
+                  <Typography variant="dataMedium" color="secondary">
+                    {invoice.invoiceNumber.replace(/^[A-Z]+-\d{4}-/, '#')}
                   </Typography>
-                  <Typography variant="caption" color="muted">
-                    #{invoice.invoiceNumber} • {invoice.date}
+                  <Typography variant="bodySmall" color="secondary">
+                    • {invoice.date}
                   </Typography>
-                </Box>
-                {statusBadge(invoice)}
+                </Row>
+              </Box>
+              {statusBadge(invoice)}
+            </Row>
+
+            <Stack
+              gap="xs"
+              style={{ paddingHorizontal: theme.spacing.base, paddingVertical: theme.spacing.xs }}
+            >
+              <Row gap="xs" align="center">
+                <Icon name="cube-outline" size={18} color="secondary" />
+                <Typography
+                  variant="bodyMedium"
+                  color="primary"
+                  numberOfLines={1}
+                  style={{ flex: 1 }}
+                >
+                  {invoice.quantity || invoice.bagQuantity} {invoice.outputUnit || 'units'}{' '}
+                  {invoice.productName}
+                </Typography>
               </Row>
-
-              <Typography variant="bodyMedium" color="secondary">
-                {invoice.quantity || invoice.bagQuantity} {invoice.outputUnit || 'units'}{' '}
-                {invoice.productName}
-              </Typography>
-
-              <Row justify="space-between" align="flex-end">
-                <Typography variant="bodySmall" color="muted">
+              <Row justify="space-between" align="center">
+                <Typography variant="bodySmall" color="secondary">
                   Total bill
                 </Typography>
-                <Box align="flex-end">
-                  <Typography variant="h3" color={unpaid ? 'warning' : 'primary'} tabular>
-                    {money(invoice.totalAmount)}
-                  </Typography>
-                  {unpaid && (
-                    <Typography variant="caption" color="warning">
-                      Due {money(invoice.balanceDue)}
-                    </Typography>
-                  )}
-                </Box>
-              </Row>
-
-              <Row gap="sm" wrap>
-                {unpaid ? (
-                  <>
-                    <Button
-                      label="Send Reminder"
-                      variant="secondary"
-                      size="sm"
-                      leftIcon="notifications-outline"
-                      onPress={() => sendReminder(invoice)}
-                    />
-                    <Button
-                      label="Record Pay"
-                      variant="primary"
-                      size="sm"
-                      leftIcon="cash-outline"
-                      onPress={() =>
-                        openSheet('record_payment', {
-                          invoiceId: invoice.id,
-                          customerId: invoice.customerId,
-                        })
-                      }
-                    />
-                  </>
-                ) : (
-                  <Button
-                    label="Share PDF"
-                    variant="secondary"
-                    size="sm"
-                    leftIcon="share-outline"
-                    loading={busyId === invoice.id}
-                    onPress={() => sharePDF(invoice)}
-                  />
-                )}
-                <Button
-                  label="View"
-                  variant="ghost"
-                  size="sm"
-                  leftIcon="eye-outline"
-                  onPress={() => openSheet('invoice_detail', { invoiceId: invoice.id })}
-                />
+                <Typography variant="dataLarge" color={unpaid ? 'warning' : 'primary'} tabular>
+                  {money(invoice.totalAmount)}
+                </Typography>
               </Row>
             </Stack>
+
+            <Row
+              gap="sm"
+              style={{
+                padding: theme.spacing.base,
+                paddingTop: theme.spacing.sm,
+                backgroundColor: colors.background.surfaceSecondary,
+              }}
+            >
+              {unpaid ? (
+                <>
+                  <Button
+                    label="Send Reminder"
+                    variant="secondary"
+                    size="sm"
+                    leftIcon="notifications-outline"
+                    style={{ flex: 1 }}
+                    onPress={() => sendReminder(invoice)}
+                  />
+                  <Button
+                    label="Record Pay"
+                    variant="primary"
+                    size="sm"
+                    leftIcon="cash-outline"
+                    style={{ flex: 1 }}
+                    onPress={() =>
+                      openSheet('record_payment', {
+                        invoiceId: invoice.id,
+                        customerId: invoice.customerId,
+                      })
+                    }
+                  />
+                </>
+              ) : (
+                <Button
+                  label="Share PDF"
+                  variant="secondary"
+                  size="sm"
+                  leftIcon="share-outline"
+                  style={{ flex: 1 }}
+                  loading={busyId === invoice.id}
+                  onPress={() => sharePDF(invoice)}
+                />
+              )}
+            </Row>
           </Card>
         );
       }}

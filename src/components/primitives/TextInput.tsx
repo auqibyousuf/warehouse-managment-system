@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  View,
-  TextInputProps as RNTextInputProps,
-  ViewStyle,
-} from 'react-native';
+import { View, TextInputProps as RNTextInputProps, ViewStyle } from 'react-native';
 import { Input as PanelInput } from 'panelui-native';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
@@ -36,27 +32,29 @@ export const TextInput: React.FC<FormTextInputProps> = ({
   editable = true,
   ...rest
 }) => {
-  const startContent = (prefix || leftIcon) ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
-      {leftIcon && <Icon name={leftIcon} size="sm" color="muted" />}
-      {prefix && (
-        <Typography variant="bodyMedium" weight="semibold" color="muted">
-          {prefix}
-        </Typography>
-      )}
-    </View>
-  ) : undefined;
+  const startContent =
+    prefix || leftIcon ? (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
+        {leftIcon && <Icon name={leftIcon} size="sm" color="muted" />}
+        {prefix && (
+          <Typography variant="bodyMedium" weight="semibold" color="muted">
+            {prefix}
+          </Typography>
+        )}
+      </View>
+    ) : undefined;
 
-  const endContent = (suffix || rightIcon) ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
-      {suffix && (
-        <Typography variant="bodySmall" weight="medium" color="muted">
-          {suffix}
-        </Typography>
-      )}
-      {rightIcon && <Icon name={rightIcon} size="sm" color="muted" />}
-    </View>
-  ) : undefined;
+  const endContent =
+    suffix || rightIcon ? (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
+        {suffix && (
+          <Typography variant="bodySmall" weight="medium" color="muted">
+            {suffix}
+          </Typography>
+        )}
+        {rightIcon && <Icon name={rightIcon} size="sm" color="muted" />}
+      </View>
+    ) : undefined;
 
   return (
     <View style={containerStyle}>
@@ -76,4 +74,3 @@ export const TextInput: React.FC<FormTextInputProps> = ({
 };
 
 export default TextInput;
-

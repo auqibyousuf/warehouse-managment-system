@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
 import { goToTab, openManage } from '../../navigation/routes';
 import { theme, useColors } from '../../theme';
@@ -16,11 +17,11 @@ import {
   Card,
   Button,
   Badge,
-  Divider,
   LoadingState,
   ChipPicker,
   ProgressBar,
   Icon,
+  IconTile,
 } from '../../components';
 
 const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
@@ -70,9 +71,9 @@ export const DashboardScreen: React.FC = () => {
 
   return (
     <ScreenContainer refreshing={isRefetching} onRefresh={refetch}>
-      <Stack gap="lg">
+      <Stack gap="xl">
         <Box>
-          <Typography variant="h1" color="primary">
+          <Typography variant="h2" color="primary">
             {greeting(now.getHours())}
           </Typography>
           <Typography variant="bodyMedium" color="secondary">
@@ -86,70 +87,80 @@ export const DashboardScreen: React.FC = () => {
           onSelect={(value) => setSelectedPeriod(value as FilterPeriod)}
         />
 
-        {/* Daily overview */}
+        {/* Overview */}
         <Stack gap="sm">
-          <Typography variant="h3" color="primary">
+          <Typography variant="title" color="primary">
             Overview
           </Typography>
-          <Card variant="elevated" padding="normal">
+          <Card variant="elevated" padding="compact">
             <Row gap="xs" align="center">
-              <Icon name="clipboard-outline" size="sm" color="brandPrimary" />
-              <Typography variant="bodyMedium" color="secondary">
+              <Icon name="cube-outline" size={18} color="brandPrimary" />
+              <Typography variant="bodySmall" color="secondary">
                 {unitName.charAt(0).toUpperCase() + unitName.slice(1)} produced
               </Typography>
             </Row>
-            <Typography variant="display" color="primary" tabular style={{ marginTop: 4 }}>
-              {(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')}
-            </Typography>
-            <Typography variant="caption" color="muted">
-              {(metrics?.production.totalBaseQuantity ?? 0).toLocaleString('en-IN')}{' '}
-              {metrics?.production.baseUnit || 'kg'} total output
-            </Typography>
+            <Row gap="xs" align="flex-end" style={{ marginTop: theme.spacing.xxs }}>
+              <Typography variant="dataLarge" color="primary" tabular>
+                {(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')}
+              </Typography>
+              <Typography variant="bodySmall" color="secondary">
+                {unitName} • {(metrics?.production.totalBaseQuantity ?? 0).toLocaleString('en-IN')}{' '}
+                {metrics?.production.baseUnit || 'kg'}
+              </Typography>
+            </Row>
           </Card>
 
           <Row gap="sm" align="stretch">
-            <Card variant="elevated" padding="compact" style={{ flex: 1 }}>
+            <Card variant="elevated" padding="compact" style={styles.smallCard}>
               <Row justify="space-between" align="center">
-                <Typography variant="bodyMedium" color="secondary">
+                <Typography variant="bodySmall" color="secondary">
                   Batches done
                 </Typography>
-                <Icon name="checkmark-circle" size="md" color="success" />
+                <IconTile icon="checkmark-circle" tone="success" size={28} />
               </Row>
-              <Typography variant="h1" color="primary" tabular>
-                {metrics?.production.totalBatches ?? 0}
-              </Typography>
-              <Typography variant="caption" color="success">
-                Confirmed batches
-              </Typography>
+              <Box>
+                <Typography variant="dataLarge" color="primary" tabular>
+                  {metrics?.production.totalBatches ?? 0}
+                </Typography>
+                <Typography variant="bodySmall" color="success">
+                  Confirmed
+                </Typography>
+              </Box>
             </Card>
             <Card
-              variant={lowStock.length > 0 ? 'accent' : 'elevated'}
+              variant="elevated"
               padding="compact"
-              style={{ flex: 1 }}
+              style={styles.smallCard}
               onPress={() => goToTab('stock')}
             >
               <Row justify="space-between" align="center">
-                <Typography variant="bodyMedium" color="secondary">
+                <Typography variant="bodySmall" color="secondary">
                   Stock alerts
                 </Typography>
-                <Icon
-                  name={lowStock.length > 0 ? 'warning' : 'shield-checkmark'}
-                  size="md"
-                  color={lowStock.length > 0 ? 'warning' : 'success'}
+                <IconTile
+                  icon={lowStock.length > 0 ? 'warning' : 'shield-checkmark'}
+                  tone={lowStock.length > 0 ? 'warning' : 'success'}
+                  size={28}
                 />
               </Row>
-              <Typography variant="h1" color={lowStock.length > 0 ? 'warning' : 'primary'} tabular>
-                {lowStock.length}
-              </Typography>
-              <Typography variant="caption" color="secondary" numberOfLines={1}>
-                {lowStock.length > 0 ? `${lowStock[0].name}` : 'All items healthy'}
-              </Typography>
+              <Box>
+                <Typography
+                  variant="dataLarge"
+                  color={lowStock.length > 0 ? 'warning' : 'primary'}
+                  tabular
+                >
+                  {lowStock.length}
+                </Typography>
+                <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                  {lowStock.length > 0 ? lowStock[0].name : 'All healthy'}
+                </Typography>
+              </Box>
             </Card>
           </Row>
         </Stack>
 
         {/* Primary actions */}
-        <Stack gap="sm">
+        <Stack gap="xs">
           <Button
             label="+ Start New Batch"
             variant="primary"
@@ -178,37 +189,44 @@ export const DashboardScreen: React.FC = () => {
 
         {/* Low-stock alert */}
         {alertItem && (
-          <Card variant="accent" padding="normal">
+          <Card tone="warning" padding="compact">
             <Row gap="sm" align="flex-start">
-              <Icon name="alert-circle" size="lg" color="warning" />
+              <IconTile icon="cube" tone="warning" size={32} />
               <Box flex={1}>
                 <Row justify="space-between" align="center">
-                  <Typography variant="title" color="primary">
+                  <Typography variant="title" color="warning">
                     Low {alertItem.type === 'raw_material' ? 'raw material' : 'stock'}
                   </Typography>
                   <Typography variant="label" color="warning">
                     Action suggested
                   </Typography>
                 </Row>
-                <Typography variant="bodyMedium" color="secondary" style={{ marginTop: 4 }}>
-                  {alertItem.name} is running low ({alertItem.currentStock.toLocaleString('en-IN')}{' '}
-                  {alertItem.unit} left, minimum {alertItem.minThreshold.toLocaleString('en-IN')}).
-                  {lowStock.length > 1 ? ` ${lowStock.length - 1} more below minimum.` : ''}
+                <Typography variant="bodySmall" color="secondary" style={{ marginTop: 2 }}>
+                  {alertItem.name} is running low (
+                  <Typography variant="dataMedium" color="primary">
+                    {alertItem.currentStock.toLocaleString('en-IN')} {alertItem.unit} remaining
+                  </Typography>
+                  ).{lowStock.length > 1 ? ` ${lowStock.length - 1} more below minimum.` : ''}
                 </Typography>
-                <Row gap="sm" style={{ marginTop: theme.spacing.sm }}>
-                  <Button
-                    label="Reorder Now"
-                    variant="primary"
-                    size="sm"
-                    rightIcon="arrow-forward"
+                <Row gap="md" align="center" style={{ marginTop: theme.spacing.xs }}>
+                  <Pressable
                     onPress={() => openSheet('record_purchase', { itemId: alertItem.id })}
-                  />
-                  <Button
-                    label="Dismiss"
-                    variant="ghost"
-                    size="sm"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reorder ${alertItem.name}`}
+                  >
+                    <Typography variant="bodySmall" weight="semibold" color="warning">
+                      Reorder Now →
+                    </Typography>
+                  </Pressable>
+                  <Pressable
                     onPress={() => setDismissed(alertItem.id)}
-                  />
+                    accessibilityRole="button"
+                    accessibilityLabel="Dismiss alert"
+                  >
+                    <Typography variant="bodySmall" color="secondary">
+                      Dismiss
+                    </Typography>
+                  </Pressable>
                 </Row>
               </Box>
             </Row>
@@ -219,20 +237,23 @@ export const DashboardScreen: React.FC = () => {
         <Stack gap="sm">
           <Row justify="space-between" align="center">
             <Row gap="xs" align="center">
-              <Typography variant="h3" color="primary">
+              <Typography variant="title" color="primary">
                 Recent batch runs
               </Typography>
               <Badge label={String(batches.length)} variant="neutral" size="sm" />
             </Row>
-            <Button
-              label="View all"
-              variant="ghost"
-              size="sm"
+            <Pressable
               onPress={() => openManage('/recipes')}
-            />
+              accessibilityRole="button"
+              accessibilityLabel="View all batches"
+            >
+              <Typography variant="bodySmall" weight="medium" color="brandPrimary">
+                View all
+              </Typography>
+            </Pressable>
           </Row>
           {recentBatches.length === 0 ? (
-            <Card variant="flat" padding="normal">
+            <Card variant="flat" padding="compact">
               <Typography variant="bodySmall" color="secondary">
                 No batches yet. Tap &quot;Start New Batch&quot; to run your first one.
               </Typography>
@@ -241,31 +262,33 @@ export const DashboardScreen: React.FC = () => {
             recentBatches.map((batch) => {
               const reversed = batch.status === 'reversed';
               return (
-                <Card key={batch.id} variant="elevated" padding="compact">
-                  <Row gap="sm" align="center">
-                    <Box
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: theme.radii.md,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: reversed
-                          ? colors.status.error.bg
-                          : colors.status.success.bg,
-                      }}
-                    >
-                      <Icon
-                        name={reversed ? 'refresh' : 'checkmark'}
-                        size="md"
-                        color={reversed ? 'error' : 'success'}
-                      />
-                    </Box>
+                <Card
+                  key={batch.id}
+                  variant="elevated"
+                  padding="compact"
+                  onPress={() => openSheet('batch_detail', { batchId: batch.id })}
+                >
+                  <Row gap="sm" align="flex-start">
+                    <IconTile
+                      icon={reversed ? 'refresh' : 'checkmark'}
+                      tone={reversed ? 'danger' : 'success'}
+                      size={32}
+                    />
                     <Box flex={1}>
-                      <Typography variant="title" color="primary" numberOfLines={1}>
-                        {batch.batchNumber} {batch.productName}
-                      </Typography>
-                      <Typography variant="caption" color="muted">
+                      <Row gap="xs" align="center">
+                        <Typography variant="dataMedium" color="secondary">
+                          {batch.batchNumber.replace(/^BAT-\d+-/, '#')}
+                        </Typography>
+                        <Typography
+                          variant="title"
+                          color="primary"
+                          numberOfLines={1}
+                          style={{ flexShrink: 1 }}
+                        >
+                          {batch.productName}
+                        </Typography>
+                      </Row>
+                      <Typography variant="bodySmall" color="secondary">
                         {batch.unitsPacked} {batch.outputUnit} • {batch.date}
                       </Typography>
                     </Box>
@@ -281,90 +304,62 @@ export const DashboardScreen: React.FC = () => {
           )}
         </Stack>
 
-        {/* Money */}
+        {/* Money: two compact cards, details one tap away */}
         <Stack gap="sm">
-          <Row justify="space-between" align="center">
-            <Typography variant="h3" color="primary">
-              Money
-            </Typography>
-            <Button
-              label="Invoices"
-              variant="ghost"
-              size="sm"
-              rightIcon="arrow-forward"
-              onPress={() => goToTab('invoices')}
-            />
-          </Row>
-          <Card variant="elevated" padding="normal">
+          <Typography variant="title" color="primary">
+            Money
+          </Typography>
+          <Card variant="elevated" padding="compact" onPress={() => goToTab('invoices')}>
             <Row justify="space-between" align="center">
-              <Typography variant="bodyMedium" color="secondary">
+              <Typography variant="bodySmall" color="secondary">
                 Sales billed
               </Typography>
-              <Typography variant="h3" color="primary" tabular>
+              <Typography variant="dataLarge" color="primary" tabular>
                 {money(revenue)}
               </Typography>
             </Row>
-            <Box marginTop="sm">
-              <ProgressBar value={settledShare} color={colors.accent.success} />
+            <Box marginTop="xs">
+              <ProgressBar value={settledShare} color={colors.brand.medium} height={10} />
             </Box>
             <Row justify="space-between" style={{ marginTop: theme.spacing.xs }}>
-              <Typography variant="caption" color="success">
+              <Typography variant="bodySmall" color="success">
                 Collected {money(collected)}
               </Typography>
-              <Typography variant="caption" color="warning">
+              <Typography variant="bodySmall" color="warning">
                 Due {money(metrics?.sales.outstandingDues ?? 0)}
               </Typography>
             </Row>
           </Card>
 
-          <Card variant="accent" padding="normal">
-            <Row justify="space-between" align="flex-start">
-              <Typography variant="label" color="brandDeep">
-                Estimated operating profit
-              </Typography>
-              <Badge label="Estimate" variant="forest" size="sm" />
+          <Card
+            variant="elevated"
+            padding="compact"
+            onPress={() => openSheet('profit_detail', { period: selectedPeriod })}
+          >
+            <Row justify="space-between" align="center">
+              <Box>
+                <Typography variant="bodySmall" color="secondary">
+                  Estimated operating profit
+                </Typography>
+                <Typography
+                  variant="dataLarge"
+                  color={(finance?.estimatedOperatingProfit ?? 0) >= 0 ? 'success' : 'error'}
+                  tabular
+                >
+                  {money(finance?.estimatedOperatingProfit ?? 0)}
+                </Typography>
+              </Box>
+              <Icon name="chevron-forward" size={20} color="subtle" />
             </Row>
-            <Typography
-              variant="h1"
-              color={(finance?.estimatedOperatingProfit ?? 0) >= 0 ? 'brandDeep' : 'error'}
-              tabular
-              style={{ marginVertical: theme.spacing.sm }}
-            >
-              {money(finance?.estimatedOperatingProfit ?? 0)}
-            </Typography>
-            <Stack gap="xs">
-              {[
-                ['(+) Sales revenue', money(finance?.salesRevenue ?? 0), 'primary' as const],
-                [
-                  '(−) Cost of goods sold',
-                  `−${money(finance?.costOfGoodsSold ?? 0)}`,
-                  'error' as const,
-                ],
-                [
-                  '(−) Operating expenses',
-                  `−${money(finance?.operatingExpenses ?? 0)}`,
-                  'error' as const,
-                ],
-              ].map(([label, value, color]) => (
-                <Row key={label as string} justify="space-between">
-                  <Typography variant="bodySmall" color="secondary">
-                    {label}
-                  </Typography>
-                  <Typography variant="dataMedium" color={color as 'primary' | 'error'} tabular>
-                    {value}
-                  </Typography>
-                </Row>
-              ))}
-            </Stack>
-            <Divider variant="subtle" spacing="sm" />
-            <Typography variant="caption" color="muted">
-              Unsold finished stock is inventory, not cost of goods sold.
-            </Typography>
           </Card>
         </Stack>
       </Stack>
     </ScreenContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  smallCard: { flex: 1, height: 112, justifyContent: 'space-between' },
+});
 
 export default DashboardScreen;

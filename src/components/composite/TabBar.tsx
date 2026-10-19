@@ -62,7 +62,7 @@ export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = d
               <View style={styles.iconContainer}>
                 <Icon
                   name={isActive ? (tab.icon.replace('-outline', '') as typeof tab.icon) : tab.icon}
-                  size="md"
+                  size={22}
                   color={isActive ? 'brandPrimary' : 'muted'}
                 />
                 {tab.badgeCount !== undefined && tab.badgeCount > 0 && (
@@ -75,8 +75,8 @@ export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = d
               </View>
 
               <Typography
-                variant="caption"
-                weight={isActive ? 'bold' : 'medium'}
+                variant="bodySmall"
+                weight="regular"
                 style={{
                   color: isActive ? colors.brand.primary : colors.text.muted,
                   marginTop: theme.spacing.xxs,
@@ -95,30 +95,34 @@ export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = d
 const createStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     container: {
-      backgroundColor: colors.background.surface,
-      borderTopWidth: 1,
-      borderTopColor: colors.border.subtle,
-      ...theme.shadows.card,
+      backgroundColor: colors.background.canvas,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -1 },
+      shadowOpacity: colors.scheme === 'dark' ? 0.4 : 0.04,
+      shadowRadius: 8,
+      elevation: 8,
     },
     tabsRow: {
       flexDirection: 'row',
       height: theme.spacing.layout.bottomNavHeight,
       alignItems: 'center',
       justifyContent: 'space-around',
+      paddingHorizontal: theme.spacing.base,
     },
     tabButton: {
-      flex: 1,
+      width: 80,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
-      height: '100%',
       position: 'relative',
+      gap: theme.spacing.xxs,
     },
     iconContainer: {
       position: 'relative',
       alignItems: 'center',
       justifyContent: 'center',
       width: 40,
-      height: 28,
+      height: 24,
     },
     badge: {
       position: 'absolute',
