@@ -124,7 +124,7 @@ export const DashboardScreen: React.FC = () => {
           <Typography variant="label" color="secondary">
             PRODUCTION & SALES ({selectedPeriod.replace('_', ' ').toUpperCase()})
           </Typography>
-          <Row gap="sm">
+          <Row gap="sm" align="stretch">
             <Box flex={1}>
               <StatCard
                 label="Units Produced"
@@ -147,7 +147,7 @@ export const DashboardScreen: React.FC = () => {
             </Box>
           </Row>
 
-          <Row gap="sm">
+          <Row gap="sm" align="stretch">
             <Box flex={1}>
               <StatCard
                 label="Sales Revenue"
@@ -170,7 +170,7 @@ export const DashboardScreen: React.FC = () => {
         </Stack>
 
         {/* Customer Dues & Finished Stock */}
-        <Row gap="sm">
+        <Row gap="sm" align="stretch">
           <Box flex={1}>
             <StatCard
               label="Customer Dues"

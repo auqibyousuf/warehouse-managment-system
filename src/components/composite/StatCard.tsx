@@ -83,6 +83,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       onPress={onPress}
       style={[
         {
+          flex: 1,
           backgroundColor: currentTheme.cardBg,
           borderColor: currentTheme.borderColor,
           borderWidth: 1,
@@ -91,7 +92,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       ]}
     >
       <Row justify="space-between" align="flex-start" style={styles.topRow}>
-        <Typography variant="label" color="muted" numberOfLines={1} style={{ flex: 1 }}>
+        <Typography variant="label" color="muted" style={styles.label}>
           {label}
         </Typography>
         {icon && (
@@ -105,13 +106,16 @@ export const StatCard: React.FC<StatCardProps> = ({
         variant="metric"
         color={currentTheme.valueColor}
         tabular
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
         style={styles.metricText}
       >
         {value}
       </Typography>
 
       {subtitle && (
-        <Typography variant="caption" color="muted" numberOfLines={1} style={styles.subtitleText}>
+        <Typography variant="caption" color="muted" style={styles.subtitleText}>
           {subtitle}
         </Typography>
       )}
@@ -120,6 +124,10 @@ export const StatCard: React.FC<StatCardProps> = ({
 };
 
 const styles = StyleSheet.create({
+  label: {
+    flex: 1,
+    flexShrink: 1,
+  },
   topRow: {
     marginBottom: theme.spacing.xs,
   },
