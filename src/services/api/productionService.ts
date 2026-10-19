@@ -88,7 +88,7 @@ export const productionService = {
       } else {
         const prodId = generateId('prod');
         const outputUnit = input.outputUnit || 'units';
-        const unitSize = input.unitSize || input.bagWeightKg || 20;
+        const unitSize = input.unitSize || input.bagWeightKg || 1;
         const baseUnit = input.baseUnit || 'kg';
         resolvedProduct = {
           id: prodId,
@@ -149,9 +149,9 @@ export const productionService = {
         input.bagWeightKg ||
         resolvedProduct.unitSize ||
         resolvedProduct.bagWeightKg ||
-        20;
+        1;
       const baseUnit = input.baseUnit || resolvedProduct.baseUnit || 'kg';
-      const targetUnits = input.targetUnits || input.targetBags || 50;
+      const targetUnits = input.targetUnits || input.targetBags || 0;
 
       const newSetup: ProductionSetup = {
         id: generateId('setup'),
@@ -207,10 +207,10 @@ export const productionService = {
 
       const outputUnit = input.outputUnit || existing.outputUnit || 'bags';
       const unitSize =
-        input.unitSize || input.bagWeightKg || existing.unitSize || existing.bagWeightKg || 20;
+        input.unitSize || input.bagWeightKg || existing.unitSize || existing.bagWeightKg || 1;
       const baseUnit = input.baseUnit || existing.baseUnit || 'kg';
       const targetUnits =
-        input.targetUnits || input.targetBags || existing.targetUnits || existing.targetBags || 50;
+        input.targetUnits || input.targetBags || existing.targetUnits || existing.targetBags || 0;
 
       // Increment version
       const updatedSetup: ProductionSetup = {

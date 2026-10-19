@@ -4,6 +4,7 @@ import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
 import { useProductionSetups, useCreateProductionBatch } from '../../../hooks/api/useProduction';
 import { useIngredients } from '../../../hooks/api/useInventory';
+import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
   Badge,
@@ -43,20 +44,29 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const [picking, setPicking] = useState(false);
   const setup = activeSetups.find((s) => s.id === setupId) ?? activeSetups[0] ?? null;
 
-  const baseUnits = setup ? setup.targetUnits || setup.targetBags || 1 : 1;
-  const unitSize = setup ? setup.unitSize || setup.bagWeightKg || 1 : 1;
-  const outputUnit = setup?.outputUnit || 'units';
-  const baseUnit = setup?.baseUnit || 'kg';
-
+  const { data: settings } = useFactorySettings();
+  // A recipe may not know its output yet (0 = not set); then it is entered after mixing.
+  const expectedUnits = setup ? setup.targetUnits || setup.targetBags || 0 : 0;
+  const [loads, setLoads] = useState(1);
   const [units, setUnits] = useState<number | null>(null);
+  const [sizeInput, setSizeInput] = useState<string | null>(null);
+  const [unitInput, setUnitInput] = useState<string | null>(null);
+  const unitSize =
+    sizeInput !== null
+      ? Number(sizeInput) || 0
+      : setup
+        ? setup.unitSize || setup.bagWeightKg || settings?.defaultUnitSize || 0
+        : 0;
+  const outputUnit = unitInput ?? (setup?.outputUnit || settings?.defaultUnitName || 'units');
+  const baseUnit = setup?.baseUnit || settings?.defaultBaseUnit || 'kg';
   const [adjusting, setAdjusting] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [wastage, setWastage] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
 
-  const target = units ?? baseUnits;
-  const scale = baseUnits > 0 ? target / baseUnits : 1;
+  const target = units ?? expectedUnits * loads;
+  const scale = loads;
 
   const rows = (setup?.recipeItems ?? []).map((ri) => {
     const ing = ingredients.find((i) => i.id === ri.ingredientId);
@@ -78,6 +88,9 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const pickSetup = (id: string) => {
     setSetupId(id);
     setUnits(null);
+    setLoads(1);
+    setSizeInput(null);
+    setUnitInput(null);
     setOverrides({});
     setPicking(false);
     setError('');
@@ -85,7 +98,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
 
   const submit = async () => {
     if (!setup) return setError('Choose a recipe');
-    if (!(target > 0)) return setError('Enter how many to make');
+    if (!(target > 0)) return setError('Enter how much it made, once you know the output');
     try {
       const wasteQty = Number(wastage) || 0;
       await createBatch.mutateAsync({
@@ -165,7 +178,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
           <SelectedCard
             icon="flask-outline"
             title={setup.name}
-            subtitle={`v${setup.version} · ${baseUnits} ${outputUnit} standard`}
+            subtitle={`v${setup.version} · ${setup.recipeItems.length} items${expectedUnits ? ` · usually ${expectedUnits} ${setup.outputUnit}` : ''}`}
           />
         )}
         {picking && (
@@ -179,26 +192,22 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
 
       {setup && (
         <>
-          <FlowSection label="Batch target" hint={`Standard: ${baseUnits} ${outputUnit}`}>
+          <FlowSection label="Mixer loads" hint="Quantities below are for one mix">
             <QuantityStepper
-              value={target}
+              value={loads}
               onChange={(v) => {
-                setUnits(v);
-                setError('');
+                setLoads(v);
+                setOverrides({});
               }}
-              unit={outputUnit}
-              step={baseUnits >= 100 ? 10 : 1}
+              unit={loads === 1 ? 'mix' : 'mixes'}
               min={1}
             />
-            <Typography variant="bodySmall" color="secondary">
-              Makes about {finished.toLocaleString('en-IN')} {baseUnit}
-            </Typography>
           </FlowSection>
 
           <FlowSection
             label="Stock availability"
             action={{
-              label: adjusting ? 'Use standard' : 'Adjust actuals',
+              label: adjusting ? 'Use recipe amounts' : 'Edit amounts used',
               icon: 'create-outline',
               onPress: () => {
                 setAdjusting((v) => !v);
@@ -265,6 +274,40 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
                 </Box>
               ))}
             </Stack>
+          </FlowSection>
+
+          <FlowSection
+            label="What did it make?"
+            hint={target > 0 ? undefined : 'Fill this in when you know the output'}
+          >
+            <QuantityStepper
+              value={target}
+              onChange={(v) => {
+                setUnits(v);
+                setError('');
+              }}
+              unit={outputUnit}
+              step={target >= 100 ? 10 : 1}
+            />
+            <Row gap="sm">
+              <Box flex={1}>
+                <TextInput
+                  label="Pack size"
+                  value={sizeInput ?? (unitSize ? String(unitSize) : '')}
+                  onChangeText={setSizeInput}
+                  keyboardType="numeric"
+                  suffix={baseUnit}
+                />
+              </Box>
+              <Box flex={1}>
+                <TextInput label="Packed as" value={outputUnit} onChangeText={setUnitInput} />
+              </Box>
+            </Row>
+            {target > 0 && unitSize > 0 && (
+              <Typography variant="bodySmall" color="secondary">
+                {finished.toLocaleString('en-IN')} {baseUnit} in total
+              </Typography>
+            )}
           </FlowSection>
 
           <FlowSection label="Cost preview">

@@ -37,7 +37,7 @@ interface Line {
   quantity: string;
 }
 
-const STEPS = ['Basics', 'Output', 'Ingredients', 'Review'];
+const STEPS = ['Basics', 'Ingredients', 'Review'];
 const OUTPUT_UNITS = ['bags', 'bottles', 'drums', 'cans', 'cartons', 'boxes', 'pouches', 'units'];
 const BASE_UNITS = ['kg', 'L', 'g', 'ml', 'tons', 'pcs'];
 
@@ -103,16 +103,8 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
     setLines((prev) => prev.map((l) => (l.ingredientId === id ? { ...l, quantity } : l)));
 
   const validate = (forStep: number): string => {
-    if (forStep === 0) {
-      if (name.trim().length < 2) return 'Give the recipe a name';
-      if (productName.trim().length < 2) return 'Say what product this makes';
-    }
+    if (forStep === 0 && name.trim().length < 2) return 'Give the recipe a name';
     if (forStep === 1) {
-      if (!outputUnit.trim()) return 'Choose how it is packed';
-      if (!(units > 0)) return 'Enter how many you make per batch';
-      if (!(size > 0)) return 'Enter the size of one pack';
-    }
-    if (forStep === 2) {
       if (lines.length === 0) return 'Add at least one item from stock';
       if (view.some((v) => !(v.qty > 0))) return 'Every item needs a quantity above 0';
     }
@@ -127,17 +119,19 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
   };
 
   const save = async () => {
-    const problem = [0, 1, 2].map(validate).find(Boolean);
+    const problem = [0, 1].map(validate).find(Boolean);
     if (problem) return setError(problem);
-    const match = products.find((p) => p.name.toLowerCase() === productName.trim().toLowerCase());
+    const match = products.find(
+      (p) => p.name.toLowerCase() === (productName.trim() || name.trim()).toLowerCase(),
+    );
     const input = {
       name: name.trim(),
       productId: match?.id,
-      productName: productName.trim(),
-      outputUnit: outputUnit.trim(),
-      unitSize: size,
-      baseUnit: baseUnit.trim(),
-      targetUnits: units,
+      productName: productName.trim() || name.trim(),
+      outputUnit: outputUnit.trim() || undefined,
+      unitSize: size || undefined,
+      baseUnit: baseUnit.trim() || undefined,
+      targetUnits: units || undefined,
       recipeItems: view.map((v) => ({
         ingredientId: v.line.ingredientId,
         ingredientName: v.ing?.name,
@@ -170,7 +164,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
       <FlowHeaderCard
         icon="flask-outline"
         title={existing ? `Edit ${existing.name}` : 'Create Recipe'}
-        description="A recipe is the mix of your stock items that makes one batch"
+        description="List what goes into the mixer. You enter the output when you run a batch."
         chip={`Step ${step + 1} of ${STEPS.length}`}
       />
       <StepIndicator steps={STEPS} current={step} />
@@ -185,10 +179,10 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
               placeholder="e.g. Cattle feed standard mix"
             />
           </FlowSection>
-          <FlowSection label="Finished product" hint="What this recipe produces">
+          <FlowSection label="Finished product" hint="Optional">
             <TextInput
               label="Product name"
-              hint="The finished product, not the raw materials. You pick those from stock in step 3."
+              hint="Leave empty to use the recipe name. Raw materials are picked in the next step."
               value={productName}
               onChangeText={setProductName}
               placeholder="e.g. High-yield feed 20kg"
@@ -218,12 +212,11 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
               multiline
             />
           </FlowSection>
-        </>
-      )}
+          <Typography variant="label" color="muted">
+            Expected output (optional: you can enter it when you run a batch)
+          </Typography>
 
-      {step === 1 && (
-        <>
-          <FlowSection label="Packed as">
+          <FlowSection label="Usually packed as">
             <ChipPicker
               options={OUTPUT_UNITS.map((u) => ({ value: u, label: u }))}
               selected={outputUnit}
@@ -231,7 +224,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
             />
             <TextInput label="Or type your own" value={outputUnit} onChangeText={setOutputUnit} />
           </FlowSection>
-          <FlowSection label="Size of one pack">
+          <FlowSection label="Pack size">
             <Row gap="sm">
               <Box flex={1}>
                 <TextInput
@@ -251,7 +244,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
               onSelect={(v) => setBaseUnit(String(v))}
             />
           </FlowSection>
-          <FlowSection label="Standard batch">
+          <FlowSection label="Usual output per batch">
             <TextInput
               label={`${outputUnit || 'Packs'} per batch`}
               value={targetUnits}
@@ -268,7 +261,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
         </>
       )}
 
-      {step === 2 && (
+      {step === 1 && (
         <>
           <FlowSection
             label="Items in this recipe"
@@ -355,12 +348,17 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
         </>
       )}
 
-      {step === 3 && (
+      {step === 2 && (
         <>
           <FlowSection label="Summary">
             <Typography variant="title">{name}</Typography>
             <Typography variant="bodySmall" color="secondary">
-              Makes {productName} · {units} {outputUnit} of {size} {baseUnit} per batch
+              {productName.trim()
+                ? `Makes ${productName.trim()}`
+                : 'Output is entered when you run a batch'}
+              {units > 0 && size > 0
+                ? ` · ${units} ${outputUnit} of ${size} ${baseUnit} per batch`
+                : ''}
             </Typography>
             <Stack gap="xs">
               {view.map((v) => (
