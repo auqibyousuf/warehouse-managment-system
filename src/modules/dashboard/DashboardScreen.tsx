@@ -7,6 +7,8 @@ import { useMoney } from '../../hooks/useMoney';
 import { useDashboardMetrics } from '../../hooks/api/useDashboard';
 import { useProductionBatches } from '../../hooks/api/useProduction';
 import { useInventoryItems } from '../../hooks/api/useInventory';
+import { useCustomers } from '../../hooks/api/useCustomers';
+import { useSalesInvoices } from '../../hooks/api/useSales';
 import { useAppStore, FilterPeriod } from '../../stores/useAppStore';
 import {
   ScreenContainer,
@@ -31,6 +33,44 @@ const PERIOD_OPTIONS: { value: FilterPeriod; label: string }[] = [
   { value: 'all_time', label: 'All Time' },
 ];
 
+interface StatTileProps {
+  label: string;
+  value: string;
+  caption: string;
+  icon: React.ComponentProps<typeof IconTile>['icon'];
+  tone: React.ComponentProps<typeof IconTile>['tone'];
+  valueColor?: 'primary' | 'warning';
+  onPress: () => void;
+}
+
+/** Equal-height overview tile: label and icon on top, value and caption at the bottom. */
+const StatTile: React.FC<StatTileProps> = ({
+  label,
+  value,
+  caption,
+  icon,
+  tone,
+  valueColor = 'primary',
+  onPress,
+}) => (
+  <Card variant="elevated" padding="compact" style={styles.smallCard} onPress={onPress}>
+    <Row justify="space-between" align="center" gap="xs">
+      <Typography variant="bodySmall" color="secondary" numberOfLines={1} style={{ flex: 1 }}>
+        {label}
+      </Typography>
+      <IconTile icon={icon} tone={tone} size={28} />
+    </Row>
+    <Box>
+      <Typography variant="dataLarge" color={valueColor} tabular numberOfLines={1}>
+        {value}
+      </Typography>
+      <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+        {caption}
+      </Typography>
+    </Box>
+  </Card>
+);
+
 const greeting = (hour: number) =>
   hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
@@ -42,6 +82,8 @@ export const DashboardScreen: React.FC = () => {
   const { data: metrics, isLoading, refetch, isRefetching } = useDashboardMetrics(selectedPeriod);
   const { data: batches = [] } = useProductionBatches();
   const { data: stock = [] } = useInventoryItems();
+  const { data: customers = [] } = useCustomers();
+  const { data: invoices = [] } = useSalesInvoices();
   const [dismissed, setDismissed] = useState<string | null>(null);
 
   const now = new Date();
@@ -54,6 +96,18 @@ export const DashboardScreen: React.FC = () => {
   const lowStock = useMemo(() => stock.filter((item) => item.isLowStock), [stock]);
   const alertItem = lowStock.find((item) => item.id !== dismissed) ?? null;
   const recentBatches = batches.slice(0, 4);
+  const owing = useMemo(
+    () =>
+      customers
+        .filter((c) => c.outstandingBalance > 0)
+        .sort((a, b) => b.outstandingBalance - a.outstandingBalance),
+    [customers],
+  );
+  const today = now.toISOString().split('T')[0];
+  const overdue = useMemo(
+    () => invoices.filter((i) => i.balanceDue > 0 && i.dueDate && i.dueDate < today),
+    [invoices, today],
+  );
 
   if (isLoading && !metrics) {
     return (
@@ -87,75 +141,48 @@ export const DashboardScreen: React.FC = () => {
           onSelect={(value) => setSelectedPeriod(value as FilterPeriod)}
         />
 
-        {/* Overview */}
+        {/* Overview: four equal tiles, each opens the place it summarises */}
         <Stack gap="sm">
           <Typography variant="title" color="primary">
             Overview
           </Typography>
-          <Card variant="elevated" padding="compact">
-            <Row gap="xs" align="center">
-              <Icon name="cube-outline" size={18} color="brandPrimary" />
-              <Typography variant="bodySmall" color="secondary">
-                {unitName.charAt(0).toUpperCase() + unitName.slice(1)} produced
-              </Typography>
-            </Row>
-            <Row gap="xs" align="flex-end" style={{ marginTop: theme.spacing.xxs }}>
-              <Typography variant="dataLarge" color="primary" tabular>
-                {(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')}
-              </Typography>
-              <Typography variant="bodySmall" color="secondary">
-                {unitName} • {(metrics?.production.totalBaseQuantity ?? 0).toLocaleString('en-IN')}{' '}
-                {metrics?.production.baseUnit || 'kg'}
-              </Typography>
-            </Row>
-          </Card>
-
           <Row gap="sm" align="stretch">
-            <Card variant="elevated" padding="compact" style={styles.smallCard}>
-              <Row justify="space-between" align="center">
-                <Typography variant="bodySmall" color="secondary">
-                  Batches done
-                </Typography>
-                <IconTile icon="checkmark-circle" tone="success" size={28} />
-              </Row>
-              <Box>
-                <Typography variant="dataLarge" color="primary" tabular>
-                  {metrics?.production.totalBatches ?? 0}
-                </Typography>
-                <Typography variant="bodySmall" color="success">
-                  Confirmed
-                </Typography>
-              </Box>
-            </Card>
-            <Card
-              variant="elevated"
-              padding="compact"
-              style={styles.smallCard}
+            <StatTile
+              label={`${unitName.charAt(0).toUpperCase() + unitName.slice(1)} produced`}
+              icon="cube"
+              tone="success"
+              value={(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')}
+              caption={`${(metrics?.production.totalBaseQuantity ?? 0).toLocaleString('en-IN')} ${metrics?.production.baseUnit || 'kg'}`}
+              onPress={() => openManage('/recipes')}
+            />
+            <StatTile
+              label="Batches done"
+              icon="checkmark-circle"
+              tone="success"
+              value={String(metrics?.production.totalBatches ?? 0)}
+              caption="Confirmed"
+              onPress={() => openManage('/recipes')}
+            />
+          </Row>
+          <Row gap="sm" align="stretch">
+            <StatTile
+              label="Stock alerts"
+              icon={lowStock.length > 0 ? 'warning' : 'shield-checkmark'}
+              tone={lowStock.length > 0 ? 'warning' : 'success'}
+              value={String(lowStock.length)}
+              valueColor={lowStock.length > 0 ? 'warning' : 'primary'}
+              caption={lowStock.length > 0 ? lowStock[0].name : 'All healthy'}
               onPress={() => goToTab('stock')}
-            >
-              <Row justify="space-between" align="center">
-                <Typography variant="bodySmall" color="secondary">
-                  Stock alerts
-                </Typography>
-                <IconTile
-                  icon={lowStock.length > 0 ? 'warning' : 'shield-checkmark'}
-                  tone={lowStock.length > 0 ? 'warning' : 'success'}
-                  size={28}
-                />
-              </Row>
-              <Box>
-                <Typography
-                  variant="dataLarge"
-                  color={lowStock.length > 0 ? 'warning' : 'primary'}
-                  tabular
-                >
-                  {lowStock.length}
-                </Typography>
-                <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
-                  {lowStock.length > 0 ? lowStock[0].name : 'All healthy'}
-                </Typography>
-              </Box>
-            </Card>
+            />
+            <StatTile
+              label="Customer dues"
+              icon="wallet"
+              tone={(metrics?.sales.outstandingDues ?? 0) > 0 ? 'warning' : 'success'}
+              value={money(metrics?.sales.outstandingDues ?? 0)}
+              valueColor={(metrics?.sales.outstandingDues ?? 0) > 0 ? 'warning' : 'primary'}
+              caption={`${owing.length} customer${owing.length === 1 ? '' : 's'} owing`}
+              onPress={() => goToTab('invoices')}
+            />
           </Row>
         </Stack>
 
@@ -231,6 +258,52 @@ export const DashboardScreen: React.FC = () => {
               </Box>
             </Row>
           </Card>
+        )}
+
+        {/* Needs attention: only shown when something is actually overdue or owed */}
+        {(overdue.length > 0 || owing.length > 0) && (
+          <Stack gap="sm">
+            <Typography variant="title" color="primary">
+              Needs attention
+            </Typography>
+            {overdue.length > 0 && (
+              <Card tone="danger" padding="compact" onPress={() => goToTab('invoices')}>
+                <Row justify="space-between" align="center">
+                  <Box flex={1}>
+                    <Typography variant="title" color="error">
+                      {overdue.length} overdue invoice{overdue.length === 1 ? '' : 's'}
+                    </Typography>
+                    <Typography variant="bodySmall" color="secondary">
+                      {money(overdue.reduce((sum, i) => sum + i.balanceDue, 0))} past the due date
+                    </Typography>
+                  </Box>
+                  <Icon name="chevron-forward" size={20} color="subtle" />
+                </Row>
+              </Card>
+            )}
+            {owing.slice(0, 3).map((c) => (
+              <Card
+                key={c.id}
+                variant="elevated"
+                padding="compact"
+                onPress={() => openSheet('customer_detail', { customerId: c.id })}
+              >
+                <Row justify="space-between" align="center">
+                  <Box flex={1}>
+                    <Typography variant="title" color="primary" numberOfLines={1}>
+                      {c.name}
+                    </Typography>
+                    <Typography variant="bodySmall" color="secondary">
+                      Owes you
+                    </Typography>
+                  </Box>
+                  <Typography variant="dataLarge" color="warning" tabular>
+                    {money(c.outstandingBalance)}
+                  </Typography>
+                </Row>
+              </Card>
+            ))}
+          </Stack>
         )}
 
         {/* Batch runs */}
