@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@import "uniwind";
+@import "panelui-native/theme.css";
+@source "./node_modules/panelui-native/src";
+
+@theme {
+  --color-forest-darkest: #0F261D;
+  --color-forest-deep: #173F30;
+  --color-forest-primary: #245B43;
+  --color-forest-medium: #317355;
+  --color-forest-light: #4B8E6F;
+  --color-forest-subtle: #D1E3D9;
+  --color-forest-wash: #E6F0E9;
+  --color-forest-ultra-light: #F2F7F4;
+
+  --color-warm-canvas: #F8F8F4;
+  --color-warm-white: #FAFAF6;
+  --color-surface-white: #FFFFFF;
+  --color-surface-secondary: #F4F5F1;
+  --color-surface-tertiary: #EAEBE6;
+
+  --color-neutral-950: #111714;
+  --color-neutral-900: #202824;
+  --color-neutral-800: #333D37;
+  --color-neutral-700: #47534D;
+  --color-neutral-600: #5E6B64;
+  --color-neutral-500: #68736C;
+  --color-neutral-400: #8A9690;
+  --color-neutral-300: #B0BCB6;
+  --color-neutral-200: #DCE2DD;
+  --color-neutral-100: #EDF0EE;
+  --color-neutral-50: #F7F9F8;
+
+  --color-amber-dark: #8C520A;
+  --color-amber-primary: #A96713;
+  --color-amber-medium: #D97706;
+  --color-amber-light: #FDE68A;
+  --color-amber-wash: #FFF2D9;
+
+  --color-red-dark: #8E1710;
+  --color-red-primary: #B42318;
+  --color-red-medium: #DC2626;
+  --color-red-light: #FECDCA;
+  --color-red-wash: #FEF3F2;
+
+  --color-green-dark: #195634;
+  --color-green-primary: #247547;
+  --color-green-medium: #16A34A;
+  --color-green-light: #BBF7D0;
+  --color-green-wash: #EDFDF2;
+
+  --color-blue-dark: #1E3A8A;
+  --color-blue-primary: #2563EB;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 12px;
+  --radius-3xl: 12px;
+}
+
+@layer theme {
+  :root {
+    --radius-xs: 4px;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-2xl: 12px;
+    --radius-3xl: 12px;
+
+    @variant light {
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-xl: 12px;
+      --radius-2xl: 12px;
+      --radius-3xl: 12px;
+    }
+
+    @variant dark {
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 10px;
+      --radius-xl: 12px;
+      --radius-2xl: 12px;
+      --radius-3xl: 12px;
+    }
+  }
+}

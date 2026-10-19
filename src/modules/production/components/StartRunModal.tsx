@@ -1,0 +1,464 @@
+import React, { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { batchRunSchema, BatchRunFormData } from '../../../validation/schemas';
+import {
+  useProductionSetups,
+  useCreateProductionBatch,
+} from '../../../hooks/api/useProduction';
+import { useIngredients } from '../../../hooks/api/useInventory';
+import { useAppStore } from '../../../stores/useAppStore';
+import {
+  Modal,
+  Box,
+  Stack,
+  Row,
+  Typography,
+  TextInput,
+  Button,
+  Badge,
+  Card,
+  Divider,
+} from '../../../components';
+
+export interface StartRunModalProps {
+  visible: boolean;
+  onClose: () => void;
+  preselectedSetupId?: string | null;
+}
+
+const COMMON_OUTPUT_UNITS = [
+  'bags',
+  'bottles',
+  'drums',
+  'cans',
+  'cartons',
+  'boxes',
+  'pouches',
+  'tins',
+  'units',
+];
+
+export const StartRunModal: React.FC<StartRunModalProps> = ({
+  visible,
+  onClose,
+  preselectedSetupId,
+}) => {
+  const { data: setups = [] } = useProductionSetups();
+  const { data: ingredients = [] } = useIngredients();
+  const createBatchMutation = useCreateProductionBatch();
+  const setBannerAlert = useAppStore((s) => s.setBannerAlert);
+  const openModal = useAppStore((s) => s.openModal);
+
+  const activeSetups = setups.filter((s) => s.status === 'active');
+  const [selectedSetupId, setSelectedSetupId] = useState<string>('');
+
+  const selectedSetup = setups.find((s) => s.id === selectedSetupId) || activeSetups[0];
+
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<BatchRunFormData>({
+    resolver: zodResolver(batchRunSchema) as any,
+    defaultValues: {
+      setupId: '',
+      date: new Date().toISOString().split('T')[0],
+      unitsPacked: 50,
+      outputUnit: 'bags',
+      actualFinishedQuantity: 1000,
+      baseUnit: 'kg',
+      measurableWastage: 0,
+      actualItems: [],
+      notes: '',
+    },
+  });
+
+  // When setup changes, populate ingredients and units
+  useEffect(() => {
+    const setupToUse = preselectedSetupId
+      ? setups.find((s) => s.id === preselectedSetupId) || activeSetups[0]
+      : activeSetups[0];
+
+    if (setupToUse) {
+      setSelectedSetupId(setupToUse.id);
+      setValue('setupId', setupToUse.id);
+
+      const unit = setupToUse.outputUnit || 'bags';
+      const bUnit = setupToUse.baseUnit || 'kg';
+      const targetUnits = setupToUse.targetUnits || setupToUse.targetBags || 50;
+      const uSize = setupToUse.unitSize || setupToUse.bagWeightKg || 20;
+
+      setValue('outputUnit', unit);
+      setValue('baseUnit', bUnit);
+      setValue('unitsPacked', targetUnits);
+      setValue('actualFinishedQuantity', targetUnits * uSize);
+
+      const items = setupToUse.recipeItems.map((item) => ({
+        ingredientId: item.ingredientId,
+        actualQuantity: item.targetQuantity,
+      }));
+      setValue('actualItems', items);
+    }
+  }, [preselectedSetupId, setups]);
+
+  const watchedItems = watch('actualItems') || [];
+  const watchedUnits = watch('unitsPacked') || 0;
+  const watchedOutputUnit = watch('outputUnit') || 'units';
+  const watchedFinishedQty = watch('actualFinishedQuantity') || 0;
+  const watchedBaseUnit = watch('baseUnit') || 'kg';
+
+  // Live Cost Preview
+  const packagingItem = ingredients.find((i) => i.category === 'packaging');
+  const packagingUnitCost = packagingItem ? packagingItem.unitCost : 20;
+  const packagingCost = watchedUnits * packagingUnitCost;
+
+  let ingredientCost = 0;
+  for (const item of watchedItems) {
+    const ing = ingredients.find((i) => i.id === item.ingredientId);
+    if (ing) {
+      ingredientCost += (item.actualQuantity || 0) * ing.unitCost;
+    }
+  }
+  const estimatedBatchCost = ingredientCost + packagingCost;
+  const estimatedCostPerUnit = watchedUnits > 0 ? estimatedBatchCost / watchedUnits : 0;
+  const estimatedCostPerBaseUnit =
+    watchedFinishedQty > 0 ? estimatedBatchCost / watchedFinishedQty : 0;
+
+  const onSubmit = async (data: BatchRunFormData) => {
+    try {
+      await createBatchMutation.mutateAsync({
+        setupId: data.setupId,
+        date: data.date,
+        actualItems: data.actualItems,
+        unitsPacked: data.unitsPacked,
+        outputUnit: data.outputUnit,
+        actualFinishedQuantity: data.actualFinishedQuantity,
+        baseUnit: data.baseUnit,
+        packagingUsedUnits: data.unitsPacked,
+        measurableWastage: data.measurableWastage,
+        // Compatibility aliases
+        bagsPacked: data.unitsPacked,
+        packagingUsedBags: data.unitsPacked,
+        actualFinishedWeightKg: data.actualFinishedQuantity,
+        measurableWastageKg: data.measurableWastage,
+        notes: data.notes,
+      });
+
+      setBannerAlert({
+        title: 'Batch Confirmed',
+        message: `Successfully produced ${data.unitsPacked} ${data.outputUnit}. Stock ledger and costs updated atomically.`,
+        variant: 'success',
+      });
+      onClose();
+    } catch (err: any) {
+      setBannerAlert({
+        title: 'Production Error',
+        message: err.message || 'Failed to confirm batch run',
+        variant: 'danger',
+      });
+    }
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      onClose={onClose}
+      title="Start Production Run"
+      subtitle={
+        selectedSetup
+          ? `Setup: ${selectedSetup.name} (v${selectedSetup.version})`
+          : activeSetups.length === 0
+          ? 'Setup Required'
+          : 'Select Setup'
+      }
+      primaryAction={
+        activeSetups.length > 0
+          ? {
+              label: 'Confirm Run & Update Stock',
+              onPress: handleSubmit(onSubmit),
+              loading: createBatchMutation.isPending,
+              variant: 'primary',
+            }
+          : undefined
+      }
+      secondaryAction={{
+        label: activeSetups.length > 0 ? 'Cancel' : 'Close',
+        onPress: onClose,
+      }}
+    >
+      <Stack gap="md">
+        {activeSetups.length === 0 ? (
+          <Card variant="accent" padding="normal">
+            <Stack gap="md" align="center">
+              <Typography variant="title" weight="bold" color="brandDeep" align="center">
+                No Production Setup Available
+              </Typography>
+              <Typography variant="bodySmall" color="secondary" align="center">
+                You must configure a production setup first to define the product, packaging units, and custom recipe formulation.
+              </Typography>
+              <Button
+                label="+ Create Production Setup Now"
+                variant="primary"
+                leftIcon="construct-outline"
+                onPress={() => {
+                  onClose();
+                  openModal('create_setup');
+                }}
+              />
+            </Stack>
+          </Card>
+        ) : (
+          <>
+            {/* Setup Selection Pills */}
+            <Box>
+              <Typography variant="label" color="secondary" style={{ marginBottom: 6 }}>
+                Select Active Setup
+              </Typography>
+              <Row gap="xs" wrap>
+            {activeSetups.map((setup) => {
+              const isSelected = setup.id === selectedSetupId;
+              return (
+                <Button
+                  key={setup.id}
+                  label={`${setup.name} (v${setup.version})`}
+                  variant={isSelected ? 'primary' : 'subtle'}
+                  size="sm"
+                  onPress={() => {
+                    setSelectedSetupId(setup.id);
+                    setValue('setupId', setup.id);
+                    const unit = setup.outputUnit || 'bags';
+                    const bUnit = setup.baseUnit || 'kg';
+                    const targetUnits = setup.targetUnits || setup.targetBags || 50;
+                    const uSize = setup.unitSize || setup.bagWeightKg || 20;
+
+                    setValue('outputUnit', unit);
+                    setValue('baseUnit', bUnit);
+                    setValue('unitsPacked', targetUnits);
+                    setValue('actualFinishedQuantity', targetUnits * uSize);
+                    setValue(
+                      'actualItems',
+                      setup.recipeItems.map((i) => ({
+                        ingredientId: i.ingredientId,
+                        actualQuantity: i.targetQuantity,
+                      }))
+                    );
+                  }}
+                />
+              );
+            })}
+          </Row>
+        </Box>
+
+        {/* Date Field */}
+        <Controller
+          control={control}
+          name="date"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              label="Production Date"
+              value={value}
+              onChangeText={onChange}
+              error={errors.date?.message}
+              leftIcon="calendar-outline"
+            />
+          )}
+        />
+
+        {/* Generalized Production Output Unit Configuration */}
+        <Box>
+          <Typography variant="label" color="secondary" style={{ marginBottom: 4 }}>
+            Production Packaging / Output Unit
+          </Typography>
+          <Typography variant="caption" color="muted" style={{ marginBottom: 8 }}>
+            Choose a preset or type any custom unit (e.g. bags, bottles, drums, cans, cartons, units)
+          </Typography>
+          <Row gap="xs" wrap style={{ marginBottom: 8 }}>
+            {COMMON_OUTPUT_UNITS.map((u) => (
+              <Button
+                key={u}
+                label={u}
+                variant={watchedOutputUnit.toLowerCase() === u ? 'secondary' : 'subtle'}
+                size="sm"
+                onPress={() => setValue('outputUnit', u)}
+              />
+            ))}
+          </Row>
+
+          <Controller
+            control={control}
+            name="outputUnit"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label="Production Unit Name (Type any custom unit)"
+                placeholder="e.g. bags, bottles, drums, cans, cartons, pouches, units"
+                value={value}
+                onChangeText={onChange}
+                error={errors.outputUnit?.message}
+                hint="Specify the container or packaged unit produced in this batch"
+              />
+            )}
+          />
+        </Box>
+
+        {/* Output Quantities (Generalized for any unit) */}
+        <Row gap="md">
+          <Box flex={1}>
+            <Controller
+              control={control}
+              name="unitsPacked"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  label={`Actual ${watchedOutputUnit} Produced`}
+                  value={value ? String(value) : ''}
+                  onChangeText={(val) => {
+                    const num = parseInt(val, 10) || 0;
+                    onChange(num);
+                    if (selectedSetup) {
+                      const uSize = selectedSetup.unitSize || selectedSetup.bagWeightKg || 20;
+                      setValue('actualFinishedQuantity', num * uSize);
+                    }
+                  }}
+                  keyboardType="numeric"
+                  suffix={watchedOutputUnit}
+                  error={errors.unitsPacked?.message}
+                />
+              )}
+            />
+          </Box>
+
+          <Box flex={1}>
+            <Controller
+              control={control}
+              name="actualFinishedQuantity"
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  label={`Finished Total (${watchedBaseUnit})`}
+                  value={value ? String(value) : ''}
+                  onChangeText={(val) => onChange(parseFloat(val) || 0)}
+                  keyboardType="numeric"
+                  suffix={watchedBaseUnit}
+                  error={errors.actualFinishedQuantity?.message}
+                />
+              )}
+            />
+          </Box>
+        </Row>
+
+        {/* Measurable Wastage */}
+        <Controller
+          control={control}
+          name="measurableWastage"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              label={`Measurable Loss / Wastage (${watchedBaseUnit})`}
+              value={value ? String(value) : '0'}
+              onChangeText={(val) => onChange(parseFloat(val) || 0)}
+              keyboardType="numeric"
+              suffix={watchedBaseUnit}
+              hint="Recorded for batch loss and yield variance audit"
+            />
+          )}
+        />
+
+        <Divider variant="subtle" spacing="xs" />
+
+        {/* Actual Ingredient Consumption Inputs */}
+        <Typography variant="label" color="secondary">
+          Actual Raw Materials Consumed (Edit if differed from standard)
+        </Typography>
+
+        {selectedSetup?.recipeItems.map((recipeItem, idx) => {
+          const currentIng = ingredients.find((i) => i.id === recipeItem.ingredientId);
+          return (
+            <Controller
+              key={recipeItem.ingredientId}
+              control={control}
+              name={`actualItems.${idx}.actualQuantity`}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  label={`${recipeItem.ingredientName} (Target: ${recipeItem.targetQuantity} ${recipeItem.unit})`}
+                  value={value !== undefined ? String(value) : ''}
+                  onChangeText={(val) => onChange(parseFloat(val) || 0)}
+                  keyboardType="numeric"
+                  suffix={recipeItem.unit}
+                  hint={
+                    currentIng
+                      ? `Unit cost snapshot: ₹${currentIng.unitCost}/${recipeItem.unit}`
+                      : undefined
+                  }
+                />
+              )}
+            />
+          );
+        })}
+
+        {/* Live Cost Calculation Card */}
+        <Card variant="accent" padding="compact">
+          <Typography variant="label" color="brandDeep" style={{ marginBottom: 4 }}>
+            AUTHORITATIVE BATCH COST PREVIEW
+          </Typography>
+          <Row justify="space-between" style={{ marginVertical: 2 }}>
+            <Typography variant="bodySmall" color="secondary">
+              Raw Ingredients Cost:
+            </Typography>
+            <Typography variant="bodySmall" weight="bold" color="primary">
+              ₹{ingredientCost.toLocaleString('en-IN')}
+            </Typography>
+          </Row>
+          <Row justify="space-between" style={{ marginVertical: 2 }}>
+            <Typography variant="bodySmall" color="secondary">
+              Packaging Cost ({watchedUnits} {watchedOutputUnit} @ ₹{packagingUnitCost}):
+            </Typography>
+            <Typography variant="bodySmall" weight="bold" color="primary">
+              ₹{packagingCost.toLocaleString('en-IN')}
+            </Typography>
+          </Row>
+          <Divider variant="brand" spacing="xxs" />
+          <Row justify="space-between" style={{ marginVertical: 2 }}>
+            <Typography variant="bodyMedium" weight="bold" color="brandDeep">
+              Total Direct Batch Cost:
+            </Typography>
+            <Typography variant="bodyMedium" weight="bold" color="brandDeep">
+              ₹{estimatedBatchCost.toLocaleString('en-IN')}
+            </Typography>
+          </Row>
+          <Row justify="space-between" style={{ marginTop: 4 }}>
+            <Badge
+              label={`₹${estimatedCostPerUnit.toFixed(2)} / ${watchedOutputUnit}`}
+              variant="forest"
+              size="md"
+            />
+            <Badge
+              label={`₹${estimatedCostPerBaseUnit.toFixed(2)} / ${watchedBaseUnit}`}
+              variant="neutral"
+              size="md"
+            />
+          </Row>
+        </Card>
+
+        {/* Operational Notes */}
+        <Controller
+          control={control}
+          name="notes"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              label="Production Run Notes (Optional)"
+              value={value || ''}
+              onChangeText={onChange}
+              placeholder="e.g. Line speeds, operator shift, moisture readings..."
+              multiline
+            />
+          )}
+        />
+          </>
+        )}
+      </Stack>
+    </Modal>
+  );
+};
+
+export default StartRunModal;
