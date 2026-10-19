@@ -4,16 +4,16 @@ import { closeSheet, SheetName, SheetParams } from '../../navigation/sheets';
 import { StartBatchPage } from '../../modules/production/components/StartBatchPage';
 import { CreateSetupModal } from '../../modules/production/components/CreateSetupModal';
 import { AddStockPage } from '../../modules/inventory/components/AddStockPage';
-import { AdjustStockModal } from '../../modules/inventory/components/AdjustStockModal';
+import { CountStockPage } from '../../modules/inventory/components/CountStockPage';
 import { CreateIngredientModal } from '../../modules/inventory/components/CreateIngredientModal';
 import { CreateSupplierModal } from '../../modules/inventory/components/CreateSupplierModal';
 import { PurchaseDetailModal } from '../../modules/inventory/components/PurchaseDetailModal';
 import { CreateInvoicePage } from '../../modules/sales/components/CreateInvoicePage';
-import { RecordPaymentModal } from '../../modules/sales/components/RecordPaymentModal';
+import { ReceivePaymentPage } from '../../modules/sales/components/ReceivePaymentPage';
 import { InvoiceDetailModal } from '../../modules/sales/components/InvoiceDetailModal';
-import { CreateCustomerModal } from '../../modules/customers/components/CreateCustomerModal';
+import { AddCustomerPage } from '../../modules/customers/components/AddCustomerPage';
 import { CustomerDetailModal } from '../../modules/customers/components/CustomerDetailModal';
-import { RecordExpenseModal } from '../../modules/expenses/components/RecordExpenseModal';
+import { AddExpensePage } from '../../modules/expenses/components/AddExpensePage';
 import { EditSupplierModal } from '../../modules/inventory/components/EditSupplierModal';
 import { EditProductModal } from '../../modules/inventory/components/EditProductModal';
 import { EditCustomerModal } from '../../modules/customers/components/EditCustomerModal';
@@ -38,7 +38,7 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
       kind={p.kind === 'waste' ? 'waste' : 'usage'}
     />
   ),
-  adjust_stock: () => <AdjustStockModal visible onClose={onClose} />,
+  adjust_stock: (p) => <CountStockPage onClose={onClose} preselectedItemId={p.itemId ?? null} />,
   create_ingredient: () => <CreateIngredientModal visible onClose={onClose} />,
   create_supplier: () => <CreateSupplierModal visible onClose={onClose} />,
   purchase_detail: (p) => (
@@ -46,8 +46,7 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   ),
   create_sale: () => <CreateInvoicePage onClose={onClose} />,
   record_payment: (p) => (
-    <RecordPaymentModal
-      visible
+    <ReceivePaymentPage
       onClose={onClose}
       preselectedCustomerId={p.customerId ?? null}
       preselectedInvoiceId={p.invoiceId ?? null}
@@ -56,11 +55,11 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   invoice_detail: (p) => (
     <InvoiceDetailModal visible onClose={onClose} invoiceId={p.invoiceId ?? null} />
   ),
-  create_customer: () => <CreateCustomerModal visible onClose={onClose} />,
+  create_customer: () => <AddCustomerPage onClose={onClose} />,
   customer_detail: (p) => (
     <CustomerDetailModal visible onClose={onClose} customerId={p.customerId ?? null} />
   ),
-  create_expense: () => <RecordExpenseModal visible onClose={onClose} />,
+  create_expense: () => <AddExpensePage onClose={onClose} />,
   company_profile: () => <CompanyProfileModal visible onClose={onClose} />,
   batch_detail: (p) => <BatchDetailModal visible onClose={onClose} batchId={p.batchId ?? null} />,
   profit_detail: (p) => <ProfitDetailModal visible onClose={onClose} period={p.period ?? null} />,

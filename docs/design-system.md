@@ -142,7 +142,7 @@ and driver allocation on invoices. Add them only together with the data model an
 
 ## Full-page action flows (Lite)
 
-The four main actions are full pages, not modals: **Add Stock**, **Use Stock**, **Start Batch**, **Create Invoice** (`/sheets/<name>`, built from `src/components/flow/`).
+The main actions are full pages, not modals: **Add Stock**, **Use Stock**, **Start Batch**, **Create Invoice**, **Receive Payment**, **Add Expense**, **Add Customer**, **Count Stock** (`/sheets/<name>`, built from `src/components/flow/`).
 
 - `FlowPage`: back arrow, BATCHIQ label, title, scrolling card stack.
 - `FlowHeaderCard`, `FlowSection` (labelled card, optional right action link), `SelectedCard`, `QuantityStepper`, `OptionGrid`.
