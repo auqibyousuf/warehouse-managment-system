@@ -1,6 +1,6 @@
 import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import {
   useInventoryItems,
   useInventoryMovements,
@@ -29,6 +29,7 @@ type InventoryTab = 'stock' | 'movements' | 'suppliers';
 type StockCategoryFilter = 'all' | 'raw_material' | 'packaging' | 'finished_feed';
 
 export const InventoryScreen: React.FC = () => {
+  const colors = useColors();
   const [activeTab, setActiveTab] = useState<InventoryTab>('stock');
   const [categoryFilter, setCategoryFilter] = useState<StockCategoryFilter>('all');
 
@@ -171,8 +172,8 @@ export const InventoryScreen: React.FC = () => {
               style={
                 item.isLowStock
                   ? {
-                      backgroundColor: theme.colors.status.warning.bg,
-                      borderColor: theme.colors.status.warning.border,
+                      backgroundColor: colors.status.warning.bg,
+                      borderColor: colors.status.warning.border,
                     }
                   : undefined
               }

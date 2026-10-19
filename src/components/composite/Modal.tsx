@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Modal as RNModal,
   View,
@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../theme';
+import { theme, useColors, ColorTokens } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Button } from '../primitives/Button';
@@ -44,6 +44,8 @@ export const Modal: React.FC<ModalProps> = ({
   secondaryAction,
   children,
 }) => {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
 
@@ -86,7 +88,11 @@ export const Modal: React.FC<ModalProps> = ({
                 {title}
               </Typography>
               {subtitle && (
-                <Typography variant="caption" color="muted" style={{ marginTop: theme.spacing.xxs }}>
+                <Typography
+                  variant="caption"
+                  color="muted"
+                  style={{ marginTop: theme.spacing.xxs }}
+                >
                   {subtitle}
                 </Typography>
               )}
@@ -142,56 +148,57 @@ export const Modal: React.FC<ModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: theme.colors.overlay.backdrop,
-    justifyContent: 'flex-end',
-  },
-  backdropPressable: {
-    flex: 1,
-  },
-  sheetContainer: {
-    backgroundColor: theme.colors.background.surface,
-    borderTopLeftRadius: theme.radii.xxl,
-    borderTopRightRadius: theme.radii.xxl,
-    maxHeight: '90%',
-    ...theme.shadows.modal,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.xs,
-  },
-  handle: {
-    width: 38,
-    height: 4,
-    borderRadius: theme.radii.full,
-    backgroundColor: theme.colors.border.medium,
-  },
-  header: {
-    paddingHorizontal: theme.spacing.base,
-    paddingVertical: theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.subtle,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.background.surfaceSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {},
-  bodyContent: {
-    padding: theme.spacing.base,
-  },
-  footer: {
-    paddingHorizontal: theme.spacing.base,
-    paddingTop: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.subtle,
-  },
-});
+const createStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay.backdrop,
+      justifyContent: 'flex-end',
+    },
+    backdropPressable: {
+      flex: 1,
+    },
+    sheetContainer: {
+      backgroundColor: colors.background.surface,
+      borderTopLeftRadius: theme.radii.xxl,
+      borderTopRightRadius: theme.radii.xxl,
+      maxHeight: '90%',
+      ...theme.shadows.modal,
+    },
+    handleContainer: {
+      alignItems: 'center',
+      paddingVertical: theme.spacing.xs,
+    },
+    handle: {
+      width: 38,
+      height: 4,
+      borderRadius: theme.radii.full,
+      backgroundColor: colors.border.medium,
+    },
+    header: {
+      paddingHorizontal: theme.spacing.base,
+      paddingVertical: theme.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border.subtle,
+    },
+    closeButton: {
+      width: 44,
+      height: 44,
+      borderRadius: theme.radii.sm,
+      backgroundColor: colors.background.surfaceSecondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    body: {},
+    bodyContent: {
+      padding: theme.spacing.base,
+    },
+    footer: {
+      paddingHorizontal: theme.spacing.base,
+      paddingTop: theme.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border.subtle,
+    },
+  });
 
 export default Modal;

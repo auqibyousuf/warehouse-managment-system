@@ -1,6 +1,6 @@
 import { openSheet } from '../../navigation/sheets';
 import React, { useState } from 'react';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { useSalesInvoices, useCustomerPayments, useCancelInvoice } from '../../hooks/api/useSales';
 import { usePurchases } from '../../hooks/api/useInventory';
 import { useAppStore } from '../../stores/useAppStore';
@@ -27,6 +27,7 @@ type SalesTab = 'invoices' | 'purchases' | 'tables' | 'payments';
 type TableView = 'sold' | 'received';
 
 export const SalesScreen: React.FC = () => {
+  const colors = useColors();
   const [activeTab, setActiveTab] = useState<SalesTab>('invoices');
   const [tableView, setTableView] = useState<TableView>('sold');
   const [invoiceToCancel, setInvoiceToCancel] = useState<SaleInvoice | null>(null);
@@ -534,7 +535,7 @@ export const SalesScreen: React.FC = () => {
                       style={{
                         paddingVertical: theme.spacing.sm,
                         paddingHorizontal: theme.spacing.sm,
-                        backgroundColor: theme.colors.background.surfaceSecondary,
+                        backgroundColor: colors.background.surfaceSecondary,
                         marginBottom: theme.spacing.xs,
                       }}
                     >
@@ -582,7 +583,7 @@ export const SalesScreen: React.FC = () => {
                         style={{
                           marginVertical: theme.spacing.xxs,
                           borderBottomWidth: 1,
-                          borderColor: theme.colors.border.default,
+                          borderColor: colors.border.default,
                         }}
                       >
                         <Row justify="space-between" align="center">
@@ -663,7 +664,7 @@ export const SalesScreen: React.FC = () => {
                       style={{
                         paddingVertical: theme.spacing.sm,
                         paddingHorizontal: theme.spacing.sm,
-                        backgroundColor: theme.colors.background.surfaceSecondary,
+                        backgroundColor: colors.background.surfaceSecondary,
                         marginBottom: theme.spacing.xs,
                       }}
                     >
@@ -711,7 +712,7 @@ export const SalesScreen: React.FC = () => {
                         style={{
                           marginVertical: theme.spacing.xxs,
                           borderBottomWidth: 1,
-                          borderColor: theme.colors.border.default,
+                          borderColor: colors.border.default,
                         }}
                       >
                         <Row justify="space-between" align="center">

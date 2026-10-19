@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../theme';
+import { theme, useColors, ColorTokens } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Badge, BadgeVariant } from '../primitives/Badge';
@@ -32,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   style,
 }) => {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   return (
@@ -99,40 +101,41 @@ export const Header: React.FC<HeaderProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: theme.colors.background.warm,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border.subtle,
-    paddingHorizontal: theme.spacing.layout.screenPaddingHorizontal,
-    paddingBottom: theme.spacing.md,
-  },
-  content: {
-    minHeight: theme.spacing.layout.headerHeight,
-  },
-  leftGroup: {
-    flex: 1,
-  },
-  titleColumn: {
-    flex: 1,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.background.surfaceSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.xs,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radii.sm,
-    backgroundColor: theme.colors.brand.wash,
-  },
-});
+const createStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background.warm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border.subtle,
+      paddingHorizontal: theme.spacing.layout.screenPaddingHorizontal,
+      paddingBottom: theme.spacing.md,
+    },
+    content: {
+      minHeight: theme.spacing.layout.headerHeight,
+    },
+    leftGroup: {
+      flex: 1,
+    },
+    titleColumn: {
+      flex: 1,
+    },
+    backButton: {
+      width: 36,
+      height: 36,
+      borderRadius: theme.radii.sm,
+      backgroundColor: colors.background.surfaceSecondary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: theme.spacing.xs,
+    },
+    actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      borderRadius: theme.radii.sm,
+      backgroundColor: colors.brand.wash,
+    },
+  });
 
 export default Header;

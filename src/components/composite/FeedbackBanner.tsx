@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Row } from '../primitives/Row';
@@ -27,40 +27,41 @@ export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
   onClose,
   style,
 }) => {
+  const colors = useColors();
   const getVariantStyles = () => {
     switch (variant) {
       case 'success':
         return {
-          bg: theme.colors.status.success.bg,
-          border: theme.colors.status.success.border,
-          text: theme.colors.status.success.text,
+          bg: colors.status.success.bg,
+          border: colors.status.success.border,
+          text: colors.status.success.text,
           iconName: (icon || 'checkmark-circle') as keyof typeof Ionicons.glyphMap,
-          iconColor: theme.colors.status.success.icon,
+          iconColor: colors.status.success.icon,
         };
       case 'warning':
         return {
-          bg: theme.colors.status.warning.bg,
-          border: theme.colors.status.warning.border,
-          text: theme.colors.status.warning.text,
+          bg: colors.status.warning.bg,
+          border: colors.status.warning.border,
+          text: colors.status.warning.text,
           iconName: (icon || 'warning') as keyof typeof Ionicons.glyphMap,
-          iconColor: theme.colors.status.warning.icon,
+          iconColor: colors.status.warning.icon,
         };
       case 'danger':
         return {
-          bg: theme.colors.status.error.bg,
-          border: theme.colors.status.error.border,
-          text: theme.colors.status.error.text,
+          bg: colors.status.error.bg,
+          border: colors.status.error.border,
+          text: colors.status.error.text,
           iconName: (icon || 'alert-circle') as keyof typeof Ionicons.glyphMap,
-          iconColor: theme.colors.status.error.icon,
+          iconColor: colors.status.error.icon,
         };
       case 'info':
       default:
         return {
-          bg: theme.colors.status.info.bg,
-          border: theme.colors.status.info.border,
-          text: theme.colors.status.info.text,
+          bg: colors.status.info.bg,
+          border: colors.status.info.border,
+          text: colors.status.info.text,
           iconName: (icon || 'information-circle') as keyof typeof Ionicons.glyphMap,
-          iconColor: theme.colors.status.info.icon,
+          iconColor: colors.status.info.icon,
         };
     }
   };

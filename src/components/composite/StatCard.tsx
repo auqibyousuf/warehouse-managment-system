@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Card } from '../primitives/Card';
@@ -28,47 +28,48 @@ export const StatCard: React.FC<StatCardProps> = ({
   onPress,
   style,
 }) => {
+  const colors = useColors();
   const getThemeStyles = () => {
     switch (variant) {
       case 'forest':
         return {
-          cardBg: theme.colors.brand.wash,
-          borderColor: theme.colors.brand.subtle,
-          iconBg: theme.colors.brand.subtle,
-          iconColor: theme.colors.brand.deep,
+          cardBg: colors.brand.wash,
+          borderColor: colors.brand.subtle,
+          iconBg: colors.brand.subtle,
+          iconColor: colors.brand.deep,
           valueColor: 'brandDeep' as const,
         };
       case 'warning':
         return {
-          cardBg: theme.colors.status.warning.bg,
-          borderColor: theme.colors.status.warning.border,
-          iconBg: theme.colors.palette.amberLight,
-          iconColor: theme.colors.status.warning.icon,
+          cardBg: colors.status.warning.bg,
+          borderColor: colors.status.warning.border,
+          iconBg: colors.status.warning.border,
+          iconColor: colors.status.warning.icon,
           valueColor: 'warning' as const,
         };
       case 'danger':
         return {
-          cardBg: theme.colors.status.error.bg,
-          borderColor: theme.colors.status.error.border,
-          iconBg: theme.colors.palette.redLight,
-          iconColor: theme.colors.status.error.icon,
+          cardBg: colors.status.error.bg,
+          borderColor: colors.status.error.border,
+          iconBg: colors.status.error.border,
+          iconColor: colors.status.error.icon,
           valueColor: 'error' as const,
         };
       case 'success':
         return {
-          cardBg: theme.colors.status.success.bg,
-          borderColor: theme.colors.status.success.border,
-          iconBg: theme.colors.palette.greenLight,
-          iconColor: theme.colors.status.success.icon,
+          cardBg: colors.status.success.bg,
+          borderColor: colors.status.success.border,
+          iconBg: colors.status.success.border,
+          iconColor: colors.status.success.icon,
           valueColor: 'success' as const,
         };
       case 'default':
       default:
         return {
-          cardBg: theme.colors.background.surface,
-          borderColor: theme.colors.border.subtle,
-          iconBg: theme.colors.background.surfaceSecondary,
-          iconColor: theme.colors.brand.primary,
+          cardBg: colors.background.surface,
+          borderColor: colors.border.subtle,
+          iconBg: colors.background.surfaceSecondary,
+          iconColor: colors.brand.primary,
           valueColor: 'primary' as const,
         };
     }

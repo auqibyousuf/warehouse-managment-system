@@ -2,7 +2,7 @@ import React from 'react';
 import { ViewStyle } from 'react-native';
 import { Card as PanelCard, AnimatedPressable } from 'panelui-native';
 import { tapLight } from '../../utils/haptics';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 
 export type CardVariant = 'elevated' | 'outlined' | 'flat' | 'accent' | 'interactive';
 export type CardPadding = 'none' | 'compact' | 'normal' | 'spacious';
@@ -24,6 +24,7 @@ export const CardComponent: React.FC<CardProps> = ({
   style,
   children,
 }) => {
+  const colors = useColors();
   const getPadding = () => {
     switch (padding) {
       case 'none':
@@ -42,22 +43,22 @@ export const CardComponent: React.FC<CardProps> = ({
     switch (variant) {
       case 'outlined':
         return {
-          backgroundColor: theme.colors.background.surface,
-          borderColor: theme.colors.border.default,
+          backgroundColor: colors.background.surface,
+          borderColor: colors.border.default,
           borderWidth: 1,
           ...theme.shadows.none,
         };
       case 'flat':
         return {
-          backgroundColor: theme.colors.background.surfaceSecondary,
+          backgroundColor: colors.background.surfaceSecondary,
           borderColor: 'transparent',
           borderWidth: 0,
           ...theme.shadows.none,
         };
       case 'accent':
         return {
-          backgroundColor: theme.colors.brand.wash,
-          borderColor: theme.colors.brand.subtle,
+          backgroundColor: colors.brand.wash,
+          borderColor: colors.brand.subtle,
           borderWidth: 1,
           ...theme.shadows.none,
         };
@@ -65,8 +66,8 @@ export const CardComponent: React.FC<CardProps> = ({
       case 'elevated':
       default:
         return {
-          backgroundColor: theme.colors.background.surface,
-          borderColor: theme.colors.border.subtle,
+          backgroundColor: colors.background.surface,
+          borderColor: colors.border.subtle,
           borderWidth: 1,
           ...theme.shadows.card,
         };
@@ -80,9 +81,7 @@ export const CardComponent: React.FC<CardProps> = ({
     ...getVariantStyles(),
   };
 
-  const combinedStyle = Array.isArray(style)
-    ? [baseCardStyle, ...style]
-    : [baseCardStyle, style];
+  const combinedStyle = Array.isArray(style) ? [baseCardStyle, ...style] : [baseCardStyle, style];
 
   if (onPress || variant === 'interactive') {
     return (
@@ -103,10 +102,7 @@ export const CardComponent: React.FC<CardProps> = ({
   }
 
   return (
-    <PanelCard
-      className={className}
-      style={combinedStyle}
-    >
+    <PanelCard className={className} style={combinedStyle}>
       {children}
     </PanelCard>
   );
@@ -121,4 +117,3 @@ export const Card = Object.assign(CardComponent, {
 });
 
 export default Card;
-

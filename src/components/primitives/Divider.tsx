@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewStyle } from 'react-native';
 import { Separator as PanelSeparator } from 'panelui-native';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 
 export interface DividerProps {
   orientation?: 'horizontal' | 'vertical';
@@ -18,21 +18,23 @@ export const Divider: React.FC<DividerProps> = ({
   className,
   style,
 }) => {
+  const colors = useColors();
   const getColor = () => {
     switch (variant) {
       case 'subtle':
-        return theme.colors.border.subtle;
+        return colors.border.subtle;
       case 'medium':
-        return theme.colors.border.medium;
+        return colors.border.medium;
       case 'brand':
-        return theme.colors.brand.subtle;
+        return colors.brand.subtle;
       case 'default':
       default:
-        return theme.colors.border.default;
+        return colors.border.default;
     }
   };
 
-  const marginValue = typeof theme.spacing[spacing] === 'number' ? (theme.spacing[spacing] as number) : 8;
+  const marginValue =
+    typeof theme.spacing[spacing] === 'number' ? (theme.spacing[spacing] as number) : 8;
 
   return (
     <PanelSeparator
@@ -49,4 +51,3 @@ export const Divider: React.FC<DividerProps> = ({
 };
 
 export default Divider;
-

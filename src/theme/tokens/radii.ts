@@ -1,16 +1,16 @@
 /**
  * BatchIQ - Radii Tokens
- * Softer, larger curves for a modern feel: inputs/buttons 12-14, cards 20, sheets 28.
+ * Source of truth: Stitch design (DEFAULT 2px, lg 4px, xl 8px, full 12px) with 12px for cards and sheets.
  */
 
 export const radii = {
   none: 0,
-  xs: 6,
-  sm: 8,
-  md: 12,
-  lg: 14,
-  xl: 20,
-  xxl: 28,
+  xs: 2,
+  sm: 4,
+  md: 8,
+  lg: 8,
+  xl: 12,
+  xxl: 16,
   full: 9999,
 } as const;
 

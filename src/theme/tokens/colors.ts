@@ -1,145 +1,205 @@
 /**
- * Cattle Feed Factory Management - Color Tokens
- * Categorized tokens ensuring strict theme consistency and zero hardcoded colors.
+ * BatchIQ - Color Tokens (light + dark)
+ *
+ * Source of truth: the Stitch design "BatchIQ Warehouse Operations Manager".
+ * Light is blue-led, dark is amber-led. Components never import a color directly:
+ * they read `useColors()` so the app follows the device appearance automatically.
  */
 
-export const palette = {
-  // Brand Greens
-  forestDarkest: '#0F261D',
-  forestDeep: '#173F30',
-  forestPrimary: '#245B43',
-  forestMedium: '#317355',
-  forestLight: '#4B8E6F',
-  forestSubtle: '#D1E3D9',
-  forestWash: '#E6F0E9',
-  forestUltraLight: '#F2F7F4',
+export type ColorScheme = 'light' | 'dark';
 
-  // Warm Neutrals
-  warmCanvas: '#F8F8F4',
-  warmWhite: '#FAFAF6',
-  surfaceWhite: '#FFFFFF',
-  surfaceSecondary: '#F4F5F1',
-  surfaceTertiary: '#EAEBE6',
+export interface StatusColors {
+  text: string;
+  bg: string;
+  border: string;
+  icon: string;
+}
 
-  // Gray / Text Neutrals
-  neutral950: '#111714',
-  neutral900: '#202824',
-  neutral800: '#333D37',
-  neutral700: '#47534D',
-  neutral600: '#5E6B64',
-  neutral500: '#68736C',
-  neutral400: '#8A9690',
-  neutral300: '#B0BCB6',
-  neutral200: '#DCE2DD',
-  neutral100: '#EDF0EE',
-  neutral50: '#F7F9F8',
-
-  // Semantic Warnings (Amber/Gold for low-stock and alerts)
-  amberDark: '#8C520A',
-  amberPrimary: '#A96713',
-  amberMedium: '#D97706',
-  amberLight: '#FDE68A',
-  amberWash: '#FFF2D9',
-
-  // Semantic Errors / Destructive (Deep Crimson)
-  redDark: '#8E1710',
-  redPrimary: '#B42318',
-  redMedium: '#DC2626',
-  redLight: '#FECDCA',
-  redWash: '#FEF3F2',
-
-  // Semantic Success (Vibrant Green)
-  greenDark: '#195634',
-  greenPrimary: '#247547',
-  greenMedium: '#16A34A',
-  greenLight: '#BBF7D0',
-  greenWash: '#EDFDF2',
-
-  // Semantic Information / Logistics (Blue-Slate)
-  blueDark: '#1E3A8A',
-  bluePrimary: '#2563EB',
-  blueLight: '#BFDBFE',
-  blueWash: '#EFF6FF',
-} as const;
-
-export const colors = {
-  palette,
+export interface ColorTokens {
+  scheme: ColorScheme;
+  /** Primary brand: fills, active states, links. */
   brand: {
-    primary: palette.forestPrimary,
-    deep: palette.forestDeep,
-    darkest: palette.forestDarkest,
-    medium: palette.forestMedium,
-    light: palette.forestLight,
-    subtle: palette.forestSubtle,
-    wash: palette.forestWash,
-    ultraLight: palette.forestUltraLight,
+    primary: string;
+    deep: string;
+    darkest: string;
+    medium: string;
+    light: string;
+    subtle: string;
+    wash: string;
+    ultraLight: string;
+  };
+  background: {
+    canvas: string;
+    warm: string;
+    surface: string;
+    surfaceSecondary: string;
+    surfaceTertiary: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+    subtle: string;
+    onBrand: string;
+    onDark: string;
+    success: string;
+    warning: string;
+    error: string;
+    info: string;
+  };
+  border: {
+    subtle: string;
+    default: string;
+    medium: string;
+    brand: string;
+    focus: string;
+    warning: string;
+    error: string;
+    success: string;
+  };
+  status: {
+    success: StatusColors;
+    warning: StatusColors;
+    error: StatusColors;
+    info: StatusColors;
+    neutral: StatusColors;
+  };
+  overlay: { backdrop: string; subtle: string; medium: string };
+  /** Solid fills for tinted icon chips and charts. */
+  accent: { success: string; warning: string; error: string; info: string };
+}
+
+export const lightColors: ColorTokens = {
+  scheme: 'light',
+  brand: {
+    primary: '#004ac6',
+    deep: '#003ea8',
+    darkest: '#00174b',
+    medium: '#2563eb',
+    light: '#b4c5ff',
+    subtle: '#dbe1ff',
+    wash: '#eaedff',
+    ultraLight: '#f2f3ff',
   },
   background: {
-    canvas: palette.warmCanvas,
-    warm: palette.warmWhite,
-    surface: palette.surfaceWhite,
-    surfaceSecondary: palette.surfaceSecondary,
-    surfaceTertiary: palette.surfaceTertiary,
+    canvas: '#faf8ff',
+    warm: '#faf8ff',
+    surface: '#ffffff',
+    surfaceSecondary: '#f2f3ff',
+    surfaceTertiary: '#eaedff',
   },
   text: {
-    primary: palette.neutral900,
-    secondary: palette.neutral700,
-    muted: palette.neutral500,
-    subtle: palette.neutral400,
-    onBrand: palette.surfaceWhite,
-    onDark: palette.surfaceWhite,
-    success: palette.greenPrimary,
-    warning: palette.amberDark,
-    error: palette.redPrimary,
-    info: palette.blueDark,
+    primary: '#131b2e',
+    secondary: '#434655',
+    muted: '#5f6373',
+    subtle: '#737686',
+    onBrand: '#ffffff',
+    onDark: '#ffffff',
+    success: '#006243',
+    warning: '#904d00',
+    error: '#ba1a1a',
+    info: '#004ac6',
   },
   border: {
-    subtle: palette.neutral100,
-    default: palette.neutral200,
-    medium: palette.neutral300,
-    brand: palette.forestPrimary,
-    focus: palette.forestMedium,
-    warning: palette.amberLight,
-    error: palette.redLight,
-    success: palette.greenLight,
+    subtle: '#e2e7ff',
+    default: '#c3c6d7',
+    medium: '#a3a7b8',
+    brand: '#004ac6',
+    focus: '#2563eb',
+    warning: '#ffb77d',
+    error: '#ffdad6',
+    success: '#85f8c4',
+  },
+  status: {
+    success: { text: '#006243', bg: '#e6faf1', border: '#85f8c4', icon: '#007d57' },
+    warning: { text: '#904d00', bg: '#fff2e6', border: '#ffb77d', icon: '#b86100' },
+    error: { text: '#ba1a1a', bg: '#fff0ee', border: '#ffdad6', icon: '#ba1a1a' },
+    info: { text: '#004ac6', bg: '#eaedff', border: '#b4c5ff', icon: '#2563eb' },
+    neutral: { text: '#434655', bg: '#f2f3ff', border: '#c3c6d7', icon: '#737686' },
+  },
+  overlay: {
+    backdrop: 'rgba(19, 27, 46, 0.5)',
+    subtle: 'rgba(19, 27, 46, 0.04)',
+    medium: 'rgba(19, 27, 46, 0.12)',
+  },
+  accent: { success: '#007d57', warning: '#fe932c', error: '#ba1a1a', info: '#2563eb' },
+};
+
+export const darkColors: ColorTokens = {
+  scheme: 'dark',
+  brand: {
+    primary: '#f59e0b',
+    deep: '#ffc174',
+    darkest: '#2a1700',
+    medium: '#ffb95f',
+    light: '#ffddb8',
+    subtle: '#653e00',
+    wash: 'rgba(245, 158, 11, 0.14)',
+    ultraLight: 'rgba(245, 158, 11, 0.08)',
+  },
+  background: {
+    canvas: '#0f141b',
+    warm: '#0f141b',
+    surface: '#171c23',
+    surfaceSecondary: '#1b2027',
+    surfaceTertiary: '#252a32',
+  },
+  text: {
+    primary: '#dee2ec',
+    secondary: '#d8c3ad',
+    muted: '#b3a08a',
+    subtle: '#a08e7a',
+    onBrand: '#472a00',
+    onDark: '#dee2ec',
+    success: '#4edea3',
+    warning: '#ffc174',
+    error: '#ffb4ab',
+    info: '#54ddfc',
+  },
+  border: {
+    subtle: '#252a32',
+    default: '#3a3f47',
+    medium: '#534434',
+    brand: '#f59e0b',
+    focus: '#ffc174',
+    warning: 'rgba(245, 158, 11, 0.4)',
+    error: 'rgba(255, 180, 171, 0.4)',
+    success: 'rgba(78, 222, 163, 0.4)',
   },
   status: {
     success: {
-      text: palette.greenPrimary,
-      bg: palette.greenWash,
-      border: palette.greenLight,
-      icon: palette.greenPrimary,
+      text: '#4edea3',
+      bg: 'rgba(78, 222, 163, 0.12)',
+      border: 'rgba(78, 222, 163, 0.35)',
+      icon: '#4edea3',
     },
     warning: {
-      text: palette.amberDark,
-      bg: palette.amberWash,
-      border: palette.amberLight,
-      icon: palette.amberPrimary,
+      text: '#ffc174',
+      bg: 'rgba(245, 158, 11, 0.12)',
+      border: 'rgba(245, 158, 11, 0.4)',
+      icon: '#f59e0b',
     },
     error: {
-      text: palette.redPrimary,
-      bg: palette.redWash,
-      border: palette.redLight,
-      icon: palette.redPrimary,
+      text: '#ffb4ab',
+      bg: 'rgba(147, 0, 10, 0.35)',
+      border: 'rgba(255, 180, 171, 0.35)',
+      icon: '#ffb4ab',
     },
     info: {
-      text: palette.blueDark,
-      bg: palette.blueWash,
-      border: palette.blueLight,
-      icon: palette.bluePrimary,
+      text: '#54ddfc',
+      bg: 'rgba(41, 193, 223, 0.12)',
+      border: 'rgba(84, 221, 252, 0.35)',
+      icon: '#54ddfc',
     },
-    neutral: {
-      text: palette.neutral700,
-      bg: palette.neutral100,
-      border: palette.neutral200,
-      icon: palette.neutral500,
-    },
+    neutral: { text: '#d8c3ad', bg: '#1b2027', border: '#3a3f47', icon: '#a08e7a' },
   },
   overlay: {
-    backdrop: 'rgba(15, 38, 29, 0.55)',
-    subtle: 'rgba(0, 0, 0, 0.04)',
-    medium: 'rgba(0, 0, 0, 0.12)',
+    backdrop: 'rgba(0, 0, 0, 0.65)',
+    subtle: 'rgba(255, 255, 255, 0.04)',
+    medium: 'rgba(255, 255, 255, 0.1)',
   },
-} as const;
+  accent: { success: '#4edea3', warning: '#f59e0b', error: '#ffb4ab', info: '#54ddfc' },
+};
 
-export type ColorTokens = typeof colors;
+export const getColors = (scheme: ColorScheme | null | undefined): ColorTokens =>
+  scheme === 'dark' ? darkColors : lightColors;

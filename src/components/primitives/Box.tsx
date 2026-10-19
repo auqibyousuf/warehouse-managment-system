@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { theme, useColors, ColorTokens } from '../../theme';
 import { spacingScale } from '../../theme/tokens/spacing';
 
 export type BoxSpacing = keyof typeof spacingScale | 'compact';
@@ -17,7 +17,7 @@ export interface BoxProps {
   marginTop?: BoxSpacing;
   marginBottom?: BoxSpacing;
   bg?:
-    | keyof typeof theme.colors.background
+    | keyof ColorTokens['background']
     | 'transparent'
     | 'brandWash'
     | 'brandPrimary'
@@ -26,7 +26,7 @@ export interface BoxProps {
     | 'greenWash';
   borderRadius?: keyof typeof theme.radii;
   borderWidth?: number;
-  borderColor?: keyof typeof theme.colors.border;
+  borderColor?: keyof ColorTokens['border'];
   flex?: number;
   align?: ViewStyle['alignItems'];
   justify?: ViewStyle['justifyContent'];
@@ -63,14 +63,15 @@ export const Box: React.FC<BoxProps> = ({
   style,
   children,
 }) => {
+  const colors = useColors();
   const resolveBg = () => {
     if (!bg || bg === 'transparent') return 'transparent';
-    if (bg === 'brandWash') return theme.colors.brand.wash;
-    if (bg === 'brandPrimary') return theme.colors.brand.primary;
-    if (bg === 'amberWash') return theme.colors.palette.amberWash;
-    if (bg === 'redWash') return theme.colors.palette.redWash;
-    if (bg === 'greenWash') return theme.colors.palette.greenWash;
-    return theme.colors.background[bg];
+    if (bg === 'brandWash') return colors.brand.wash;
+    if (bg === 'brandPrimary') return colors.brand.primary;
+    if (bg === 'amberWash') return colors.status.warning.bg;
+    if (bg === 'redWash') return colors.status.error.bg;
+    if (bg === 'greenWash') return colors.status.success.bg;
+    return colors.background[bg];
   };
 
   const computedStyle: ViewStyle = {
@@ -101,7 +102,7 @@ export const Box: React.FC<BoxProps> = ({
     ...(bg !== undefined && { backgroundColor: resolveBg() }),
     ...(borderRadius !== undefined && { borderRadius: theme.radii[borderRadius] }),
     ...(borderWidth !== undefined && { borderWidth }),
-    ...(borderColor !== undefined && { borderColor: theme.colors.border[borderColor] }),
+    ...(borderColor !== undefined && { borderColor: colors.border[borderColor] }),
     ...(flex !== undefined && { flex }),
     ...(align !== undefined && { alignItems: align }),
     ...(justify !== undefined && { justifyContent: justify }),
@@ -117,4 +118,3 @@ export const Box: React.FC<BoxProps> = ({
 };
 
 export default Box;
-

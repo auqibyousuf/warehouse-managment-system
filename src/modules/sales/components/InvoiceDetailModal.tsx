@@ -1,10 +1,7 @@
 import { openSheet } from '../../../navigation/sheets';
-import { theme } from '../../../theme';
+import { theme, useColors } from '../../../theme';
 import React, { useState } from 'react';
-import {
-  useSalesInvoices,
-  useCancelInvoice,
-} from '../../../hooks/api/useSales';
+import { useSalesInvoices, useCancelInvoice } from '../../../hooks/api/useSales';
 import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import { generateInvoicePDF } from '../../../utils/pdfGenerator';
@@ -32,6 +29,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   onClose,
   invoiceId,
 }) => {
+  const colors = useColors();
   const [downloading, setDownloading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
@@ -70,7 +68,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
     openSheet(
       'record_payment',
       { invoiceId: invoice.id, customerId: invoice.customerId },
-      { replace: true }
+      { replace: true },
     );
   };
 
@@ -100,10 +98,10 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
     invoice.paymentStatus === 'paid'
       ? 'success'
       : invoice.paymentStatus === 'partial'
-      ? 'warning'
-      : invoice.paymentStatus === 'cancelled'
-      ? 'danger'
-      : 'neutral';
+        ? 'warning'
+        : invoice.paymentStatus === 'cancelled'
+          ? 'danger'
+          : 'neutral';
 
   return (
     <>
@@ -149,7 +147,12 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Customer Details */}
           <Card variant="elevated" padding="normal">
-            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.xsm }}>
+            <Typography
+              variant="title"
+              weight="bold"
+              color="primary"
+              style={{ marginBottom: theme.spacing.xsm }}
+            >
               Billed To (Customer)
             </Typography>
             <Typography variant="bodyMedium" weight="semibold" color="secondary">
@@ -166,7 +169,12 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               </Typography>
             )}
             {invoice.customerGstin && (
-              <Typography variant="caption" weight="semibold" color="secondary" style={{ marginTop: theme.spacing.xxs }}>
+              <Typography
+                variant="caption"
+                weight="semibold"
+                color="secondary"
+                style={{ marginTop: theme.spacing.xxs }}
+              >
                 GSTIN: {invoice.customerGstin}
               </Typography>
             )}
@@ -174,26 +182,57 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
           {/* Itemized Line Items Table */}
           <Card variant="elevated" padding="normal">
-            <Typography variant="title" weight="bold" color="primary" style={{ marginBottom: theme.spacing.sm }}>
+            <Typography
+              variant="title"
+              weight="bold"
+              color="primary"
+              style={{ marginBottom: theme.spacing.sm }}
+            >
               Itemized Breakdown
             </Typography>
 
-            <Row justify="space-between" style={{ paddingBottom: theme.spacing.xsm, borderBottomWidth: 1, borderColor: theme.colors.border.default }}>
+            <Row
+              justify="space-between"
+              style={{
+                paddingBottom: theme.spacing.xsm,
+                borderBottomWidth: 1,
+                borderColor: colors.border.default,
+              }}
+            >
               <Typography variant="caption" weight="bold" color="muted" style={{ flex: 2 }}>
                 ITEM DESCRIPTION
               </Typography>
-              <Typography variant="caption" weight="bold" color="muted" style={{ width: 60, textAlign: 'center' }}>
+              <Typography
+                variant="caption"
+                weight="bold"
+                color="muted"
+                style={{ width: 60, textAlign: 'center' }}
+              >
                 QTY
               </Typography>
-              <Typography variant="caption" weight="bold" color="muted" style={{ width: 70, textAlign: 'right' }}>
+              <Typography
+                variant="caption"
+                weight="bold"
+                color="muted"
+                style={{ width: 70, textAlign: 'right' }}
+              >
                 RATE
               </Typography>
-              <Typography variant="caption" weight="bold" color="muted" style={{ width: 80, textAlign: 'right' }}>
+              <Typography
+                variant="caption"
+                weight="bold"
+                color="muted"
+                style={{ width: 80, textAlign: 'right' }}
+              >
                 AMOUNT
               </Typography>
             </Row>
 
-            <Row justify="space-between" align="center" style={{ paddingVertical: theme.spacing.smd }}>
+            <Row
+              justify="space-between"
+              align="center"
+              style={{ paddingVertical: theme.spacing.smd }}
+            >
               <Box style={{ flex: 2 }}>
                 <Typography variant="bodySmall" weight="bold" color="primary">
                   {invoice.productName}
@@ -202,13 +241,27 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   Unit: {invoice.outputUnit || 'bags'}
                 </Typography>
               </Box>
-              <Typography variant="bodySmall" weight="semibold" color="primary" style={{ width: 60, textAlign: 'center' }}>
+              <Typography
+                variant="bodySmall"
+                weight="semibold"
+                color="primary"
+                style={{ width: 60, textAlign: 'center' }}
+              >
                 {invoice.quantity || invoice.bagQuantity}
               </Typography>
-              <Typography variant="bodySmall" color="secondary" style={{ width: 70, textAlign: 'right' }}>
+              <Typography
+                variant="bodySmall"
+                color="secondary"
+                style={{ width: 70, textAlign: 'right' }}
+              >
                 ₹{invoice.unitPrice.toLocaleString('en-IN')}
               </Typography>
-              <Typography variant="bodySmall" weight="bold" color="primary" style={{ width: 80, textAlign: 'right' }}>
+              <Typography
+                variant="bodySmall"
+                weight="bold"
+                color="primary"
+                style={{ width: 80, textAlign: 'right' }}
+              >
                 ₹{invoice.subtotal.toLocaleString('en-IN')}
               </Typography>
             </Row>
@@ -278,7 +331,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               <Typography variant="caption" weight="bold" color="muted">
                 DISPATCH & PAYMENT NOTES
               </Typography>
-              <Typography variant="caption" color="secondary" style={{ marginTop: theme.spacing.xxs }}>
+              <Typography
+                variant="caption"
+                color="secondary"
+                style={{ marginTop: theme.spacing.xxs }}
+              >
                 {invoice.notes}
               </Typography>
             </Card>

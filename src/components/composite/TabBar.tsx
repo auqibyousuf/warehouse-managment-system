@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { tapSelection } from '../../utils/haptics';
-import { theme } from '../../theme';
+import { theme, useColors, ColorTokens } from '../../theme';
 import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,11 +30,9 @@ export const defaultTabs: TabItem[] = [
   { id: 'business', label: 'Business', icon: 'briefcase-outline' },
 ];
 
-export const TabBar: React.FC<TabBarProps> = ({
-  activeTab,
-  onTabChange,
-  tabs = defaultTabs,
-}) => {
+export const TabBar: React.FC<TabBarProps> = ({ activeTab, onTabChange, tabs = defaultTabs }) => {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   return (
@@ -82,13 +80,12 @@ export const TabBar: React.FC<TabBarProps> = ({
                 variant="caption"
                 weight={isActive ? 'bold' : 'medium'}
                 style={{
-                  color: isActive ? theme.colors.brand.primary : theme.colors.text.muted,
+                  color: isActive ? colors.brand.primary : colors.text.muted,
                   marginTop: theme.spacing.xxs,
                 }}
               >
                 {tab.label}
               </Typography>
-
             </Pressable>
           );
         })}
@@ -97,62 +94,63 @@ export const TabBar: React.FC<TabBarProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: theme.colors.background.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border.subtle,
-    borderTopLeftRadius: theme.radii.xl,
-    borderTopRightRadius: theme.radii.xl,
-    ...theme.shadows.card,
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    height: theme.spacing.layout.bottomNavHeight,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    position: 'relative',
-  },
-  iconContainer: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 56,
-    height: 30,
-    borderRadius: theme.radii.full,
-  },
-  iconContainerActive: {
-    backgroundColor: theme.colors.brand.wash,
-  },
-  badge: {
-    position: 'absolute',
-    top: -4,
-    right: -10,
-    backgroundColor: theme.colors.status.error.bg,
-    borderColor: theme.colors.status.error.text,
-    borderWidth: 1,
-    borderRadius: theme.radii.full,
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: theme.spacing.hairline,
-  },
-  badgeText: {
-    fontSize: theme.typography.fontSizes.xxs,
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: 0,
-    width: 28,
-    height: 3,
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
-    backgroundColor: theme.colors.brand.primary,
-  },
-});
+const createStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.border.subtle,
+      borderTopLeftRadius: theme.radii.xl,
+      borderTopRightRadius: theme.radii.xl,
+      ...theme.shadows.card,
+    },
+    tabsRow: {
+      flexDirection: 'row',
+      height: theme.spacing.layout.bottomNavHeight,
+      alignItems: 'center',
+      justifyContent: 'space-around',
+    },
+    tabButton: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      position: 'relative',
+    },
+    iconContainer: {
+      position: 'relative',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: 56,
+      height: 30,
+      borderRadius: theme.radii.full,
+    },
+    iconContainerActive: {
+      backgroundColor: colors.brand.wash,
+    },
+    badge: {
+      position: 'absolute',
+      top: -4,
+      right: -10,
+      backgroundColor: colors.status.error.bg,
+      borderColor: colors.status.error.text,
+      borderWidth: 1,
+      borderRadius: theme.radii.full,
+      paddingHorizontal: theme.spacing.xs,
+      paddingVertical: theme.spacing.hairline,
+    },
+    badgeText: {
+      fontSize: theme.typography.fontSizes.xxs,
+    },
+    activeIndicator: {
+      position: 'absolute',
+      top: 0,
+      width: 28,
+      height: 3,
+      borderBottomLeftRadius: 2,
+      borderBottomRightRadius: 2,
+      backgroundColor: colors.brand.primary,
+    },
+  });
 
 export default TabBar;

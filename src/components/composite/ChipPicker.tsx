@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { tapLight } from '../../utils/haptics';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Typography } from '../primitives/Typography';
 
 export interface ChipOption<T = string> {
@@ -25,6 +25,7 @@ export const ChipPicker = <T extends string | number>({
   scrollable = false,
   style,
 }: ChipPickerProps<T>) => {
+  const colors = useColors();
   const renderChips = () => (
     <View style={[styles.container, style]}>
       {options.map((opt) => {
@@ -45,12 +46,8 @@ export const ChipPicker = <T extends string | number>({
             style={[
               styles.chip,
               {
-                backgroundColor: isSelected
-                  ? theme.colors.brand.primary
-                  : theme.colors.background.surface,
-                borderColor: isSelected
-                  ? theme.colors.brand.primary
-                  : theme.colors.border.default,
+                backgroundColor: isSelected ? colors.brand.primary : colors.background.surface,
+                borderColor: isSelected ? colors.brand.primary : colors.border.default,
               },
             ]}
           >
@@ -58,7 +55,7 @@ export const ChipPicker = <T extends string | number>({
               variant="bodySmall"
               weight={isSelected ? 'bold' : 'medium'}
               style={{
-                color: isSelected ? theme.colors.text.onBrand : theme.colors.text.secondary,
+                color: isSelected ? colors.text.onBrand : colors.text.secondary,
               }}
             >
               {opt.label}
@@ -70,8 +67,8 @@ export const ChipPicker = <T extends string | number>({
                   styles.countBadge,
                   {
                     backgroundColor: isSelected
-                      ? theme.colors.brand.deep
-                      : theme.colors.background.surfaceSecondary,
+                      ? colors.brand.deep
+                      : colors.background.surfaceSecondary,
                   },
                 ]}
               >
@@ -80,7 +77,7 @@ export const ChipPicker = <T extends string | number>({
                   weight="bold"
                   style={{
                     fontSize: theme.typography.fontSizes.xxs,
-                    color: isSelected ? theme.colors.text.onBrand : theme.colors.text.muted,
+                    color: isSelected ? colors.text.onBrand : colors.text.muted,
                   }}
                 >
                   {opt.count}

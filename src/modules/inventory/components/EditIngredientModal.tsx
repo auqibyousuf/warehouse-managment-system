@@ -1,4 +1,4 @@
-import { theme } from '../../../theme';
+import { theme, useColors } from '../../../theme';
 import React, { useState } from 'react';
 import { useUpdateIngredient, useDeleteIngredient } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
@@ -27,6 +27,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
   item,
   onClose,
 }) => {
+  const colors = useColors();
   const updateMutation = useUpdateIngredient();
   const deleteMutation = useDeleteIngredient();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -236,7 +237,7 @@ export const EditIngredientModal: React.FC<EditIngredientModalProps> = ({
               marginTop: theme.spacing.md,
               paddingTop: theme.spacing.base,
               borderTopWidth: 1,
-              borderTopColor: theme.colors.border.subtle,
+              borderTopColor: colors.border.subtle,
             }}
           >
             <Row justify="space-between" align="center">

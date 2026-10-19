@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   FlatList,
   RefreshControl,
@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { theme } from '../../theme';
+import { theme, useColors, ColorTokens } from '../../theme';
 
 export interface ScreenListProps<T> {
   /** Scrolls with the list: module title, tab switcher, filters. */
@@ -39,6 +39,8 @@ export const ScreenList = <T,>({
   onRefresh,
   rowGap = theme.spacing.md,
 }: ScreenListProps<T>) => {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
 
   return (
@@ -68,8 +70,8 @@ export const ScreenList = <T,>({
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={theme.colors.brand.primary}
-              colors={[theme.colors.brand.primary]}
+              tintColor={colors.brand.primary}
+              colors={[colors.brand.primary]}
             />
           ) : undefined
         }
@@ -78,6 +80,7 @@ export const ScreenList = <T,>({
   );
 };
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: theme.colors.background.canvas },
-});
+const createStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background.canvas },
+  });

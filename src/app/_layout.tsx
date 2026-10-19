@@ -1,26 +1,24 @@
 import '../../global.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-} from '@expo-google-fonts/inter';
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+  HankenGrotesk_700Bold,
+} from '@expo-google-fonts/hanken-grotesk';
 import {
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
-  useFonts,
-} from '@expo-google-fonts/manrope';
+  JetBrainsMono_500Medium,
+  JetBrainsMono_600SemiBold,
+} from '@expo-google-fonts/jetbrains-mono';
+import { useFonts } from 'expo-font';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PanelUIProvider } from 'panelui-native';
-import { ThemeProvider, theme } from '../theme';
+import { ThemeProvider, theme, useColors, ColorTokens } from '../theme';
 import { useAppStore } from '../stores/useAppStore';
 import { FeedbackBanner, Box } from '../components';
 
@@ -38,6 +36,8 @@ const queryClient = new QueryClient({
 });
 
 const Shell: React.FC = () => {
+  const colors = useColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const bannerAlert = useAppStore((s) => s.bannerAlert);
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -69,14 +69,12 @@ const Shell: React.FC = () => {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-    Manrope_800ExtraBold,
+    HankenGrotesk_400Regular,
+    HankenGrotesk_500Medium,
+    HankenGrotesk_600SemiBold,
+    HankenGrotesk_700Bold,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_600SemiBold,
   });
 
   useEffect(() => {
@@ -91,7 +89,7 @@ export default function RootLayout() {
       <PanelUIProvider>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
-            <StatusBar style="dark" />
+            <StatusBar style="auto" />
             <Shell />
           </QueryClientProvider>
         </ThemeProvider>
@@ -100,12 +98,13 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: theme.colors.background.canvas,
-  },
-  screens: {
-    flex: 1,
-  },
-});
+const createStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background.canvas,
+    },
+    screens: {
+      flex: 1,
+    },
+  });

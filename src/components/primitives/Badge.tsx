@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Badge as PanelBadge } from 'panelui-native';
-import { theme } from '../../theme';
+import { theme, useColors } from '../../theme';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,9 +28,13 @@ export const Badge: React.FC<BadgeProps> = ({
   className,
   style,
 }) => {
+  const colors = useColors();
   const isSm = size === 'sm';
 
-  const panelVariantMap: Record<BadgeVariant, 'success' | 'warning' | 'destructive' | 'info' | 'secondary' | 'default'> = {
+  const panelVariantMap: Record<
+    BadgeVariant,
+    'success' | 'warning' | 'destructive' | 'info' | 'secondary' | 'default'
+  > = {
     success: 'success',
     warning: 'warning',
     danger: 'destructive',
@@ -41,40 +45,40 @@ export const Badge: React.FC<BadgeProps> = ({
 
   const variantStyles = {
     success: {
-      bg: theme.colors.status.success.bg,
-      border: theme.colors.status.success.border,
-      text: theme.colors.status.success.text,
-      dot: theme.colors.status.success.text,
+      bg: colors.status.success.bg,
+      border: colors.status.success.border,
+      text: colors.status.success.text,
+      dot: colors.status.success.text,
     },
     warning: {
-      bg: theme.colors.status.warning.bg,
-      border: theme.colors.status.warning.border,
-      text: theme.colors.status.warning.text,
-      dot: theme.colors.status.warning.text,
+      bg: colors.status.warning.bg,
+      border: colors.status.warning.border,
+      text: colors.status.warning.text,
+      dot: colors.status.warning.text,
     },
     danger: {
-      bg: theme.colors.status.error.bg,
-      border: theme.colors.status.error.border,
-      text: theme.colors.status.error.text,
-      dot: theme.colors.status.error.text,
+      bg: colors.status.error.bg,
+      border: colors.status.error.border,
+      text: colors.status.error.text,
+      dot: colors.status.error.text,
     },
     info: {
-      bg: theme.colors.status.info.bg,
-      border: theme.colors.status.info.border,
-      text: theme.colors.status.info.text,
-      dot: theme.colors.status.info.text,
+      bg: colors.status.info.bg,
+      border: colors.status.info.border,
+      text: colors.status.info.text,
+      dot: colors.status.info.text,
     },
     neutral: {
-      bg: theme.colors.status.neutral.bg,
-      border: theme.colors.status.neutral.border,
-      text: theme.colors.status.neutral.text,
-      dot: theme.colors.status.neutral.text,
+      bg: colors.status.neutral.bg,
+      border: colors.status.neutral.border,
+      text: colors.status.neutral.text,
+      dot: colors.status.neutral.text,
     },
     forest: {
-      bg: theme.colors.brand.wash,
-      border: theme.colors.brand.subtle,
-      text: theme.colors.brand.deep,
-      dot: theme.colors.brand.primary,
+      bg: colors.brand.wash,
+      border: colors.brand.subtle,
+      text: colors.brand.deep,
+      dot: colors.brand.primary,
     },
   }[variant];
 
@@ -146,4 +150,3 @@ const styles = StyleSheet.create({
 });
 
 export default Badge;
-

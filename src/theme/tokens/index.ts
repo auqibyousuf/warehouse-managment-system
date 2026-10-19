@@ -1,4 +1,3 @@
-import { colors } from './colors';
 import { typography } from './typography';
 import { spacing } from './spacing';
 import { radii } from './radii';
@@ -12,8 +11,11 @@ export * from './radii';
 export * from './shadows';
 export * from './zIndex';
 
+/**
+ * Static design tokens (the same in light and dark).
+ * Colors are deliberately NOT here: read them with `useColors()` so they follow the device appearance.
+ */
 export const theme = {
-  colors,
   typography,
   spacing,
   radii,
