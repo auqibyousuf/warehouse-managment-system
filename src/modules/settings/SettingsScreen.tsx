@@ -89,7 +89,11 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <>
-      <Header title="Settings" subtitle="Business profile and data" onBack={() => router.back()} />
+      <Header
+        title="Settings"
+        subtitle="Business profile and data"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+      />
       <ScreenContainer>
         <Stack gap="md">
           {/* Company Profile Card */}
@@ -121,46 +125,46 @@ export const SettingsScreen: React.FC = () => {
                   {settings?.factoryName?.trim() || 'Not set'}
                 </Typography>
               </Row>
-              {settings?.tagline && (
+              {Boolean(settings?.tagline) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     Tagline:
                   </Typography>
                   <Typography variant="bodySmall" color="muted">
-                    {settings.tagline}
+                    {settings?.tagline}
                   </Typography>
                 </Row>
-              )}
-              {settings?.gstin && (
+              ) : null}
+              {Boolean(settings?.gstin) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     GSTIN / Tax ID:
                   </Typography>
                   <Typography variant="bodySmall" weight="semibold" color="primary">
-                    {settings.gstin}
+                    {settings?.gstin}
                   </Typography>
                 </Row>
-              )}
-              {settings?.phone && (
+              ) : null}
+              {Boolean(settings?.phone) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     Contact Phone:
                   </Typography>
                   <Typography variant="bodySmall" color="primary">
-                    {settings.phone}
+                    {settings?.phone}
                   </Typography>
                 </Row>
-              )}
-              {settings?.bankName && (
+              ) : null}
+              {Boolean(settings?.bankName) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     Bank Remittance:
                   </Typography>
                   <Typography variant="bodySmall" color="primary">
-                    {settings.bankName} (A/C: {settings.accountNumber || 'N/A'})
+                    {settings?.bankName} (A/C: {settings?.accountNumber || 'N/A'})
                   </Typography>
                 </Row>
-              )}
+              ) : null}
             </Stack>
           </Card>
 
