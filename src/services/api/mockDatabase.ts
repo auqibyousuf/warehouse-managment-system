@@ -18,6 +18,7 @@ import {
   Expense,
 } from '../../types';
 import { createDeviceSnapshotStore } from '../storage/deviceStore';
+import { DB_SCHEMA_VERSION } from '../storage/schemaVersion';
 
 export interface DatabaseState {
   settings: FactorySettings;
@@ -309,5 +310,57 @@ export const getDB = (): DatabaseState => db;
 /** Back to the demo seed (also overwrites what is saved on the device). */
 export const resetDB = (): void => {
   db = clone(initialDatabase);
+  snapshots.saveNow(db);
+};
+
+const COLLECTIONS = [
+  'products',
+  'ingredients',
+  'setups',
+  'batches',
+  'movements',
+  'suppliers',
+  'purchases',
+  'customers',
+  'invoices',
+  'payments',
+  'expenses',
+] as const;
+
+/** Everything on this device as one JSON document, for a backup file. */
+export const exportDatabase = (): string =>
+  JSON.stringify({
+    app: 'batchiq',
+    version: DB_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: db,
+  });
+
+/** Replace everything with a backup made by exportDatabase. Throws a readable message if it is not one. */
+export const importDatabase = (json: string): void => {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error('This file is not a BatchIQ backup.');
+  }
+  if (parsed?.app !== 'batchiq' || !parsed.data)
+    throw new Error('This file is not a BatchIQ backup.');
+  if (parsed.version !== DB_SCHEMA_VERSION) {
+    throw new Error('This backup was made by a different version of BatchIQ.');
+  }
+  const data = parsed.data;
+  if (!data.settings || COLLECTIONS.some((key) => !Array.isArray(data[key]))) {
+    throw new Error('This backup is incomplete.');
+  }
+  db = { ...clone(initialDatabase), ...data };
+  snapshots.saveNow(db);
+};
+
+/** Empty every record but keep the business settings, for starting real work. */
+export const clearDatabase = (): void => {
+  const empty = clone(initialDatabase);
+  for (const key of COLLECTIONS) (empty as any)[key] = [];
+  db = { ...empty, settings: db.settings };
   snapshots.saveNow(db);
 };
