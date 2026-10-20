@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 /** Every bottom sheet in the app is a route: /sheets/<name>?<params>. */
 export type SheetName =
   | 'start_batch'
+  | 'complete_batch'
   | 'create_setup'
   | 'edit_setup'
   | 'record_purchase'

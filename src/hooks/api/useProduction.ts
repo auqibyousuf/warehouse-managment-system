@@ -3,6 +3,8 @@ import {
   productionService,
   CreateBatchInput,
   CreateSetupInput,
+  StartBatchRunInput,
+  CompleteBatchRunInput,
 } from '../../services/api/productionService';
 import { SetupStatus } from '../../types';
 
@@ -61,6 +63,29 @@ export const useCreateProductionBatch = () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
+  });
+};
+
+const refreshProduction = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.invalidateQueries({ queryKey: ['production', 'batches'] });
+  queryClient.invalidateQueries({ queryKey: ['inventory'] });
+  queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+};
+
+export const useStartBatchRun = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StartBatchRunInput) => productionService.startBatchRun(input),
+    onSuccess: () => refreshProduction(queryClient),
+  });
+};
+
+export const useCompleteBatchRun = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: CompleteBatchRunInput }) =>
+      productionService.completeBatchRun(id, input),
+    onSuccess: () => refreshProduction(queryClient),
   });
 };
 

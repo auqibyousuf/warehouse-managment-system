@@ -3,6 +3,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
 import { goToTab, openManage } from '../../navigation/routes';
 import { theme, useColors } from '../../theme';
+import { batchStatusView } from '../../utils/batchStatus';
 import { useMoney } from '../../hooks/useMoney';
 import { useDashboardMetrics } from '../../hooks/api/useDashboard';
 import { useProductionBatches } from '../../hooks/api/useProduction';
@@ -96,6 +97,7 @@ export const DashboardScreen: React.FC = () => {
   const lowStock = useMemo(() => stock.filter((item) => item.isLowStock), [stock]);
   const alertItem = lowStock.find((item) => item.id !== dismissed) ?? null;
   const recentBatches = batches.slice(0, 4);
+  const running = batches.filter((b) => b.status === 'in_progress');
   const owing = useMemo(
     () =>
       customers
@@ -185,6 +187,26 @@ export const DashboardScreen: React.FC = () => {
             />
           </Row>
         </Stack>
+
+        {/* Running now */}
+        {running.length > 0 && (
+          <Card variant="elevated" padding="compact" onPress={() => goToTab('batches')}>
+            <Row gap="sm" align="center">
+              <IconTile icon="sync" tone="info" size={32} />
+              <Box flex={1}>
+                <Typography variant="title" color="primary">
+                  {running.length} batch{running.length === 1 ? '' : 'es'} running
+                </Typography>
+                <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                  {running.map((b) => b.productName).join(', ')}
+                </Typography>
+              </Box>
+              <Typography variant="bodySmall" weight="medium" color="brandPrimary">
+                Complete →
+              </Typography>
+            </Row>
+          </Card>
+        )}
 
         {/* Primary actions */}
         <Stack gap="xs">
@@ -333,7 +355,7 @@ export const DashboardScreen: React.FC = () => {
             </Card>
           ) : (
             recentBatches.map((batch) => {
-              const reversed = batch.status === 'reversed';
+              const view = batchStatusView(batch.status);
               return (
                 <Card
                   key={batch.id}
@@ -342,11 +364,7 @@ export const DashboardScreen: React.FC = () => {
                   onPress={() => openSheet('batch_detail', { batchId: batch.id })}
                 >
                   <Row gap="sm" align="flex-start">
-                    <IconTile
-                      icon={reversed ? 'refresh' : 'checkmark'}
-                      tone={reversed ? 'danger' : 'success'}
-                      size={32}
-                    />
+                    <IconTile icon={view.icon} tone={view.tone} size={32} />
                     <Box flex={1}>
                       <Row gap="xs" align="center">
                         <Typography variant="dataMedium" color="secondary">
@@ -362,14 +380,13 @@ export const DashboardScreen: React.FC = () => {
                         </Typography>
                       </Row>
                       <Typography variant="bodySmall" color="secondary">
-                        {batch.unitsPacked} {batch.outputUnit} • {batch.date}
+                        {batch.status === 'in_progress'
+                          ? 'Output not recorded yet'
+                          : `${batch.unitsPacked} ${batch.outputUnit}`}{' '}
+                        • {batch.date}
                       </Typography>
                     </Box>
-                    <Badge
-                      label={reversed ? 'Reversed' : 'Done'}
-                      variant={reversed ? 'danger' : 'success'}
-                      size="sm"
-                    />
+                    <Badge label={view.label} variant={view.badge} size="sm" />
                   </Row>
                 </Card>
               );

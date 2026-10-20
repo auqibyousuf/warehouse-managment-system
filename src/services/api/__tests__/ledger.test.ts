@@ -140,6 +140,42 @@ describe('production', () => {
   });
 });
 
+describe('running batches', () => {
+  const stock = (id: string) => getDB().ingredients.find((i) => i.id === id)!.currentStock;
+  const start = () =>
+    productionService.startBatchRun({
+      setupId: 'setup-1',
+      date: '2026-01-01',
+      actualItems: [{ ingredientId: 'ing-1', actualQuantity: 300 }],
+    });
+
+  it('takes inputs on start and books output on completion', async () => {
+    const before = stock('ing-1');
+    const finishedBefore = getDB().products.find((p) => p.id === 'prod-1')!.currentStockUnits!;
+    const run = await start();
+    expect(run.status).toBe('in_progress');
+    expect(stock('ing-1')).toBe(before - 300);
+    expect(getDB().products.find((p) => p.id === 'prod-1')!.currentStockUnits).toBe(finishedBefore);
+
+    const done = await productionService.completeBatchRun(run.id, {
+      unitsPacked: 10,
+      unitSize: 20,
+    });
+    expect(done.status).toBe('confirmed');
+    expect(done.actualFinishedQuantity).toBe(200);
+    expect(getDB().products.find((p) => p.id === 'prod-1')!.currentStockUnits).toBe(
+      finishedBefore + 10,
+    );
+  });
+
+  it('returns the inputs when a run is cancelled', async () => {
+    const before = stock('ing-1');
+    const run = await start();
+    await productionService.reverseBatch(run.id, 'test');
+    expect(stock('ing-1')).toBe(before);
+  });
+});
+
 describe('deleting a recipe', () => {
   it('removes an unused recipe and archives one with batch history', async () => {
     const created = await productionService.createSetup({

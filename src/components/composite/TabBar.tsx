@@ -7,7 +7,7 @@ import { Typography } from '../primitives/Typography';
 import { Icon } from '../primitives/Icon';
 import { Ionicons } from '@expo/vector-icons';
 
-export type NavTabId = 'home' | 'stock' | 'invoices';
+export type NavTabId = 'home' | 'batches' | 'stock' | 'invoices';
 
 export interface TabItem {
   id: NavTabId;
@@ -24,6 +24,7 @@ export interface TabBarProps {
 
 export const defaultTabs: TabItem[] = [
   { id: 'home', label: 'Home', icon: 'checkmark-circle-outline' },
+  { id: 'batches', label: 'Batches', icon: 'flask-outline' },
   { id: 'stock', label: 'Stock', icon: 'archive-outline' },
   { id: 'invoices', label: 'Invoices', icon: 'receipt-outline' },
 ];
@@ -128,9 +129,9 @@ const createStyles = (colors: ColorTokens) =>
       position: 'absolute',
       top: -4,
       right: -10,
-      backgroundColor: colors.status.error.bg,
-      borderColor: colors.status.error.text,
-      borderWidth: 1,
+      backgroundColor: colors.accent.error,
+      minWidth: 16,
+      alignItems: 'center',
       borderRadius: theme.radii.full,
       paddingHorizontal: theme.spacing.xs,
       paddingVertical: theme.spacing.hairline,

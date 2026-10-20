@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
+import { batchStatusView } from '../../utils/batchStatus';
 import { useMoney } from '../../hooks/useMoney';
 import { useProductionSetups, useProductionBatches } from '../../hooks/api/useProduction';
 import { useIngredients } from '../../hooks/api/useInventory';
@@ -133,7 +134,7 @@ export const ProductionScreen: React.FC = () => {
         ) : null
       }
       renderItem={({ item: batch }) => {
-        const reversed = batch.status === 'reversed';
+        const view = batchStatusView(batch.status);
         return (
           <Card
             variant="elevated"
@@ -141,11 +142,7 @@ export const ProductionScreen: React.FC = () => {
             onPress={() => openSheet('batch_detail', { batchId: batch.id })}
           >
             <Row gap="sm" align="center">
-              <IconTile
-                icon={reversed ? 'refresh' : 'checkmark'}
-                tone={reversed ? 'danger' : 'success'}
-                size={32}
-              />
+              <IconTile icon={view.icon} tone={view.tone} size={32} />
               <Box flex={1}>
                 <Row gap="xs" align="center">
                   <Typography variant="dataMedium" color="secondary">
@@ -161,14 +158,13 @@ export const ProductionScreen: React.FC = () => {
                   </Typography>
                 </Row>
                 <Typography variant="bodySmall" color="secondary">
-                  {batch.unitsPacked} {batch.outputUnit} • {batch.date}
+                  {batch.status === 'in_progress'
+                    ? `Output not recorded yet`
+                    : `${batch.unitsPacked} ${batch.outputUnit}`}{' '}
+                  • {batch.date}
                 </Typography>
               </Box>
-              <Badge
-                label={reversed ? 'Reversed' : 'Done'}
-                variant={reversed ? 'danger' : 'success'}
-                size="sm"
-              />
+              <Badge label={view.label} variant={view.badge} size="sm" />
             </Row>
           </Card>
         );

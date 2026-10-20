@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { closeSheet, SheetName, SheetParams } from '../../navigation/sheets';
 import { StartBatchPage } from '../../modules/production/components/StartBatchPage';
+import { CompleteBatchPage } from '../../modules/production/components/CompleteBatchPage';
 import { RecipePage } from '../../modules/production/components/RecipePage';
 import { AddStockPage } from '../../modules/inventory/components/AddStockPage';
 import { CountStockPage } from '../../modules/inventory/components/CountStockPage';
@@ -14,9 +15,9 @@ import { InvoiceDetailModal } from '../../modules/sales/components/InvoiceDetail
 import { AddCustomerPage } from '../../modules/customers/components/AddCustomerPage';
 import { CustomerDetailModal } from '../../modules/customers/components/CustomerDetailModal';
 import { AddExpensePage } from '../../modules/expenses/components/AddExpensePage';
-import { EditSupplierModal } from '../../modules/inventory/components/EditSupplierModal';
-import { EditProductModal } from '../../modules/inventory/components/EditProductModal';
-import { EditCustomerModal } from '../../modules/customers/components/EditCustomerModal';
+import { EditSupplierPage } from '../../modules/inventory/components/EditSupplierPage';
+import { EditProductPage } from '../../modules/inventory/components/EditProductPage';
+import { EditCustomerPage } from '../../modules/customers/components/EditCustomerPage';
 import { UseStockPage } from '../../modules/inventory/components/UseStockPage';
 import { BatchDetailModal } from '../../modules/details/BatchDetailModal';
 import { ProfitDetailModal } from '../../modules/details/ProfitDetailModal';
@@ -29,6 +30,7 @@ const onClose = closeSheet;
 
 const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   start_batch: (p) => <StartBatchPage onClose={onClose} preselectedSetupId={p.setupId ?? null} />,
+  complete_batch: (p) => <CompleteBatchPage onClose={onClose} batchId={p.batchId ?? null} />,
   create_setup: () => <RecipePage onClose={onClose} />,
   edit_setup: (p) => <RecipePage onClose={onClose} setupId={p.setupId ?? null} />,
   record_purchase: (p) => <AddStockPage onClose={onClose} preselectedItemId={p.itemId ?? null} />,
@@ -69,15 +71,9 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   supplier_detail: (p) => (
     <SupplierDetailModal visible onClose={onClose} supplierId={p.supplierId ?? null} />
   ),
-  edit_customer: (p) => (
-    <EditCustomerModal visible onClose={onClose} customerId={p.customerId ?? null} />
-  ),
-  edit_supplier: (p) => (
-    <EditSupplierModal visible onClose={onClose} supplierId={p.supplierId ?? null} />
-  ),
-  edit_product: (p) => (
-    <EditProductModal visible onClose={onClose} productId={p.productId ?? null} />
-  ),
+  edit_customer: (p) => <EditCustomerPage onClose={onClose} customerId={p.customerId ?? null} />,
+  edit_supplier: (p) => <EditSupplierPage onClose={onClose} supplierId={p.supplierId ?? null} />,
+  edit_product: (p) => <EditProductPage onClose={onClose} productId={p.productId ?? null} />,
 };
 
 export default function SheetRoute() {

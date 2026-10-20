@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { useCreateSupplier } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
-import {
-  Modal,
-  Stack,
-  Typography,
-  TextInput,
-} from '../../../components';
+import { Modal, Stack, Typography, TextInput } from '../../../components';
 
 export interface CreateSupplierModalProps {
   visible: boolean;
