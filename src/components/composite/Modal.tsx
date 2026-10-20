@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Animated,
+  PanResponder,
   Modal as RNModal,
   View,
   StyleSheet,
@@ -49,6 +51,35 @@ export const Modal: React.FC<ModalProps> = ({
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
 
+  // Drag the handle or header down to close; a short drag springs back.
+  const [dragY] = useState(() => new Animated.Value(0));
+  const dragResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_, g) =>
+          Math.abs(g.dy) > 4 && Math.abs(g.dy) > Math.abs(g.dx),
+        onPanResponderMove: (_, g) => dragY.setValue(Math.max(0, g.dy)),
+        onPanResponderRelease: (_, g) => {
+          if (g.dy > 90 || g.vy > 0.8) {
+            Animated.timing(dragY, {
+              toValue: windowHeight,
+              duration: 180,
+              useNativeDriver: true,
+            }).start(() => {
+              dragY.setValue(0);
+              onClose();
+            });
+          } else {
+            Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start();
+          }
+        },
+        onPanResponderTerminate: () =>
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start(),
+      }),
+    [dragY, windowHeight, onClose],
+  );
+
   return (
     <RNModal
       visible={visible}
@@ -68,16 +99,21 @@ export const Modal: React.FC<ModalProps> = ({
           accessibilityLabel="Dismiss"
         />
 
-        <View
+        <Animated.View
           style={[
             styles.sheetContainer,
             {
               paddingBottom: Math.max(insets.bottom, theme.spacing.base),
+              transform: [{ translateY: dragY }],
             },
           ]}
         >
-          {/* Handle bar */}
-          <View style={styles.handleContainer}>
+          {/* Handle bar: drag down to close */}
+          <View
+            style={styles.handleContainer}
+            {...dragResponder.panHandlers}
+            accessibilityLabel="Drag down to close"
+          >
             <View style={styles.handle} />
           </View>
 
@@ -142,7 +178,7 @@ export const Modal: React.FC<ModalProps> = ({
               )}
             </Row>
           )}
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </RNModal>
   );
@@ -167,7 +203,7 @@ const createStyles = (colors: ColorTokens) =>
     },
     handleContainer: {
       alignItems: 'center',
-      paddingVertical: theme.spacing.xs,
+      paddingVertical: theme.spacing.md,
     },
     handle: {
       width: 38,

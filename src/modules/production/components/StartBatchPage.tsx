@@ -3,7 +3,13 @@ import { useColors } from '../../../theme';
 import { useMoney } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
 import { useProductionSetups, useStartBatchRun } from '../../../hooks/api/useProduction';
-import { useIngredients } from '../../../hooks/api/useInventory';
+import { useIngredients, useProducts } from '../../../hooks/api/useInventory';
+import {
+  formatDuration,
+  hoursForOutput,
+  outputForHours,
+  profitEstimate,
+} from '../../../utils/batchEstimates';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
   Badge,
@@ -34,6 +40,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const money = useMoney();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
+  const { data: products = [] } = useProducts();
   const startRun = useStartBatchRun();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
@@ -50,6 +57,30 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const [error, setError] = useState('');
 
   const scale = loads;
+  // The page opening is the closest thing to "now" that stays stable between renders.
+  const [openedAt] = useState(() => Date.now());
+
+  // Run time and output: give either one and the other follows from the recipe's rate.
+  const rate = setup?.outputPerHour ?? 0;
+  const [hoursText, setHoursText] = useState<string | null>(null);
+  const [outText, setOutText] = useState<string | null>(null);
+  const outUnit = setup?.outputUnit || 'packs';
+  const usual = expectedUnits * loads;
+  const expected =
+    outText !== null
+      ? Number(outText) || 0
+      : hoursText !== null && rate > 0
+        ? outputForHours(rate, Number(hoursText) || 0)
+        : usual;
+  const plannedHours =
+    hoursText !== null ? Number(hoursText) || 0 : rate > 0 ? hoursForOutput(rate, expected) : 0;
+  const finishAt =
+    plannedHours > 0
+      ? new Date(openedAt + plannedHours * 3600000).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : null;
 
   const rows = (setup?.recipeItems ?? []).map((ri) => {
     const ing = ingredients.find((i) => i.id === ri.ingredientId);
@@ -63,10 +94,18 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const short = rows.filter((r) => !r.ok);
 
   const ingredientCost = rows.reduce((sum, r) => sum + r.required * (r.ing?.unitCost ?? 0), 0);
+  const packaging = ingredients.find((i) => i.category === 'packaging');
+  const packagingEstimate = packaging ? expected * packaging.unitCost : 0;
+  const estimatedCost = ingredientCost + packagingEstimate;
+  const product = products.find((p) => p.id === setup?.productId);
+  const price = product?.sellingPricePerUnit ?? product?.sellingPricePerBag ?? 0;
+  const estimate = profitEstimate(expected, price, estimatedCost);
 
   const pickSetup = (id: string) => {
     setSetupId(id);
     setLoads(1);
+    setHoursText(null);
+    setOutText(null);
     setOverrides({});
     setPicking(false);
     setError('');
@@ -83,6 +122,8 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
           ingredientId: r.ri.ingredientId,
           actualQuantity: r.required,
         })),
+        plannedHours: plannedHours || undefined,
+        expectedUnits: expected || undefined,
         notes: notes.trim(),
       });
       setBannerAlert({
@@ -170,6 +211,48 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
           </FlowSection>
 
           <FlowSection
+            label="Run time"
+            hint={rate > 0 ? `Recipe speed: ${rate} ${outUnit}/hour` : 'Optional'}
+          >
+            <Row gap="sm">
+              <Box flex={1}>
+                <TextInput
+                  label="Hours it will run"
+                  value={hoursText ?? (plannedHours ? String(plannedHours) : '')}
+                  onChangeText={(t) => {
+                    setHoursText(t);
+                    setOutText(null);
+                  }}
+                  keyboardType="numeric"
+                  suffix="h"
+                />
+              </Box>
+              <Box flex={1}>
+                <TextInput
+                  label={`Expected ${outUnit}`}
+                  value={outText ?? (expected ? String(expected) : '')}
+                  onChangeText={(t) => {
+                    setOutText(t);
+                    setHoursText(null);
+                  }}
+                  keyboardType="numeric"
+                />
+              </Box>
+            </Row>
+            {rate > 0 ? (
+              <Typography variant="bodySmall" color="secondary">
+                Change either box and the other updates from {rate} {outUnit} per hour.
+                {finishAt ? ` Ready about ${finishAt} (${formatDuration(plannedHours * 60)}).` : ''}
+              </Typography>
+            ) : (
+              <Typography variant="bodySmall" color="secondary">
+                No speed saved for this recipe yet. Complete a batch and BatchIQ will learn it, or
+                set it in the recipe.
+              </Typography>
+            )}
+          </FlowSection>
+
+          <FlowSection
             label="Stock availability"
             action={{
               label: adjusting ? 'Use recipe amounts' : 'Edit amounts used',
@@ -241,16 +324,67 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
             </Stack>
           </FlowSection>
 
-          <FlowSection label="Materials cost">
-            <Row justify="space-between" align="center">
-              <Typography variant="title">Loaded into the mixer</Typography>
-              <Typography variant="dataLarge" tabular>
+          <FlowSection label="Estimated cost & profit" hint="Based on the expected output">
+            <Row justify="space-between">
+              <Typography variant="bodySmall" color="secondary">
+                Materials
+              </Typography>
+              <Typography variant="dataMedium" tabular>
                 {money(ingredientCost)}
               </Typography>
             </Row>
-            <Typography variant="bodySmall" color="secondary">
-              Packaging and the final cost per pack are added when you complete the batch.
-            </Typography>
+            {packaging && expected > 0 && (
+              <Row justify="space-between">
+                <Typography variant="bodySmall" color="secondary">
+                  Packaging ({expected} × {money(packaging.unitCost)})
+                </Typography>
+                <Typography variant="dataMedium" tabular>
+                  {money(packagingEstimate)}
+                </Typography>
+              </Row>
+            )}
+            <Row justify="space-between" align="center">
+              <Typography variant="title">Total cost</Typography>
+              <Typography variant="dataLarge" tabular>
+                {money(estimatedCost)}
+              </Typography>
+            </Row>
+            {estimate ? (
+              <>
+                <Row justify="space-between">
+                  <Typography variant="bodySmall" color="secondary">
+                    Sales value at {money(price)} each
+                  </Typography>
+                  <Typography variant="dataMedium" tabular>
+                    {money(estimate.revenue)}
+                  </Typography>
+                </Row>
+                <Row justify="space-between" align="center">
+                  <Typography variant="title">Estimated profit</Typography>
+                  <Typography
+                    variant="dataLarge"
+                    color={estimate.profit >= 0 ? 'success' : 'error'}
+                    tabular
+                  >
+                    {money(estimate.profit)}
+                  </Typography>
+                </Row>
+                <Row gap="xs">
+                  <Badge label={`${estimate.marginPct}% margin`} variant="neutral" size="sm" />
+                  <Badge
+                    label={`${money(estimate.costPerUnit)} cost / ${outUnit}`}
+                    variant="neutral"
+                    size="sm"
+                  />
+                </Row>
+              </>
+            ) : (
+              <Typography variant="bodySmall" color="secondary">
+                {expected > 0
+                  ? 'Set a selling price on the product to see the profit estimate.'
+                  : 'Enter the expected output above to see cost per pack and profit.'}
+              </Typography>
+            )}
           </FlowSection>
 
           <FlowSection label="Notes" hint="Optional">

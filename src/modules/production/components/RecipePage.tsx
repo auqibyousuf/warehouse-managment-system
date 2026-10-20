@@ -66,6 +66,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
     settings?.defaultUnitSize ? String(settings.defaultUnitSize) : '',
   );
   const [targetUnits, setTargetUnits] = useState('');
+  const [perHour, setPerHour] = useState('');
   const [lines, setLines] = useState<Line[]>([]);
   const [adding, setAdding] = useState(true);
   const [newMaterial, setNewMaterial] = useState(false);
@@ -81,6 +82,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
     setBaseUnit(existing.baseUnit || 'kg');
     setUnitSize(String(existing.unitSize || existing.bagWeightKg || ''));
     setTargetUnits(String(existing.targetUnits || existing.targetBags || ''));
+    setPerHour(existing.outputPerHour ? String(existing.outputPerHour) : '');
     setLines(
       existing.recipeItems.map((i) => ({
         ingredientId: i.ingredientId,
@@ -132,6 +134,7 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
       unitSize: size || undefined,
       baseUnit: baseUnit.trim() || undefined,
       targetUnits: units || undefined,
+      outputPerHour: Number(perHour) || undefined,
       recipeItems: view.map((v) => ({
         ingredientId: v.line.ingredientId,
         ingredientName: v.ing?.name,
@@ -257,6 +260,15 @@ export const RecipePage: React.FC<RecipePageProps> = ({ onClose, setupId }) => {
                 One batch makes {(units * size).toLocaleString('en-IN')} {baseUnit}
               </Typography>
             )}
+          </FlowSection>
+          <FlowSection label="Speed" hint="Optional">
+            <TextInput
+              label={`${outputUnit || 'Packs'} per hour`}
+              value={perHour}
+              onChangeText={setPerHour}
+              keyboardType="numeric"
+              hint="Used to estimate how long a batch runs and what it makes. BatchIQ also learns it from completed batches."
+            />
           </FlowSection>
         </>
       )}

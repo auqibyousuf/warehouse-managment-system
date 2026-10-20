@@ -176,6 +176,29 @@ describe('running batches', () => {
   });
 });
 
+describe('run time and rate', () => {
+  it('records duration and rate on completion and can remember it on the recipe', async () => {
+    const run = await productionService.startBatchRun({
+      setupId: 'setup-1',
+      date: '2026-01-01',
+      actualItems: [{ ingredientId: 'ing-1', actualQuantity: 10 }],
+      plannedHours: 4,
+      expectedUnits: 100,
+    });
+    expect(run.startedAt).toBeDefined();
+    expect(run.plannedHours).toBe(4);
+    const done = await productionService.completeBatchRun(run.id, {
+      unitsPacked: 120,
+      unitSize: 20,
+      durationMinutes: 240,
+      rememberRate: true,
+    });
+    expect(done.durationMinutes).toBe(240);
+    expect(done.outputPerHour).toBe(30);
+    expect(getDB().setups.find((s) => s.id === 'setup-1')!.outputPerHour).toBe(30);
+  });
+});
+
 describe('deleting a recipe', () => {
   it('removes an unused recipe and archives one with batch history', async () => {
     const created = await productionService.createSetup({
