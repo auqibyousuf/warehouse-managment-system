@@ -295,25 +295,7 @@ export const initialDatabase: DatabaseState = {
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
-const snapshots = createDeviceSnapshotStore<DatabaseState>();
-
-// Active database: the saved snapshot when there is one, otherwise the demo seed.
-// Spreading over the seed keeps newly added collections defined after an app update.
-const saved = snapshots.load();
-let db: DatabaseState = saved ? { ...clone(initialDatabase), ...saved } : clone(initialDatabase);
-
-/** Queue a save of the current state. Called after every completed API call. */
-export const persistDB = (): void => snapshots.scheduleSave(() => db);
-
-export const getDB = (): DatabaseState => db;
-
-/** Back to the demo seed (also overwrites what is saved on the device). */
-export const resetDB = (): void => {
-  db = clone(initialDatabase);
-  snapshots.saveNow(db);
-};
-
-const COLLECTIONS = [
+const COLLECTION_KEYS = [
   'products',
   'ingredients',
   'setups',
@@ -326,6 +308,31 @@ const COLLECTIONS = [
   'payments',
   'expenses',
 ] as const;
+
+/** A brand-new business: default settings, no records. The sample data is opt-in from Settings. */
+function emptyState(settings: FactorySettings = initialDatabase.settings): DatabaseState {
+  const empty = clone(initialDatabase);
+  for (const key of COLLECTION_KEYS) (empty as any)[key] = [];
+  return { ...empty, settings: clone(settings) };
+}
+
+const snapshots = createDeviceSnapshotStore<DatabaseState>();
+
+// Active database: the saved snapshot when there is one, otherwise the demo seed.
+// Spreading over the seed keeps newly added collections defined after an app update.
+const saved = snapshots.load();
+let db: DatabaseState = saved ? { ...clone(initialDatabase), ...saved } : emptyState();
+
+/** Queue a save of the current state. Called after every completed API call. */
+export const persistDB = (): void => snapshots.scheduleSave(() => db);
+
+export const getDB = (): DatabaseState => db;
+
+/** Back to the demo seed (also overwrites what is saved on the device). */
+export const resetDB = (): void => {
+  db = clone(initialDatabase);
+  snapshots.saveNow(db);
+};
 
 /** Everything on this device as one JSON document, for a backup file. */
 export const exportDatabase = (): string =>
@@ -350,7 +357,7 @@ export const importDatabase = (json: string): void => {
     throw new Error('This backup was made by a different version of BatchIQ.');
   }
   const data = parsed.data;
-  if (!data.settings || COLLECTIONS.some((key) => !Array.isArray(data[key]))) {
+  if (!data.settings || COLLECTION_KEYS.some((key) => !Array.isArray(data[key]))) {
     throw new Error('This backup is incomplete.');
   }
   db = { ...clone(initialDatabase), ...data };
@@ -359,8 +366,6 @@ export const importDatabase = (json: string): void => {
 
 /** Empty every record but keep the business settings, for starting real work. */
 export const clearDatabase = (): void => {
-  const empty = clone(initialDatabase);
-  for (const key of COLLECTIONS) (empty as any)[key] = [];
-  db = { ...empty, settings: db.settings };
+  db = emptyState(db.settings);
   snapshots.saveNow(db);
 };

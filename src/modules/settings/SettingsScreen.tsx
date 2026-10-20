@@ -39,8 +39,8 @@ export const SettingsScreen: React.FC = () => {
     queryClient.invalidateQueries();
     setConfirmResetVisible(false);
     setBannerAlert({
-      title: 'Demo data restored',
-      message: 'All records were reset to the sample data.',
+      title: 'Sample data loaded',
+      message: 'Explore the app, then use Start fresh to clear it.',
       variant: 'info',
     });
   };
@@ -261,15 +261,15 @@ export const SettingsScreen: React.FC = () => {
               color="primary"
               style={{ marginBottom: theme.spacing.xsm }}
             >
-              Sample Data
+              Sample data
             </Typography>
             <Typography
               variant="bodySmall"
               color="secondary"
               style={{ marginBottom: theme.spacing.md }}
             >
-              Your records are saved on this device. Reset to replace everything with the sample
-              data. This cannot be undone.
+              Want to see how the app works? Load the sample data to explore, then use Start fresh
+              to clear it. Loading replaces everything now on this device.
             </Typography>
             <Button
               label="Start fresh (clear all records)"
@@ -279,7 +279,7 @@ export const SettingsScreen: React.FC = () => {
               style={{ marginBottom: theme.spacing.sm }}
             />
             <Button
-              label="Reset to Sample Data"
+              label="Load sample data"
               variant="subtle"
               leftIcon="refresh-outline"
               onPress={() => setConfirmResetVisible(true)}
@@ -300,9 +300,9 @@ export const SettingsScreen: React.FC = () => {
             visible={confirmResetVisible}
             onClose={() => setConfirmResetVisible(false)}
             onConfirm={handleResetData}
-            title="Reset all data?"
-            message="Every recipe, batch, stock level, invoice, customer and expense on this device will be replaced with the sample data."
-            confirmLabel="Reset Data"
+            title="Load sample data?"
+            message="Every recipe, batch, stock level, invoice, customer and expense on this device will be replaced with the sample data. Save a backup first if you need them."
+            confirmLabel="Load sample data"
             isDestructive
           />
         </Stack>

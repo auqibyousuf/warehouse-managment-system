@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMoney } from '../../hooks/useMoney';
-import { useDashboardMetrics } from '../../hooks/api/useDashboard';
-import { FilterPeriod } from '../../stores/useAppStore';
+import { useCustomers } from '../../hooks/api/useCustomers';
+import { generateBusinessReportPDF } from '../../utils/pdfGenerator';
+import { useDashboardMetrics, useFactorySettings } from '../../hooks/api/useDashboard';
+import { FilterPeriod, useAppStore } from '../../stores/useAppStore';
 import { openManage } from '../../navigation/routes';
 import { Button, Card, Divider, Modal, Row, Stack, Typography } from '../../components';
 
@@ -28,7 +30,31 @@ export const ProfitDetailModal: React.FC<ProfitDetailModalProps> = ({
   const selected =
     (period as FilterPeriod) in PERIOD_LABEL ? (period as FilterPeriod) : 'this_month';
   const { data: metrics } = useDashboardMetrics(selected);
+  const { data: settings } = useFactorySettings();
+  const { data: customers = [] } = useCustomers();
+  const setBannerAlert = useAppStore((st) => st.setBannerAlert);
+  const [sharing, setSharing] = useState(false);
   const f = metrics?.financial;
+
+  const shareReport = async () => {
+    if (!metrics) return;
+    setSharing(true);
+    try {
+      await generateBusinessReportPDF({
+        metrics,
+        settings,
+        periodLabel: PERIOD_LABEL[selected],
+        owing: customers
+          .filter((c) => c.outstandingBalance > 0)
+          .sort((a, b) => b.outstandingBalance - a.outstandingBalance)
+          .map((c) => ({ name: c.name, amount: c.outstandingBalance })),
+      });
+    } catch (err: any) {
+      setBannerAlert({ title: 'Could not create report', message: err.message, variant: 'danger' });
+    } finally {
+      setSharing(false);
+    }
+  };
   const profit = f?.estimatedOperatingProfit ?? 0;
 
   const line = (label: string, value: number, sign: '+' | '−', color: 'primary' | 'error') => (
@@ -50,6 +76,11 @@ export const ProfitDetailModal: React.FC<ProfitDetailModalProps> = ({
       title="Operating profit"
       subtitle={`Estimate for ${PERIOD_LABEL[selected]}`}
       secondaryAction={{ label: 'Close', onPress: onClose }}
+      primaryAction={{
+        label: 'Share report (PDF)',
+        onPress: shareReport,
+        loading: sharing,
+      }}
     >
       <Stack gap="md">
         <Typography variant="h1" color={profit >= 0 ? 'success' : 'error'} tabular>
