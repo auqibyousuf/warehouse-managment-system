@@ -137,11 +137,11 @@ export const Modal: React.FC<ModalProps> = ({
             <Pressable
               onPress={onClose}
               style={styles.closeButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityRole="button"
               accessibilityLabel={`Close ${title}`}
             >
-              <Icon name="close" size="sm" color="muted" />
+              <Icon name="close" size="md" color="secondary" />
             </Pressable>
           </Row>
 
@@ -218,10 +218,8 @@ const createStyles = (colors: ColorTokens) =>
       borderBottomColor: colors.border.subtle,
     },
     closeButton: {
-      width: 44,
-      height: 44,
-      borderRadius: theme.radii.sm,
-      backgroundColor: colors.background.surfaceSecondary,
+      width: 28,
+      height: 28,
       alignItems: 'center',
       justifyContent: 'center',
     },
