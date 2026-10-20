@@ -19,7 +19,7 @@ export type StockUnit =
 
 export type SetupStatus = 'active' | 'paused' | 'archived';
 
-export type BatchStatus = 'confirmed' | 'reversed';
+export type BatchStatus = 'in_progress' | 'confirmed' | 'reversed';
 
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
 

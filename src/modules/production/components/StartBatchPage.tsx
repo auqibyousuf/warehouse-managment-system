@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useColors } from '../../../theme';
 import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
-import { useProductionSetups, useCreateProductionBatch } from '../../../hooks/api/useProduction';
+import { useProductionSetups, useStartBatchRun } from '../../../hooks/api/useProduction';
 import { useIngredients } from '../../../hooks/api/useInventory';
-import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
   Badge,
@@ -36,7 +35,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const symbol = useCurrencySymbol();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
-  const createBatch = useCreateProductionBatch();
+  const startRun = useStartBatchRun();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const activeSetups = setups.filter((s) => s.status === 'active');
@@ -44,28 +43,13 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const [picking, setPicking] = useState(false);
   const setup = activeSetups.find((s) => s.id === setupId) ?? activeSetups[0] ?? null;
 
-  const { data: settings } = useFactorySettings();
-  // A recipe may not know its output yet (0 = not set); then it is entered after mixing.
   const expectedUnits = setup ? setup.targetUnits || setup.targetBags || 0 : 0;
   const [loads, setLoads] = useState(1);
-  const [units, setUnits] = useState<number | null>(null);
-  const [sizeInput, setSizeInput] = useState<string | null>(null);
-  const [unitInput, setUnitInput] = useState<string | null>(null);
-  const unitSize =
-    sizeInput !== null
-      ? Number(sizeInput) || 0
-      : setup
-        ? setup.unitSize || setup.bagWeightKg || settings?.defaultUnitSize || 0
-        : 0;
-  const outputUnit = unitInput ?? (setup?.outputUnit || settings?.defaultUnitName || 'units');
-  const baseUnit = setup?.baseUnit || settings?.defaultBaseUnit || 'kg';
   const [adjusting, setAdjusting] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
-  const [wastage, setWastage] = useState('');
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
 
-  const target = units ?? expectedUnits * loads;
   const scale = loads;
 
   const rows = (setup?.recipeItems ?? []).map((ri) => {
@@ -79,18 +63,11 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
 
   const short = rows.filter((r) => !r.ok);
 
-  const packaging = ingredients.find((i) => i.category === 'packaging');
-  const packagingCost = packaging ? target * packaging.unitCost : 0;
   const ingredientCost = rows.reduce((sum, r) => sum + r.required * (r.ing?.unitCost ?? 0), 0);
-  const totalCost = ingredientCost + packagingCost;
-  const finished = target * unitSize;
 
   const pickSetup = (id: string) => {
     setSetupId(id);
-    setUnits(null);
     setLoads(1);
-    setSizeInput(null);
-    setUnitInput(null);
     setOverrides({});
     setPicking(false);
     setError('');
@@ -98,31 +75,20 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
 
   const submit = async () => {
     if (!setup) return setError('Choose a recipe');
-    if (!(target > 0)) return setError('Enter how much it made, once you know the output');
+    if (short.length > 0) return setError('Some items are short. Add stock or lower the amounts.');
     try {
-      const wasteQty = Number(wastage) || 0;
-      await createBatch.mutateAsync({
+      await startRun.mutateAsync({
         setupId: setup.id,
         date: new Date().toISOString().split('T')[0],
         actualItems: rows.map((r) => ({
           ingredientId: r.ri.ingredientId,
           actualQuantity: r.required,
         })),
-        unitsPacked: target,
-        outputUnit,
-        actualFinishedQuantity: finished,
-        baseUnit,
-        packagingUsedUnits: target,
-        measurableWastage: wasteQty,
-        bagsPacked: target,
-        packagingUsedBags: target,
-        actualFinishedWeightKg: finished,
-        measurableWastageKg: wasteQty,
         notes: notes.trim(),
       });
       setBannerAlert({
-        title: 'Batch started',
-        message: `${target} ${outputUnit} of ${setup.name} recorded. Stock and costs updated.`,
+        title: 'Batch running',
+        message: `${setup.name} is in the mixer. Complete it from Batches once you know the output.`,
         variant: 'success',
       });
       onClose();
@@ -158,7 +124,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
       <FlowHeaderCard
         icon="flask-outline"
         title="Start New Batch Run"
-        description="Pick a recipe, set the target and confirm stock"
+        description="Load the mixer now. You enter the output when it finishes."
         chip="Production"
       />
 
@@ -192,7 +158,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
 
       {setup && (
         <>
-          <FlowSection label="Mixer loads" hint="Quantities below are for one mix">
+          <FlowSection label="Mixer loads" hint="Amounts below are for one mix">
             <QuantityStepper
               value={loads}
               onChange={(v) => {
@@ -276,80 +242,19 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
             </Stack>
           </FlowSection>
 
-          <FlowSection
-            label="What did it make?"
-            hint={target > 0 ? undefined : 'Fill this in when you know the output'}
-          >
-            <QuantityStepper
-              value={target}
-              onChange={(v) => {
-                setUnits(v);
-                setError('');
-              }}
-              unit={outputUnit}
-              step={target >= 100 ? 10 : 1}
-            />
-            <Row gap="sm">
-              <Box flex={1}>
-                <TextInput
-                  label="Pack size"
-                  value={sizeInput ?? (unitSize ? String(unitSize) : '')}
-                  onChangeText={setSizeInput}
-                  keyboardType="numeric"
-                  suffix={baseUnit}
-                />
-              </Box>
-              <Box flex={1}>
-                <TextInput label="Packed as" value={outputUnit} onChangeText={setUnitInput} />
-              </Box>
-            </Row>
-            {target > 0 && unitSize > 0 && (
-              <Typography variant="bodySmall" color="secondary">
-                {finished.toLocaleString('en-IN')} {baseUnit} in total
-              </Typography>
-            )}
-          </FlowSection>
-
-          <FlowSection label="Cost preview">
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                Materials
-              </Typography>
-              <Typography variant="dataMedium" tabular>
+          <FlowSection label="Materials cost">
+            <Row justify="space-between" align="center">
+              <Typography variant="title">Loaded into the mixer</Typography>
+              <Typography variant="dataLarge" tabular>
                 {money(ingredientCost)}
               </Typography>
             </Row>
-            {packaging && (
-              <Row justify="space-between">
-                <Typography variant="bodySmall" color="secondary">
-                  Packaging ({target} × {money(packaging.unitCost)})
-                </Typography>
-                <Typography variant="dataMedium" tabular>
-                  {money(packagingCost)}
-                </Typography>
-              </Row>
-            )}
-            <Row justify="space-between" align="center">
-              <Typography variant="title">Total batch cost</Typography>
-              <Typography variant="dataLarge" tabular>
-                {money(totalCost)}
-              </Typography>
-            </Row>
-            <Badge
-              label={`${symbol}${(target > 0 ? totalCost / target : 0).toFixed(2)} / ${outputUnit}`}
-              variant="neutral"
-              size="sm"
-            />
+            <Typography variant="bodySmall" color="secondary">
+              Packaging and the final cost per pack are added when you complete the batch.
+            </Typography>
           </FlowSection>
 
-          <FlowSection label="Notes & loss" hint="Optional">
-            <TextInput
-              label={`Wastage (${baseUnit})`}
-              value={wastage}
-              onChangeText={setWastage}
-              keyboardType="numeric"
-              suffix={baseUnit}
-            />
+          <FlowSection label="Notes" hint="Optional">
             <TextInput
               label="Batch notes"
               value={notes}
@@ -373,8 +278,8 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
           size="lg"
           leftIcon="play-circle-outline"
           fullWidth
-          disabled={!setup}
-          loading={createBatch.isPending}
+          disabled={!setup || short.length > 0}
+          loading={startRun.isPending}
           onPress={submit}
         />
         <Button label="Cancel" variant="ghost" fullWidth onPress={onClose} />

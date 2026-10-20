@@ -5,7 +5,6 @@
 
 import { create } from 'zustand';
 
-
 export type FilterPeriod = 'today' | 'this_week' | 'this_month' | 'all_time';
 
 export interface BannerAlert {

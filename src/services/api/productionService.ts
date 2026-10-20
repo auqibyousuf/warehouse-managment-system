@@ -53,6 +53,25 @@ export interface CreateSetupInput {
   notes?: string;
 }
 
+export interface StartBatchRunInput {
+  setupId: string;
+  date: string;
+  actualItems: { ingredientId: string; actualQuantity: number }[];
+  notes?: string;
+}
+
+export interface CompleteBatchRunInput {
+  unitsPacked: number;
+  outputUnit?: string;
+  baseUnit?: string;
+  unitSize?: number;
+  actualFinishedQuantity?: number;
+  packagingUsedUnits?: number;
+  measurableWastage?: number;
+  date?: string;
+  notes?: string;
+}
+
 export const productionService = {
   // Fetch all persistent setups
   getSetups: async (): Promise<ProductionSetup[]> => {
@@ -301,7 +320,7 @@ export const productionService = {
 
       // Packaging units
       const bagItem = db.ingredients.find((i) => i.category === 'packaging');
-      const packagingUnitCost = bagItem ? bagItem.unitCost : 20;
+      const packagingUnitCost = bagItem ? bagItem.unitCost : 0;
       const packagingCost = packagingUsedUnits * packagingUnitCost;
 
       // Process ingredients consumption with cost snapshot
@@ -451,6 +470,190 @@ export const productionService = {
     });
   },
 
+  // Start a run: the inputs go into the mixer now, the output is entered when it finishes.
+  startBatchRun: async (input: StartBatchRunInput): Promise<ProductionBatch> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const setup = db.setups.find((s) => s.id === input.setupId);
+      if (!setup) throw new Error('Selected production setup does not exist');
+      const product = db.products.find((p) => p.id === setup.productId);
+      if (!product) throw new Error('Associated product not found');
+
+      let ingredientCost = 0;
+      const itemsConsumed: BatchIngredientConsumption[] = [];
+      for (const line of input.actualItems) {
+        const ing = db.ingredients.find((i) => i.id === line.ingredientId);
+        if (!ing) throw new Error(`Ingredient ${line.ingredientId} not found`);
+        if (ing.currentStock < line.actualQuantity) {
+          throw new Error(
+            `Not enough ${ing.name}: ${ing.currentStock} ${ing.unit} on hand, ${line.actualQuantity} needed.`,
+          );
+        }
+      }
+      for (const line of input.actualItems) {
+        const ing = db.ingredients.find((i) => i.id === line.ingredientId)!;
+        const planned = setup.recipeItems.find((r) => r.ingredientId === line.ingredientId);
+        const lineCost = line.actualQuantity * ing.unitCost;
+        ingredientCost += lineCost;
+        itemsConsumed.push({
+          ingredientId: ing.id,
+          ingredientName: ing.name,
+          plannedQuantity: planned ? planned.targetQuantity : line.actualQuantity,
+          actualQuantity: line.actualQuantity,
+          unit: ing.unit,
+          unitCostSnapshot: ing.unitCost,
+          lineCost,
+        });
+        ing.currentStock -= line.actualQuantity;
+      }
+
+      const batchId = generateId('batch');
+      const batchNumber = nextDocumentNumber(
+        'BAT',
+        db.batches.map((b) => b.batchNumber),
+      );
+      const outputUnit = setup.outputUnit || product.outputUnit || 'units';
+      const baseUnit = setup.baseUnit || product.baseUnit || 'kg';
+      const batch: ProductionBatch = {
+        id: batchId,
+        batchNumber,
+        date: input.date,
+        setupId: setup.id,
+        setupVersion: setup.version,
+        productId: product.id,
+        productName: product.name,
+        outputUnit,
+        unitsPacked: 0,
+        baseUnit,
+        actualFinishedQuantity: 0,
+        itemsConsumed,
+        packagingUsedUnits: 0,
+        packagingUnitCostSnapshot: 0,
+        packagingCost: 0,
+        ingredientCost,
+        directBatchCost: ingredientCost,
+        measurableWastage: 0,
+        directCostPerUnit: 0,
+        directCostPerBaseUnit: 0,
+        status: 'in_progress',
+        notes: input.notes,
+      };
+      db.batches.unshift(batch);
+
+      for (const item of itemsConsumed) {
+        db.movements.unshift({
+          id: generateId('mov'),
+          date: input.date,
+          itemId: item.ingredientId,
+          itemName: item.ingredientName,
+          itemType: 'raw_material',
+          movementType: 'production_consumption',
+          quantity: item.actualQuantity,
+          unit: item.unit,
+          direction: 'out',
+          referenceType: 'batch',
+          referenceId: batchId,
+          notes: `Loaded into batch ${batchNumber}`,
+        });
+      }
+      return { ...batch };
+    });
+  },
+
+  // Finish a run: record what it made; finished stock, packaging and final cost are booked now.
+  completeBatchRun: async (
+    batchId: string,
+    input: CompleteBatchRunInput,
+  ): Promise<ProductionBatch> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const batch = db.batches.find((b) => b.id === batchId);
+      if (!batch) throw new Error('Batch not found');
+      if (batch.status !== 'in_progress') throw new Error('This batch is not running.');
+      if (!(input.unitsPacked > 0)) throw new Error('Enter how much the batch made.');
+      const product = db.products.find((p) => p.id === batch.productId);
+      if (!product) throw new Error('Associated product not found');
+
+      const today = input.date ?? new Date().toISOString().split('T')[0];
+      const outputUnit = input.outputUnit || batch.outputUnit || 'units';
+      const baseUnit = input.baseUnit || batch.baseUnit || 'kg';
+      const finished = input.actualFinishedQuantity ?? input.unitsPacked * (input.unitSize ?? 0);
+      const packagingItem = db.ingredients.find((i) => i.category === 'packaging');
+      const packUsed = packagingItem ? (input.packagingUsedUnits ?? input.unitsPacked) : 0;
+      const packUnitCost = packagingItem ? packagingItem.unitCost : 0;
+      const packagingCost = packUsed * packUnitCost;
+
+      if (packagingItem && packagingItem.currentStock < packUsed) {
+        throw new Error(
+          `Not enough ${packagingItem.name}: ${packagingItem.currentStock} on hand, ${packUsed} needed.`,
+        );
+      }
+      if (packagingItem) packagingItem.currentStock -= packUsed;
+
+      const prev = product.currentStockUnits ?? product.currentStockBags ?? 0;
+      product.currentStockUnits = prev + input.unitsPacked;
+      product.currentStockBags = product.currentStockUnits;
+      if (input.unitSize) {
+        product.unitSize = input.unitSize;
+        product.bagWeightKg = input.unitSize;
+      }
+      product.outputUnit = outputUnit;
+
+      const directBatchCost = batch.ingredientCost + packagingCost;
+      Object.assign(batch, {
+        date: today,
+        outputUnit,
+        baseUnit,
+        unitsPacked: input.unitsPacked,
+        actualFinishedQuantity: finished,
+        packagingUsedUnits: packUsed,
+        packagingUnitCostSnapshot: packUnitCost,
+        packagingCost,
+        directBatchCost,
+        measurableWastage: input.measurableWastage ?? 0,
+        directCostPerUnit: Number((directBatchCost / input.unitsPacked).toFixed(2)),
+        directCostPerBaseUnit: finished > 0 ? Number((directBatchCost / finished).toFixed(2)) : 0,
+        status: 'confirmed' as const,
+        notes: input.notes ?? batch.notes,
+        bagsPacked: input.unitsPacked,
+        packagingUsedBags: packUsed,
+        actualFinishedWeightKg: finished,
+      });
+
+      if (packagingItem) {
+        db.movements.unshift({
+          id: generateId('mov'),
+          date: today,
+          itemId: packagingItem.id,
+          itemName: packagingItem.name,
+          itemType: 'packaging',
+          movementType: 'production_consumption',
+          quantity: packUsed,
+          unit: 'pcs',
+          direction: 'out',
+          referenceType: 'batch',
+          referenceId: batch.id,
+          notes: `Packaging used for batch ${batch.batchNumber}`,
+        });
+      }
+      db.movements.unshift({
+        id: generateId('mov'),
+        date: today,
+        itemId: product.id,
+        itemName: product.name,
+        itemType: 'finished_feed',
+        movementType: 'finished_production',
+        quantity: input.unitsPacked,
+        unit: outputUnit as any,
+        direction: 'in',
+        referenceType: 'batch',
+        referenceId: batch.id,
+        notes: `Finished production from batch ${batch.batchNumber}`,
+      });
+      return { ...batch };
+    });
+  },
+
   // Controlled batch reversal: restores stock and logs compensating movement records
   reverseBatch: async (batchId: string, reason?: string): Promise<ProductionBatch> => {
     return simulateNetwork(() => {
@@ -458,13 +661,14 @@ export const productionService = {
       const batch = db.batches.find((b) => b.id === batchId);
       if (!batch) throw new Error('Batch not found');
       if (batch.status === 'reversed') throw new Error('Batch has already been reversed.');
+      const running = batch.status === 'in_progress';
 
       const product = db.products.find((p) => p.id === batch.productId);
       const bagItem = db.ingredients.find((i) => i.category === 'packaging');
 
       // Guard first: never reverse if the batch output has already left the warehouse,
       // otherwise raw materials would be restored while the sold goods stay unaccounted for.
-      if (product) {
+      if (product && !running) {
         const units = batch.unitsPacked || batch.bagsPacked || 0;
         const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
         if (onHand < units) {
@@ -497,7 +701,7 @@ export const productionService = {
       }
 
       // Return packaging
-      if (bagItem) {
+      if (bagItem && !running) {
         const returnPackaging = batch.packagingUsedUnits || batch.packagingUsedBags || 0;
         bagItem.currentStock += returnPackaging;
         db.movements.unshift({
@@ -517,7 +721,7 @@ export const productionService = {
       }
 
       // Deduct finished goods stock
-      if (product) {
+      if (product && !running) {
         const units = batch.unitsPacked || batch.bagsPacked || 0;
         product.currentStockUnits =
           (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;

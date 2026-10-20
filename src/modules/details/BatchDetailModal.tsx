@@ -1,3 +1,5 @@
+import { openSheet } from '../../navigation/sheets';
+import { batchStatusView } from '../../utils/batchStatus';
 import React, { useState } from 'react';
 import { useMoney } from '../../hooks/useMoney';
 import { useProductionBatches, useReverseProductionBatch } from '../../hooks/api/useProduction';
@@ -38,6 +40,8 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
   if (!batch) return null;
 
   const reversed = batch.status === 'reversed';
+  const running = batch.status === 'in_progress';
+  const view = batchStatusView(batch.status);
   const perUnit = batch.directCostPerUnit ?? batch.directCostPerBag ?? 0;
   const perBase = batch.directCostPerBaseUnit ?? batch.directCostPerKg ?? 0;
 
@@ -71,16 +75,21 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
         primaryAction={
           reversed
             ? undefined
-            : { label: 'Reverse Batch', onPress: () => setConfirming(true), variant: 'danger' }
+            : running
+              ? {
+                  label: 'Complete Batch',
+                  onPress: () => {
+                    onClose();
+                    openSheet('complete_batch', { batchId: batch.id });
+                  },
+                  variant: 'success',
+                }
+              : { label: 'Reverse Batch', onPress: () => setConfirming(true), variant: 'danger' }
         }
       >
         <Stack gap="md">
           <Row justify="space-between" align="center">
-            <Badge
-              label={reversed ? 'Reversed' : 'Done'}
-              variant={reversed ? 'danger' : 'success'}
-              size="sm"
-            />
+            <Badge label={view.label} variant={view.badge} size="sm" />
             {batch.setupVersion ? (
               <Typography variant="caption" color="muted">
                 Recipe v{batch.setupVersion}
@@ -90,7 +99,10 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
 
           <InsetStats
             stats={[
-              { label: 'Output', value: `${batch.unitsPacked} ${batch.outputUnit}` },
+              {
+                label: 'Output',
+                value: running ? 'Not recorded' : `${batch.unitsPacked} ${batch.outputUnit}`,
+              },
               { label: 'Cost per unit', value: money(perUnit) },
             ]}
           />
@@ -161,6 +173,15 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
             </Stack>
           </Box>
 
+          {running && (
+            <Button
+              label="Cancel run"
+              variant="subtle"
+              size="sm"
+              onPress={() => setConfirming(true)}
+            />
+          )}
+
           {(batch.measurableWastage ?? 0) > 0 && (
             <Typography variant="bodySmall" color="warning">
               Wastage recorded: {batch.measurableWastage} {batch.baseUnit}
@@ -178,9 +199,13 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
         visible={confirming}
         onClose={() => setConfirming(false)}
         onConfirm={handleReverse}
-        title="Reverse this batch?"
-        message={`Ingredients and packaging return to stock and ${batch.unitsPacked} ${batch.outputUnit} of finished goods are removed. This cannot be done if they were already sold.`}
-        confirmLabel="Reverse Batch"
+        title={running ? 'Cancel this run?' : 'Reverse this batch?'}
+        message={
+          running
+            ? 'The loaded materials return to stock. Nothing was produced yet.'
+            : `Ingredients and packaging return to stock and ${batch.unitsPacked} ${batch.outputUnit} of finished goods are removed. This cannot be done if they were already sold.`
+        }
+        confirmLabel={running ? 'Cancel run' : 'Reverse Batch'}
         cancelLabel="Keep Batch"
         isDestructive
         loading={reverse.isPending}
