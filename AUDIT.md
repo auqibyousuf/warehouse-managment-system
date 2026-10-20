@@ -120,3 +120,9 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Empty start:** a new install has no records, only editable default settings. Home shows a three-step "Get started" checklist (raw materials, recipe, first batch) until each exists. Sample data is opt-in from Settings ("Load sample data"); "Start fresh" clears it again.
 - **Search:** top-bar search across customers, invoices, stock items, recipes, batches and suppliers (2+ characters, grouped, tap opens the detail sheet).
 - **Report:** "Share report (PDF)" in the operating-profit sheet: profit breakdown, sales, production and the customers who owe the most, for the chosen period. Values come from the same dashboard metrics as the app, so the PDF always matches the screen.
+
+## 13. Sheet gestures, run time and estimates (latest)
+
+- **Sheets close by gesture:** the handle strip on every bottom sheet follows the finger and closes on a drag down (or a quick flick); a short drag springs back. Tapping outside still closes. Full-page flows keep their back arrow.
+- **Run time and rate:** a recipe can store a speed (packs per hour). Start Batch takes either hours or expected output and fills in the other, shows the expected finish time, and records `startedAt`, `plannedHours` and `expectedUnits`. Complete Batch measures the real run time, shows output per hour, per minute and minutes per pack, and can save the measured speed back to the recipe.
+- **Estimates:** Start and Complete both show materials, packaging, total cost, cost per pack, sales value at the product's selling price, estimated profit and margin. Without a selling price they ask for one instead of guessing. Batch details show run time, rate and profit for finished batches.
