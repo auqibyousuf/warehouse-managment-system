@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useColors } from '../../../theme';
-import { useMoney, useCurrencySymbol } from '../../../hooks/useMoney';
+import { useMoney } from '../../../hooks/useMoney';
 import { openSheet } from '../../../navigation/sheets';
 import { useProductionSetups, useStartBatchRun } from '../../../hooks/api/useProduction';
 import { useIngredients } from '../../../hooks/api/useInventory';
@@ -32,7 +32,6 @@ export interface StartBatchPageProps {
 export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, preselectedSetupId }) => {
   const colors = useColors();
   const money = useMoney();
-  const symbol = useCurrencySymbol();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
   const startRun = useStartBatchRun();

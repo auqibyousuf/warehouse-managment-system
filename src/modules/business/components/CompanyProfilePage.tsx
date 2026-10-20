@@ -1,5 +1,4 @@
-import { theme } from '../../../theme';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -9,14 +8,20 @@ import {
 } from '../../../validation/schemas';
 import { useFactorySettings, useUpdateFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
-import { Modal, Stack, TextInput, Typography, Card } from '../../../components';
+import {
+  Button,
+  FlowHeaderCard,
+  FlowPage,
+  FlowSection,
+  Stack,
+  TextInput,
+} from '../../../components';
 
-export interface CompanyProfileModalProps {
-  visible: boolean;
+export interface CompanyProfilePageProps {
   onClose: () => void;
 }
 
-export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visible, onClose }) => {
+export const CompanyProfilePage: React.FC<CompanyProfilePageProps> = ({ onClose }) => {
   const { data: settings } = useFactorySettings();
   const updateSettingsMutation = useUpdateFactorySettings();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -47,8 +52,11 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
     },
   });
 
+  // Fill the form once when the settings arrive; later refetches must not wipe what is being typed.
+  const seeded = useRef(false);
   useEffect(() => {
-    if (settings && visible) {
+    if (settings && !seeded.current) {
+      seeded.current = true;
       reset({
         factoryName: settings.factoryName || '',
         tagline: settings.tagline || '',
@@ -67,7 +75,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
         lowUnitsThreshold: String(settings.lowUnitsThreshold ?? 0),
       });
     }
-  }, [settings, visible, reset]);
+  }, [settings, reset]);
 
   const onSubmit = async (data: CompanyProfileFormData) => {
     try {
@@ -106,34 +114,15 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
   };
 
   return (
-    <Modal
-      visible={visible}
-      onClose={onClose}
-      title="Company Profile & Billing"
-      subtitle="Details stamped on invoices, purchase bills, and PDF vouchers"
-      primaryAction={{
-        label: 'Save Profile Changes',
-        onPress: handleSubmit(onSubmit),
-        loading: updateSettingsMutation.isPending,
-      }}
-      secondaryAction={{
-        label: 'Cancel',
-        onPress: onClose,
-      }}
-    >
-      <Stack gap="md">
-        <Card variant="accent" padding="compact">
-          <Typography variant="caption" color="secondary">
-            Note: These details appear directly in headers and footers when generating or printing
-            official PDF invoices for customers and suppliers.
-          </Typography>
-        </Card>
+    <FlowPage title="Business Profile" onClose={onClose}>
+      <FlowHeaderCard
+        icon="business-outline"
+        title="Business Profile"
+        description="Shown on invoices, purchase bills and PDFs"
+        chip="Settings"
+      />
 
-        {/* Business Identity */}
-        <Typography variant="bodyMedium" weight="bold" color="primary">
-          Business Identity
-        </Typography>
-
+      <FlowSection label="Business identity">
         <Controller
           control={control}
           name="factoryName"
@@ -216,7 +205,7 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
           render={({ field: { onChange, value } }) => (
             <TextInput
               label="Billing / Accounts Email"
-              placeholder="accounts@nexusmfg.in"
+              placeholder="accounts@yourbusiness.com"
               value={value}
               onChangeText={onChange}
               keyboardType="email-address"
@@ -225,17 +214,9 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
             />
           )}
         />
+      </FlowSection>
 
-        {/* Bank & Remittance Information */}
-        <Typography
-          variant="bodyMedium"
-          weight="bold"
-          color="primary"
-          style={{ marginTop: theme.spacing.sm }}
-        >
-          Bank & Remittance Details (For Invoice Remittance)
-        </Typography>
-
+      <FlowSection label="Bank details" hint="Optional, printed on invoices">
         <Controller
           control={control}
           name="bankName"
@@ -281,20 +262,9 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
             />
           )}
         />
+      </FlowSection>
 
-        {/* Preferences */}
-        <Typography
-          variant="bodyMedium"
-          weight="bold"
-          color="primary"
-          style={{ marginTop: theme.spacing.sm }}
-        >
-          Preferences
-        </Typography>
-        <Typography variant="caption" color="muted">
-          Used across the app: money formatting, new recipes and the finished-goods stock alert.
-        </Typography>
-
+      <FlowSection label="Preferences" hint="Currency, units and alerts used across the app">
         {(
           [
             ['currencySymbol', 'Currency Symbol', 'e.g. ₹, $, AED', 'default'],
@@ -320,17 +290,9 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
             )}
           />
         ))}
+      </FlowSection>
 
-        {/* Invoice Terms */}
-        <Typography
-          variant="bodyMedium"
-          weight="bold"
-          color="primary"
-          style={{ marginTop: theme.spacing.sm }}
-        >
-          Standard Terms & Conditions
-        </Typography>
-
+      <FlowSection label="Invoice terms" hint="Optional">
         <Controller
           control={control}
           name="termsAndConditions"
@@ -345,9 +307,21 @@ export const CompanyProfileModal: React.FC<CompanyProfileModalProps> = ({ visibl
             />
           )}
         />
+      </FlowSection>
+
+      <Stack gap="xs">
+        <Button
+          label="Save Profile"
+          size="lg"
+          leftIcon="checkmark-circle-outline"
+          fullWidth
+          loading={updateSettingsMutation.isPending}
+          onPress={handleSubmit(onSubmit)}
+        />
+        <Button label="Cancel" variant="ghost" fullWidth onPress={onClose} />
       </Stack>
-    </Modal>
+    </FlowPage>
   );
 };
 
-export default CompanyProfileModal;
+export default CompanyProfilePage;

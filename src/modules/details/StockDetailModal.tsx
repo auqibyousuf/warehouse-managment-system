@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { openSheet } from '../../navigation/sheets';
 import { useMoney } from '../../hooks/useMoney';
 import { useInventoryItems, useInventoryMovements } from '../../hooks/api/useInventory';
-import { EditIngredientModal } from '../inventory/components/EditIngredientModal';
 import {
   Badge,
   Box,
@@ -34,7 +33,6 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({ visible, onC
   const colors = useColors();
   const { data: items = [] } = useInventoryItems();
   const { data: movements = [] } = useInventoryMovements();
-  const [editing, setEditing] = useState(false);
 
   const item = items.find((i) => i.id === itemId);
   const recent = useMemo(
@@ -133,7 +131,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({ visible, onC
               onPress={() =>
                 isFinished
                   ? go(() => openSheet('edit_product', { productId: item.id }))
-                  : setEditing(true)
+                  : go(() => openSheet('edit_ingredient', { itemId: item.id }))
               }
             />
           </Row>
@@ -173,10 +171,6 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({ visible, onC
           </Box>
         </Stack>
       </Modal>
-
-      {!isFinished && (
-        <EditIngredientModal visible={editing} item={item} onClose={() => setEditing(false)} />
-      )}
     </>
   );
 };
