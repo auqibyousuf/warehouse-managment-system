@@ -6,8 +6,8 @@ import { theme, useColors } from '../../theme';
 import { batchStatusView } from '../../utils/batchStatus';
 import { useMoney } from '../../hooks/useMoney';
 import { useDashboardMetrics } from '../../hooks/api/useDashboard';
-import { useProductionBatches } from '../../hooks/api/useProduction';
-import { useInventoryItems } from '../../hooks/api/useInventory';
+import { useProductionBatches, useProductionSetups } from '../../hooks/api/useProduction';
+import { useIngredients, useInventoryItems } from '../../hooks/api/useInventory';
 import { useCustomers } from '../../hooks/api/useCustomers';
 import { useSalesInvoices } from '../../hooks/api/useSales';
 import { useAppStore, FilterPeriod } from '../../stores/useAppStore';
@@ -84,6 +84,8 @@ export const DashboardScreen: React.FC = () => {
   const { data: batches = [] } = useProductionBatches();
   const { data: stock = [] } = useInventoryItems();
   const { data: customers = [] } = useCustomers();
+  const { data: ingredients = [] } = useIngredients();
+  const { data: setups = [] } = useProductionSetups();
   const { data: invoices = [] } = useSalesInvoices();
   const [dismissed, setDismissed] = useState<string | null>(null);
 
@@ -136,6 +138,61 @@ export const DashboardScreen: React.FC = () => {
             Today, {dateLine}
           </Typography>
         </Box>
+
+        {/* First steps: only until stock, a recipe and a first batch exist */}
+        {(ingredients.length === 0 || setups.length === 0 || batches.length === 0) && (
+          <Card variant="elevated" padding="normal">
+            <Typography variant="title" color="primary">
+              Get started
+            </Typography>
+            <Typography variant="bodySmall" color="secondary" style={{ marginBottom: 12 }}>
+              Three steps to your first batch. Everything here is yours to edit later.
+            </Typography>
+            <Stack gap="sm">
+              {[
+                {
+                  done: ingredients.length > 0,
+                  label: '1. Add your raw materials',
+                  action: 'Add stock',
+                  onPress: () => openSheet('record_purchase'),
+                },
+                {
+                  done: setups.length > 0,
+                  label: '2. Create a recipe',
+                  action: 'New recipe',
+                  onPress: () => openSheet('create_setup'),
+                },
+                {
+                  done: batches.length > 0,
+                  label: '3. Start your first batch',
+                  action: 'Start batch',
+                  onPress: () => openSheet('start_batch'),
+                },
+              ].map((step) => (
+                <Row key={step.label} justify="space-between" align="center" gap="sm">
+                  <Row gap="xs" align="center" style={{ flex: 1 }}>
+                    <Icon
+                      name={step.done ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={20}
+                      color={step.done ? 'success' : 'muted'}
+                    />
+                    <Typography
+                      variant="bodyMedium"
+                      color={step.done ? 'muted' : 'primary'}
+                      numberOfLines={1}
+                      style={{ flexShrink: 1 }}
+                    >
+                      {step.label}
+                    </Typography>
+                  </Row>
+                  {!step.done && (
+                    <Button label={step.action} variant="subtle" size="sm" onPress={step.onPress} />
+                  )}
+                </Row>
+              ))}
+            </Stack>
+          </Card>
+        )}
 
         <ChipPicker
           options={PERIOD_OPTIONS}

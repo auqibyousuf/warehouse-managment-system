@@ -42,6 +42,15 @@ export const AppTopBar: React.FC<AppTopBarProps> = ({ title }) => {
 
       <View style={styles.actions}>
         <Pressable
+          onPress={() => router.push('/search')}
+          style={styles.iconButton}
+          accessibilityRole="button"
+          accessibilityLabel="Search customers, invoices, stock and recipes"
+          hitSlop={8}
+        >
+          <Icon name="search-outline" size={22} color="secondary" />
+        </Pressable>
+        <Pressable
           onPress={() => router.push('/manage')}
           style={styles.iconButton}
           accessibilityRole="button"
