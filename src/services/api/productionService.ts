@@ -39,6 +39,7 @@ export interface CreateSetupInput {
   productName?: string;
   outputUnit?: string;
   targetUnits?: number;
+  outputPerHour?: number;
   unitSize?: number;
   baseUnit?: string;
   targetBags?: number;
@@ -57,6 +58,8 @@ export interface StartBatchRunInput {
   setupId: string;
   date: string;
   actualItems: { ingredientId: string; actualQuantity: number }[];
+  plannedHours?: number;
+  expectedUnits?: number;
   notes?: string;
 }
 
@@ -68,6 +71,10 @@ export interface CompleteBatchRunInput {
   actualFinishedQuantity?: number;
   packagingUsedUnits?: number;
   measurableWastage?: number;
+  /** Actual run time; defaults to the time since the run started. */
+  durationMinutes?: number;
+  /** Save the measured rate on the recipe for future estimates. */
+  rememberRate?: boolean;
   date?: string;
   notes?: string;
 }
@@ -184,6 +191,7 @@ export const productionService = {
         bagWeightKg: unitSize,
         targetBags: targetUnits,
         status: 'active',
+        outputPerHour: input.outputPerHour,
         version: 1,
         effectiveDate: new Date().toISOString().split('T')[0],
         notes: input.notes,
@@ -243,6 +251,8 @@ export const productionService = {
         targetUnits,
         bagWeightKg: unitSize,
         targetBags: targetUnits,
+        outputPerHour:
+          input.outputPerHour !== undefined ? input.outputPerHour : existing.outputPerHour,
         version: existing.version + 1,
         recipeItems,
         notes: input.notes !== undefined ? input.notes : existing.notes,
@@ -536,6 +546,9 @@ export const productionService = {
         directCostPerUnit: 0,
         directCostPerBaseUnit: 0,
         status: 'in_progress',
+        startedAt: new Date().toISOString(),
+        plannedHours: input.plannedHours,
+        expectedUnits: input.expectedUnits,
         notes: input.notes,
       };
       db.batches.unshift(batch);
@@ -600,7 +613,24 @@ export const productionService = {
       product.outputUnit = outputUnit;
 
       const directBatchCost = batch.ingredientCost + packagingCost;
+      const finishedAt = new Date();
+      const minutes =
+        input.durationMinutes ??
+        (batch.startedAt
+          ? Math.max(1, Math.round((finishedAt.getTime() - Date.parse(batch.startedAt)) / 60000))
+          : undefined);
+      const perHour =
+        minutes && minutes > 0
+          ? Number(((input.unitsPacked * 60) / minutes).toFixed(2))
+          : undefined;
+      if (input.rememberRate && perHour) {
+        const recipe = db.setups.find((r) => r.id === batch.setupId);
+        if (recipe) recipe.outputPerHour = perHour;
+      }
       Object.assign(batch, {
+        completedAt: finishedAt.toISOString(),
+        durationMinutes: minutes,
+        outputPerHour: perHour,
         date: today,
         outputUnit,
         baseUnit,

@@ -1,4 +1,6 @@
 import { openSheet } from '../../navigation/sheets';
+import { formatDuration, profitEstimate, ratesFor } from '../../utils/batchEstimates';
+import { useProducts } from '../../hooks/api/useInventory';
 import { batchStatusView } from '../../utils/batchStatus';
 import React, { useState } from 'react';
 import { useMoney } from '../../hooks/useMoney';
@@ -36,8 +38,15 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
   const [confirming, setConfirming] = useState(false);
 
+  const { data: products = [] } = useProducts();
   const batch = batches.find((b) => b.id === batchId);
   if (!batch) return null;
+  const rates = batch.durationMinutes ? ratesFor(batch.unitsPacked, batch.durationMinutes) : null;
+  const price = products.find((p) => p.id === batch.productId)?.sellingPricePerUnit ?? 0;
+  const estimate =
+    batch.status === 'confirmed'
+      ? profitEstimate(batch.unitsPacked, price, batch.directBatchCost)
+      : null;
 
   const reversed = batch.status === 'reversed';
   const running = batch.status === 'in_progress';
@@ -144,6 +153,57 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
               </Row>
             </Stack>
           </Card>
+
+          {(rates || estimate) && (
+            <Card variant="flat" padding="compact">
+              <Stack gap="xs">
+                {batch.durationMinutes ? (
+                  <Row justify="space-between">
+                    <Typography variant="bodySmall" color="secondary">
+                      Run time
+                    </Typography>
+                    <Typography variant="dataMedium" tabular>
+                      {formatDuration(batch.durationMinutes)}
+                    </Typography>
+                  </Row>
+                ) : null}
+                {rates && (
+                  <Row justify="space-between">
+                    <Typography variant="bodySmall" color="secondary">
+                      Output rate
+                    </Typography>
+                    <Typography variant="dataMedium" tabular>
+                      {rates.perHour} {batch.outputUnit}/h · {rates.perMinute}/min
+                    </Typography>
+                  </Row>
+                )}
+                {estimate && (
+                  <>
+                    <Row justify="space-between">
+                      <Typography variant="bodySmall" color="secondary">
+                        Sales value at current price
+                      </Typography>
+                      <Typography variant="dataMedium" tabular>
+                        {money(estimate.revenue)}
+                      </Typography>
+                    </Row>
+                    <Row justify="space-between">
+                      <Typography variant="bodySmall" weight="semibold" color="primary">
+                        Estimated profit
+                      </Typography>
+                      <Typography
+                        variant="dataMedium"
+                        color={estimate.profit >= 0 ? 'success' : 'error'}
+                        tabular
+                      >
+                        {money(estimate.profit)} ({estimate.marginPct}%)
+                      </Typography>
+                    </Row>
+                  </>
+                )}
+              </Stack>
+            </Card>
+          )}
 
           <Box>
             <Typography variant="label" color="muted" style={{ marginBottom: 8 }}>

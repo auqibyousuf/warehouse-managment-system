@@ -108,6 +108,8 @@ export interface ProductionSetup {
   unitSize: number; // size per package (e.g. 20 kg or 5 L)
   baseUnit: string; // 'kg', 'L'
   targetUnits: number; // e.g. 50
+  /** Packs this recipe usually makes per hour; learned from completed batches or entered. */
+  outputPerHour?: number;
   status: SetupStatus;
   version: number;
   recipeItems: RecipeItem[];
@@ -150,6 +152,15 @@ export interface ProductionBatch {
   directCostPerUnit: number; // e.g. cost per bag or bottle
   directCostPerBaseUnit: number; // e.g. cost per kg or L
   status: BatchStatus;
+  /** When the mixer was loaded and when the output was recorded (ISO). */
+  startedAt?: string;
+  completedAt?: string;
+  /** Planned run time and the output expected from it, set when the run starts. */
+  plannedHours?: number;
+  expectedUnits?: number;
+  /** Actual run time and the rate it gave, set on completion. */
+  durationMinutes?: number;
+  outputPerHour?: number;
   reversedAt?: string;
   notes?: string;
   // Backward compatibility aliases

@@ -5,7 +5,8 @@ import {
   useProductionBatches,
   useProductionSetups,
 } from '../../../hooks/api/useProduction';
-import { useIngredients } from '../../../hooks/api/useInventory';
+import { useIngredients, useProducts } from '../../../hooks/api/useInventory';
+import { formatDuration, profitEstimate, ratesFor } from '../../../utils/batchEstimates';
 import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
@@ -34,6 +35,7 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
   const { data: batches = [] } = useProductionBatches();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
+  const { data: products = [] } = useProducts();
   const { data: settings } = useFactorySettings();
   const complete = useCompleteBatchRun();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -46,6 +48,10 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
   const [unit, setUnit] = useState<string | null>(null);
   const [wastage, setWastage] = useState('');
   const [notes, setNotes] = useState('');
+  const [hoursText, setHoursText] = useState<string | null>(null);
+  const [remember, setRemember] = useState(true);
+  // Time since the run started, taken once when the page opens.
+  const [openedAt] = useState(() => Date.now());
   const [error, setError] = useState('');
 
   if (!batch) {
@@ -63,7 +69,7 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
 
   const outputUnit = unit ?? (batch.outputUnit || settings?.defaultUnitName || 'units');
   const baseUnit = batch.baseUnit || settings?.defaultBaseUnit || 'kg';
-  const made = units ?? 0;
+  const made = units ?? batch.expectedUnits ?? 0;
   const packSize =
     size !== null ? Number(size) || 0 : setup?.unitSize || settings?.defaultUnitSize || 0;
   const finished = made * packSize;
@@ -71,6 +77,14 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
   const packagingCost = packaging ? made * packaging.unitCost : 0;
   const total = batch.ingredientCost + packagingCost;
   const short = packaging && made > packaging.currentStock;
+  const elapsedMinutes = batch.startedAt
+    ? Math.max(1, Math.round((openedAt - Date.parse(batch.startedAt)) / 60000))
+    : 0;
+  const minutes = hoursText !== null ? Math.round((Number(hoursText) || 0) * 60) : elapsedMinutes;
+  const rates = ratesFor(made, minutes);
+  const product = products.find((p) => p.id === batch.productId);
+  const price = product?.sellingPricePerUnit ?? product?.sellingPricePerBag ?? 0;
+  const estimate = profitEstimate(made, price, total);
 
   const submit = async () => {
     if (!(made > 0)) return setError('Enter how much the batch made');
@@ -85,6 +99,8 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
           actualFinishedQuantity: packSize ? finished : undefined,
           measurableWastage: Number(wastage) || 0,
           notes: notes.trim() || undefined,
+          durationMinutes: minutes || undefined,
+          rememberRate: remember,
         },
       });
       setBannerAlert({
@@ -152,7 +168,64 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
         )}
       </FlowSection>
 
-      <FlowSection label="Final cost">
+      <FlowSection
+        label="Run time"
+        hint={batch.plannedHours ? `Planned ${batch.plannedHours} h` : undefined}
+      >
+        <TextInput
+          label="Hours it ran"
+          value={hoursText ?? (minutes ? String(Math.round((minutes / 60) * 100) / 100) : '')}
+          onChangeText={setHoursText}
+          keyboardType="numeric"
+          suffix="h"
+          hint={
+            elapsedMinutes
+              ? `Time since you started: ${formatDuration(elapsedMinutes)}. Edit it if the mixer ran for less.`
+              : undefined
+          }
+        />
+        {rates ? (
+          <Stack gap="xs">
+            <Row justify="space-between">
+              <Typography variant="bodySmall" color="secondary">
+                Output per hour
+              </Typography>
+              <Typography variant="dataMedium" tabular>
+                {rates.perHour} {outputUnit}
+              </Typography>
+            </Row>
+            <Row justify="space-between">
+              <Typography variant="bodySmall" color="secondary">
+                Output per minute
+              </Typography>
+              <Typography variant="dataMedium" tabular>
+                {rates.perMinute} {outputUnit}
+              </Typography>
+            </Row>
+            <Row justify="space-between">
+              <Typography variant="bodySmall" color="secondary">
+                Time per {outputUnit}
+              </Typography>
+              <Typography variant="dataMedium" tabular>
+                {rates.minutesPerUnit} min
+              </Typography>
+            </Row>
+          </Stack>
+        ) : (
+          <Typography variant="bodySmall" color="secondary">
+            Enter the output and run time to see the production rate.
+          </Typography>
+        )}
+        <Button
+          label={remember ? 'Saving this speed to the recipe' : 'Save this speed to the recipe'}
+          variant={remember ? 'subtle' : 'ghost'}
+          size="sm"
+          leftIcon={remember ? 'checkmark-circle' : 'ellipse-outline'}
+          onPress={() => setRemember((v) => !v)}
+        />
+      </FlowSection>
+
+      <FlowSection label="Batch totals">
         <Row justify="space-between">
           <Typography variant="bodySmall" color="secondary">
             Materials
@@ -172,13 +245,55 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
           </Row>
         )}
         <Row justify="space-between" align="center">
-          <Typography variant="title">Total</Typography>
+          <Typography variant="title">Total cost</Typography>
           <Typography variant="dataLarge" tabular>
             {money(total)}
           </Typography>
         </Row>
         {made > 0 && (
-          <Badge label={`${money(total / made)} / ${outputUnit}`} variant="neutral" size="sm" />
+          <Row gap="xs">
+            <Badge
+              label={`${money(total / made)} cost / ${outputUnit}`}
+              variant="neutral"
+              size="sm"
+            />
+          </Row>
+        )}
+        {estimate ? (
+          <>
+            <Row justify="space-between">
+              <Typography variant="bodySmall" color="secondary">
+                Sales value at {money(price)} each
+              </Typography>
+              <Typography variant="dataMedium" tabular>
+                {money(estimate.revenue)}
+              </Typography>
+            </Row>
+            <Row justify="space-between" align="center">
+              <Typography variant="title">Estimated profit</Typography>
+              <Typography
+                variant="dataLarge"
+                color={estimate.profit >= 0 ? 'success' : 'error'}
+                tabular
+              >
+                {money(estimate.profit)}
+              </Typography>
+            </Row>
+            <Row gap="xs">
+              <Badge label={`${estimate.marginPct}% margin`} variant="neutral" size="sm" />
+              <Badge
+                label={`${money(estimate.profitPerUnit)} profit / ${outputUnit}`}
+                variant="neutral"
+                size="sm"
+              />
+            </Row>
+          </>
+        ) : (
+          <Typography variant="bodySmall" color="secondary">
+            {made > 0
+              ? 'Set a selling price on the product to see the profit estimate.'
+              : 'Enter the output above to see cost per pack and profit.'}
+          </Typography>
         )}
       </FlowSection>
 
