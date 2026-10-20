@@ -16,6 +16,7 @@ import { AddCustomerPage } from '../../modules/customers/components/AddCustomerP
 import { CustomerDetailModal } from '../../modules/customers/components/CustomerDetailModal';
 import { AddExpensePage } from '../../modules/expenses/components/AddExpensePage';
 import { EditSupplierPage } from '../../modules/inventory/components/EditSupplierPage';
+import { EditStockItemPage } from '../../modules/inventory/components/EditStockItemPage';
 import { EditProductPage } from '../../modules/inventory/components/EditProductPage';
 import { EditCustomerPage } from '../../modules/customers/components/EditCustomerPage';
 import { UseStockPage } from '../../modules/inventory/components/UseStockPage';
@@ -24,7 +25,7 @@ import { ProfitDetailModal } from '../../modules/details/ProfitDetailModal';
 import { StockDetailModal } from '../../modules/details/StockDetailModal';
 import { RecipeDetailModal } from '../../modules/details/RecipeDetailModal';
 import { SupplierDetailModal } from '../../modules/details/SupplierDetailModal';
-import { CompanyProfileModal } from '../../modules/business/components/CompanyProfileModal';
+import { CompanyProfilePage } from '../../modules/business/components/CompanyProfilePage';
 
 const onClose = closeSheet;
 
@@ -63,7 +64,7 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
     <CustomerDetailModal visible onClose={onClose} customerId={p.customerId ?? null} />
   ),
   create_expense: () => <AddExpensePage onClose={onClose} />,
-  company_profile: () => <CompanyProfileModal visible onClose={onClose} />,
+  company_profile: () => <CompanyProfilePage onClose={onClose} />,
   batch_detail: (p) => <BatchDetailModal visible onClose={onClose} batchId={p.batchId ?? null} />,
   profit_detail: (p) => <ProfitDetailModal visible onClose={onClose} period={p.period ?? null} />,
   stock_detail: (p) => <StockDetailModal visible onClose={onClose} itemId={p.itemId ?? null} />,
@@ -73,6 +74,7 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
   ),
   edit_customer: (p) => <EditCustomerPage onClose={onClose} customerId={p.customerId ?? null} />,
   edit_supplier: (p) => <EditSupplierPage onClose={onClose} supplierId={p.supplierId ?? null} />,
+  edit_ingredient: (p) => <EditStockItemPage onClose={onClose} itemId={p.itemId ?? null} />,
   edit_product: (p) => <EditProductPage onClose={onClose} productId={p.productId ?? null} />,
 };
 

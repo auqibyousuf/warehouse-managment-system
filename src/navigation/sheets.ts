@@ -21,6 +21,7 @@ export type SheetName =
   | 'edit_customer'
   | 'edit_supplier'
   | 'edit_product'
+  | 'edit_ingredient'
   | 'use_stock'
   | 'batch_detail'
   | 'profit_detail'
