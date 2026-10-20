@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.batchiq.app",
       "adaptiveIcon": {
         "backgroundColor": "#173F30",
         "foregroundImage": "./assets/android-icon-foreground.png",

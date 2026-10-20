@@ -114,3 +114,9 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Data safety:** versioned JSON backup and restore, and a start-fresh option that keeps business settings.
 - **Web correctness:** pressable cards no longer wrap buttons (nested `<button>`); the self-recursive modal close handlers are gone.
 - **Still open:** a React Native Web "text node" warning was reported once and could not be reproduced from a production build; sample data still loads on first run; no login or sync (planned for launch).
+
+## 12. Empty start, search, report (latest)
+
+- **Empty start:** a new install has no records, only editable default settings. Home shows a three-step "Get started" checklist (raw materials, recipe, first batch) until each exists. Sample data is opt-in from Settings ("Load sample data"); "Start fresh" clears it again.
+- **Search:** top-bar search across customers, invoices, stock items, recipes, batches and suppliers (2+ characters, grouped, tap opens the detail sheet).
+- **Report:** "Share report (PDF)" in the operating-profit sheet: profit breakdown, sales, production and the customers who owe the most, for the chosen period. Values come from the same dashboard metrics as the app, so the PDF always matches the screen.

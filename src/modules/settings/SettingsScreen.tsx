@@ -39,8 +39,8 @@ export const SettingsScreen: React.FC = () => {
     queryClient.invalidateQueries();
     setConfirmResetVisible(false);
     setBannerAlert({
-      title: 'Demo data restored',
-      message: 'All records were reset to the sample data.',
+      title: 'Sample data loaded',
+      message: 'Explore the app, then use Start fresh to clear it.',
       variant: 'info',
     });
   };
@@ -89,7 +89,11 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <>
-      <Header title="Settings" subtitle="Business profile and data" onBack={() => router.back()} />
+      <Header
+        title="Settings"
+        subtitle="Business profile and data"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+      />
       <ScreenContainer>
         <Stack gap="md">
           {/* Company Profile Card */}
@@ -121,46 +125,46 @@ export const SettingsScreen: React.FC = () => {
                   {settings?.factoryName?.trim() || 'Not set'}
                 </Typography>
               </Row>
-              {settings?.tagline && (
+              {Boolean(settings?.tagline) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     Tagline:
                   </Typography>
                   <Typography variant="bodySmall" color="muted">
-                    {settings.tagline}
+                    {settings?.tagline}
                   </Typography>
                 </Row>
-              )}
-              {settings?.gstin && (
+              ) : null}
+              {Boolean(settings?.gstin) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     GSTIN / Tax ID:
                   </Typography>
                   <Typography variant="bodySmall" weight="semibold" color="primary">
-                    {settings.gstin}
+                    {settings?.gstin}
                   </Typography>
                 </Row>
-              )}
-              {settings?.phone && (
+              ) : null}
+              {Boolean(settings?.phone) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     Contact Phone:
                   </Typography>
                   <Typography variant="bodySmall" color="primary">
-                    {settings.phone}
+                    {settings?.phone}
                   </Typography>
                 </Row>
-              )}
-              {settings?.bankName && (
+              ) : null}
+              {Boolean(settings?.bankName) ? (
                 <Row justify="space-between">
                   <Typography variant="bodySmall" color="secondary">
                     Bank Remittance:
                   </Typography>
                   <Typography variant="bodySmall" color="primary">
-                    {settings.bankName} (A/C: {settings.accountNumber || 'N/A'})
+                    {settings?.bankName} (A/C: {settings?.accountNumber || 'N/A'})
                   </Typography>
                 </Row>
-              )}
+              ) : null}
             </Stack>
           </Card>
 
@@ -261,15 +265,15 @@ export const SettingsScreen: React.FC = () => {
               color="primary"
               style={{ marginBottom: theme.spacing.xsm }}
             >
-              Sample Data
+              Sample data
             </Typography>
             <Typography
               variant="bodySmall"
               color="secondary"
               style={{ marginBottom: theme.spacing.md }}
             >
-              Your records are saved on this device. Reset to replace everything with the sample
-              data. This cannot be undone.
+              Want to see how the app works? Load the sample data to explore, then use Start fresh
+              to clear it. Loading replaces everything now on this device.
             </Typography>
             <Button
               label="Start fresh (clear all records)"
@@ -279,7 +283,7 @@ export const SettingsScreen: React.FC = () => {
               style={{ marginBottom: theme.spacing.sm }}
             />
             <Button
-              label="Reset to Sample Data"
+              label="Load sample data"
               variant="subtle"
               leftIcon="refresh-outline"
               onPress={() => setConfirmResetVisible(true)}
@@ -300,9 +304,9 @@ export const SettingsScreen: React.FC = () => {
             visible={confirmResetVisible}
             onClose={() => setConfirmResetVisible(false)}
             onConfirm={handleResetData}
-            title="Reset all data?"
-            message="Every recipe, batch, stock level, invoice, customer and expense on this device will be replaced with the sample data."
-            confirmLabel="Reset Data"
+            title="Load sample data?"
+            message="Every recipe, batch, stock level, invoice, customer and expense on this device will be replaced with the sample data. Save a backup first if you need them."
+            confirmLabel="Load sample data"
             isDestructive
           />
         </Stack>

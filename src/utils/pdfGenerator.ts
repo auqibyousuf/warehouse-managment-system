@@ -1,7 +1,7 @@
 import { DEFAULT_CURRENCY_SYMBOL, formatMoney } from './money';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
-import { SaleInvoice, FactorySettings, Purchase } from '../types';
+import { SaleInvoice, FactorySettings, Purchase, DashboardMetrics } from '../types';
 
 /**
  * BatchIQ - Professional Invoice & Bill PDF Generator
@@ -399,6 +399,90 @@ export const generateSalesSummaryPDF = async (
     await Sharing.shareAsync(uri, {
       mimeType: 'application/pdf',
       dialogTitle: `Sales summary ${periodLabel}`,
+      UTI: 'com.adobe.pdf',
+    });
+  }
+  return uri;
+};
+
+const esc = (value: string) =>
+  value.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+export interface BusinessReportInput {
+  metrics: DashboardMetrics;
+  settings?: FactorySettings | null;
+  periodLabel: string;
+  /** Customers who owe money, largest first. */
+  owing: { name: string; amount: number }[];
+}
+
+/** Profit and sales report for one period, shared as a PDF. Only real figures; nothing is estimated beyond the app's own profit estimate. */
+export const generateBusinessReportPDF = async ({
+  metrics,
+  settings,
+  periodLabel,
+  owing,
+}: BusinessReportInput): Promise<string> => {
+  const companyName = esc(settings?.factoryName?.trim() || 'Your Business');
+  const symbol = settings?.currencySymbol?.trim() || DEFAULT_CURRENCY_SYMBOL;
+  const money = (value: number) => esc(formatMoney(value, symbol));
+  const f = metrics.financial;
+  const unit = esc(metrics.production.defaultUnitName || 'units');
+  const base = esc(metrics.production.baseUnit || 'kg');
+  const row = (label: string, value: string, bold = false) =>
+    `<tr><td>${bold ? '<b>' : ''}${label}${bold ? '</b>' : ''}</td><td class="n">${bold ? '<b>' : ''}${value}${bold ? '</b>' : ''}</td></tr>`;
+  const owingRows = owing
+    .slice(0, 10)
+    .map((c) => row(esc(c.name), money(c.amount)))
+    .join('');
+
+  const html = `
+    <html><head><meta charset="utf-8" /><style>
+      body { font-family: Helvetica, Arial, sans-serif; padding: 28px; color: #131b2e; font-size: 13px; }
+      h1 { font-size: 22px; margin: 0 0 2px; } h2 { font-size: 14px; margin: 22px 0 6px; color: #0040a1; }
+      p { margin: 0; color: #434655; font-size: 12px; }
+      table { width: 100%; border-collapse: collapse; }
+      td { border-bottom: 1px solid #e2e7ff; padding: 7px 4px; } td.n { text-align: right; }
+      .profit { font-size: 20px; font-weight: 700; margin-top: 14px; }
+      .note { margin-top: 18px; font-size: 11px; color: #737686; }
+    </style></head><body>
+      <h1>${companyName}</h1>
+      <p>Profit and sales report, ${esc(periodLabel)}</p>
+      <div class="profit">Estimated operating profit: ${money(f.estimatedOperatingProfit)}</div>
+
+      <h2>Profit</h2>
+      <table>
+        ${row('Sales revenue', money(f.salesRevenue))}
+        ${row('Cost of goods sold', `−${money(f.costOfGoodsSold)}`)}
+        ${row('Operating expenses', `−${money(f.operatingExpenses)}`)}
+        ${row('Estimated profit', money(f.estimatedOperatingProfit), true)}
+      </table>
+
+      <h2>Sales</h2>
+      <table>
+        ${row('Billed', money(metrics.sales.salesRevenue))}
+        ${row('Cash collected', money(metrics.sales.cashCollected))}
+        ${row('Outstanding dues', money(metrics.sales.outstandingDues))}
+        ${row(`${unit} sold`, String(metrics.sales.totalUnitsSold))}
+      </table>
+
+      <h2>Production</h2>
+      <table>
+        ${row('Batches completed', String(metrics.production.totalBatches))}
+        ${row(`${unit} produced`, `${metrics.production.totalUnitsProduced} (${metrics.production.totalBaseQuantity} ${base})`)}
+        ${row('Production cost', money(metrics.production.productionCost))}
+      </table>
+
+      ${owing.length ? `<h2>Customers who owe you</h2><table>${owingRows}</table>` : ''}
+
+      <p class="note">Revenue counts when goods are invoiced, not when cash arrives. Unsold finished stock is inventory, not cost of goods sold. Generated ${esc(new Date().toISOString().split('T')[0])}.</p>
+    </body></html>`;
+
+  const { uri } = await Print.printToFileAsync({ html });
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(uri, {
+      mimeType: 'application/pdf',
+      dialogTitle: `Report ${periodLabel}`,
       UTI: 'com.adobe.pdf',
     });
   }
