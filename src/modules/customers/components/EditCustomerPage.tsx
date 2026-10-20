@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { useCustomers, useUpdateCustomer } from '../../../hooks/api/useCustomers';
 import { useAppStore } from '../../../stores/useAppStore';
-import { Modal, Stack, TextInput } from '../../../components';
+import {
+  Button,
+  FlowHeaderCard,
+  FlowPage,
+  FlowSection,
+  Stack,
+  TextInput,
+  Typography,
+} from '../../../components';
 
-export interface EditCustomerModalProps {
-  visible: boolean;
+export interface EditCustomerPageProps {
   onClose: () => void;
   customerId: string | null;
 }
 
-export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
-  visible,
-  onClose,
-  customerId,
-}) => {
+export const EditCustomerPage: React.FC<EditCustomerPageProps> = ({ onClose, customerId }) => {
   const { data: customers = [] } = useCustomers();
   const updateMutation = useUpdateCustomer();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -70,46 +73,65 @@ export const EditCustomerModal: React.FC<EditCustomerModalProps> = ({
     }
   };
 
+  if (!customer) return null;
+
   return (
-    <Modal
-      visible={visible}
-      onClose={onClose}
-      title="Edit Customer"
-      subtitle="Past invoices keep the name they were issued with"
-      primaryAction={{
-        label: 'Save Changes',
-        onPress: handleSubmit,
-        loading: updateMutation.isPending,
-      }}
-      secondaryAction={{ label: 'Cancel', onPress: onClose }}
-    >
-      <Stack gap="md">
-        <TextInput label="Customer Name" value={name} onChangeText={setName} error={error} />
+    <FlowPage title="Edit Customer" onClose={onClose}>
+      <FlowHeaderCard
+        icon="person-outline"
+        title={customer.name}
+        description="Past invoices keep the name they were issued with"
+        chip="Customer"
+      />
+
+      <FlowSection label="Contact">
+        <TextInput label="Name" value={name} onChangeText={setName} />
         <TextInput label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         <TextInput label="Address" value={address} onChangeText={setAddress} multiline />
+      </FlowSection>
+
+      <FlowSection label="Credit & tax" hint="Optional">
         <TextInput
-          label="Email (Optional)"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          label="Credit limit"
+          value={creditLimit}
+          onChangeText={setCreditLimit}
+          keyboardType="numeric"
         />
         <TextInput
-          label="GSTIN (Optional)"
+          label="GSTIN"
           value={gstin}
           onChangeText={setGstin}
           autoCapitalize="characters"
         />
         <TextInput
-          label="Credit Limit"
-          value={creditLimit}
-          onChangeText={setCreditLimit}
-          keyboardType="numeric"
+          label="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
-        <TextInput label="Notes (Optional)" value={notes} onChangeText={setNotes} multiline />
+        <TextInput label="Notes" value={notes} onChangeText={setNotes} multiline />
+      </FlowSection>
+
+      {error ? (
+        <Typography variant="bodySmall" color="error">
+          {error}
+        </Typography>
+      ) : null}
+
+      <Stack gap="xs">
+        <Button
+          label="Save Changes"
+          size="lg"
+          leftIcon="checkmark-circle-outline"
+          fullWidth
+          loading={updateMutation.isPending}
+          onPress={handleSubmit}
+        />
+        <Button label="Cancel" variant="ghost" fullWidth onPress={onClose} />
       </Stack>
-    </Modal>
+    </FlowPage>
   );
 };
 
-export default EditCustomerModal;
+export default EditCustomerPage;

@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { useProducts, useUpdateProduct } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
-import { Modal, Stack, TextInput } from '../../../components';
+import {
+  Button,
+  FlowHeaderCard,
+  FlowPage,
+  FlowSection,
+  Stack,
+  TextInput,
+  Typography,
+} from '../../../components';
 
-export interface EditProductModalProps {
-  visible: boolean;
+export interface EditProductPageProps {
   onClose: () => void;
   productId: string | null;
 }
 
-export const EditProductModal: React.FC<EditProductModalProps> = ({
-  visible,
-  onClose,
-  productId,
-}) => {
+export const EditProductPage: React.FC<EditProductPageProps> = ({ onClose, productId }) => {
   const { data: products = [] } = useProducts();
   const updateMutation = useUpdateProduct();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -53,38 +56,50 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   };
 
+  if (!product) return null;
+
   return (
-    <Modal
-      visible={visible}
-      onClose={onClose}
-      title="Edit Product"
-      subtitle={
-        product ? `Priced per ${product.outputUnit}. Change stock with Reconcile Count.` : undefined
-      }
-      primaryAction={{
-        label: 'Save Changes',
-        onPress: handleSubmit,
-        loading: updateMutation.isPending,
-      }}
-      secondaryAction={{ label: 'Cancel', onPress: onClose }}
-    >
-      <Stack gap="md">
-        <TextInput label="Product Name" value={name} onChangeText={setName} error={error} />
+    <FlowPage title="Edit Product" onClose={onClose}>
+      <FlowHeaderCard
+        icon="cube-outline"
+        title={product.name}
+        description="Change stock with Count Stock, not here"
+        chip="Product"
+      />
+
+      <FlowSection label="Product">
+        <TextInput label="Name" value={name} onChangeText={setName} />
         <TextInput
-          label={`Selling Price per ${product?.outputUnit ?? 'unit'}`}
+          label={`Selling price per ${product.outputUnit ?? 'unit'}`}
           value={price}
           onChangeText={setPrice}
           keyboardType="numeric"
         />
-        <TextInput
-          label="Description (Optional)"
-          value={description}
-          onChangeText={setDescription}
-          multiline
+      </FlowSection>
+
+      <FlowSection label="Description" hint="Optional">
+        <TextInput label="Notes" value={description} onChangeText={setDescription} multiline />
+      </FlowSection>
+
+      {error ? (
+        <Typography variant="bodySmall" color="error">
+          {error}
+        </Typography>
+      ) : null}
+
+      <Stack gap="xs">
+        <Button
+          label="Save Changes"
+          size="lg"
+          leftIcon="checkmark-circle-outline"
+          fullWidth
+          loading={updateMutation.isPending}
+          onPress={handleSubmit}
         />
+        <Button label="Cancel" variant="ghost" fullWidth onPress={onClose} />
       </Stack>
-    </Modal>
+    </FlowPage>
   );
 };
 
-export default EditProductModal;
+export default EditProductPage;

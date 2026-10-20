@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { useSuppliers, useUpdateSupplier } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
-import { Modal, Stack, TextInput } from '../../../components';
+import {
+  Button,
+  FlowHeaderCard,
+  FlowPage,
+  FlowSection,
+  Stack,
+  TextInput,
+  Typography,
+} from '../../../components';
 
-export interface EditSupplierModalProps {
-  visible: boolean;
+export interface EditSupplierPageProps {
   onClose: () => void;
   supplierId: string | null;
 }
 
-export const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
-  visible,
-  onClose,
-  supplierId,
-}) => {
+export const EditSupplierPage: React.FC<EditSupplierPageProps> = ({ onClose, supplierId }) => {
   const { data: suppliers = [] } = useSuppliers();
   const updateMutation = useUpdateSupplier();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
@@ -60,32 +63,51 @@ export const EditSupplierModal: React.FC<EditSupplierModalProps> = ({
     }
   };
 
+  if (!supplier) return null;
+
   return (
-    <Modal
-      visible={visible}
-      onClose={onClose}
-      title="Edit Supplier"
-      subtitle="Past bills keep the name they were issued with"
-      primaryAction={{
-        label: 'Save Changes',
-        onPress: handleSubmit,
-        loading: updateMutation.isPending,
-      }}
-      secondaryAction={{ label: 'Cancel', onPress: onClose }}
-    >
-      <Stack gap="md">
-        <TextInput label="Supplier Name" value={name} onChangeText={setName} error={error} />
+    <FlowPage title="Edit Supplier" onClose={onClose}>
+      <FlowHeaderCard
+        icon="business-outline"
+        title={supplier.name}
+        description="Past bills keep the name they were issued with"
+        chip="Supplier"
+      />
+
+      <FlowSection label="Contact">
+        <TextInput label="Name" value={name} onChangeText={setName} />
         <TextInput label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-        <TextInput label="Address (Optional)" value={address} onChangeText={setAddress} multiline />
+      </FlowSection>
+
+      <FlowSection label="Details" hint="Optional">
+        <TextInput label="Address" value={address} onChangeText={setAddress} multiline />
         <TextInput
-          label="GST Number (Optional)"
+          label="GST number"
           value={gstNumber}
           onChangeText={setGstNumber}
           autoCapitalize="characters"
         />
+      </FlowSection>
+
+      {error ? (
+        <Typography variant="bodySmall" color="error">
+          {error}
+        </Typography>
+      ) : null}
+
+      <Stack gap="xs">
+        <Button
+          label="Save Changes"
+          size="lg"
+          leftIcon="checkmark-circle-outline"
+          fullWidth
+          loading={updateMutation.isPending}
+          onPress={handleSubmit}
+        />
+        <Button label="Cancel" variant="ghost" fullWidth onPress={onClose} />
       </Stack>
-    </Modal>
+    </FlowPage>
   );
 };
 
-export default EditSupplierModal;
+export default EditSupplierPage;
