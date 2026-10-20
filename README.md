@@ -4,48 +4,46 @@ An industrial-grade, multi-platform Warehouse and Manufacturing Operations Manag
 
 Designed for manufacturing plants, feed processing factories, formulation mills, and multi-category warehouse operations to track production batches, raw material/packaging stock levels, purchases, sales invoices, and supplier/customer financial ledgers in real-time.
 
-> **Status:** prototype. Data is stored on this device (SQLite on phones, localStorage on web; a snapshot of the mock database in `src/services/api/mockDatabase.ts`), starts from sample data, and can be reset from Business > Settings. There is no server or sync yet. Native modules (`panelui-native`, `uniwind`, `react-native-worklets`) require a development build, not Expo Go.
+> **Status:** personal-use build, no login yet. Data is stored on this device (SQLite on phones, localStorage on web; a snapshot of the in-memory database in `src/services/api/mockDatabase.ts`) and starts from sample data. Save and restore a JSON backup, or clear everything, from Settings. There is no server or sync yet. Native modules (`panelui-native`, `uniwind`, `react-native-worklets`) require a development build, not Expo Go.
 >
-> Checks: `npm run lint`, `npm run typecheck` and `npm test`. Product/architecture audit: see `AUDIT.md`.
+> Checks: `npm run lint`, `npm run typecheck` and `npm test`. Product/architecture audit: `AUDIT.md`. Design rules: `docs/design-system.md`.
 
 ---
 
 ## 🚀 Key Features
 
-### 1. Operations Dashboard
-- Real-time KPI metrics for production runs, sales turnover, cash collections, and outstanding dues.
-- Dynamic period filtering: *Today*, *This Week*, *This Month*, *All Time*.
-- Proactive low-stock safety threshold alerts.
-- Quick action triggers for starting batch runs, recording inward purchase bills, logging sales invoices, and customer payments.
+Bottom tabs: **Home, Batches, Stock, Invoices**. Everything else (recipes, suppliers, customers, expenses, movements, settings) is reached from the top bar and the Manage list.
 
-### 2. Production Control & Recipe Formulation
-- **Reusable Production Setups (Formulas)**: Create and manage persistent standard recipes with customizable output units (e.g., bags, drums, bottles, metric tons, kg).
-- **Inline Material Creation**: Register new raw materials with custom units directly during recipe formulation.
-- **Production Batches & Ledger Integration**: Starting batch runs automatically deducts raw materials/packaging from stock and increments finished goods.
-- **Batch History & Audit Reversals**: Complete audit trail of completed runs with reversal safeguard options.
+### Home
+- Overview tiles (units produced, batches done, stock alerts, customer dues) for Today, This Week, This Month or All Time; each opens the place it summarises.
+- "Needs attention": overdue invoices and the customers who owe the most. A card for batches running now.
 
-### 3. Inventory & Warehouse Stock Ledger
-- **Multi-Category Tracking**: Raw materials, packaging materials, and finished goods floor stock.
-- **Dynamic Measurement Units**: Full support for custom units (`kg`, `L`, `tons`, `bags`, `drums`, `pcs`, etc.).
-- **Live Stock Editing & Deletion**: Update stock items, standard purchase costs, safety alert thresholds, and current stock counts (with automatic ledger reconciliation entries).
-- **Dependency Guardrails**: Prevents accidental deletion of ingredients that are actively referenced by active formulas.
-- **Stock Movement Ledger**: Complete transaction history with reference IDs (purchases, production outputs, count adjustments, dispatches).
+### Batches (production)
+- **Recipes** list the stock items and quantities for one mix. Output is optional, because it is only known after mixing.
+- **Start Batch** loads the mixer: pick a recipe, set mixer loads, edit amounts used, and see Ready/Short per item. Ingredients are deducted immediately and the batch shows as Running.
+- **Complete Batch** records what it made (packs, pack size, wastage). Finished stock, packaging and the final cost per pack are booked then. **Cancel run** returns the materials.
+- Recipes can be edited (new version, past batches keep the old one) or deleted (archived when they have history).
 
-### 4. Procurement & Supplier Ledger
-- **Vendor Registration**: Manage suppliers with GST numbers, contact phones, and factory addresses.
-- **Purchase Bills (Inward Stock)**: Record bills with custom bill numbers, rate, quantity, and payment breakdowns (Paid vs. Outstanding Due).
-- **Accounts Payable**: Live balance due tracking per vendor with inline quick-billing.
+### Stock
+- Raw materials, packaging and finished goods with search, filters and low-stock alerts.
+- Add Stock (purchase), Use Stock (consumption or waste), Count Stock (physical count), and edit or delete items. A full movement ledger records every change.
 
-### 5. Sales & Invoicing
-- **Customer Directory**: Customer profiles, phone numbers, addresses, and balance receivables.
-- **Purchase Orders & Invoices**: Generate professional sales invoices with automatic tax, discount, and net balance calculations.
-- **Detailed Data Tables**: Invoiced items breakdown and payment reconciliation.
+### Invoices and money
+- Create Invoice with payment terms (Immediate, Net 7/15/30), credit-limit warning, partial payment, PDF share. Receive Payment against a customer or one invoice. Add Expense. Customers and suppliers are added and edited as full pages.
+
+### Settings
+- Business profile, currency, units and alert levels are all editable; nothing is hard-coded. Backup, restore and start-fresh live here.
+
+### Conventions
+- Light and dark follow the device. Fonts are Hanken Grotesk and JetBrains Mono. Colors, sizes and radii come from `src/theme`.
+- Action flows are full pages built from `src/components/flow`; they are routes under `/sheets/<name>`.
+- Branches are named by purpose (`feature/...`, `fix/...`, `docs/...`).
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework**: [React Native](https://reactnative.dev/) / [Expo SDK 54](https://docs.expo.dev/) (New Architecture ready)
+- **Framework**: [React Native](https://reactnative.dev/) / [Expo SDK 58](https://docs.expo.dev/) (New Architecture ready)
 - **UI Components**: [PanelUI Native](https://github.com/) & [Tailwind CSS (Uniwind)](https://uniwind.dev/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Server State / Cache**: [TanStack React Query v5](https://tanstack.com/query/latest)
@@ -87,6 +85,10 @@ npx expo start --web
 ```bash
 # Run TypeScript type check
 npx tsc --noEmit
+
+# Lint and tests
+npm run lint
+npm test
 
 # Diagnose Expo configuration and dependencies
 npx expo-doctor

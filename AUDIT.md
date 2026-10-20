@@ -105,3 +105,12 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Rebuilt to the Stitch markup:** Home, Stock, Invoices. Manage lists (recipes, batches, suppliers, bills, customers, payments, expenses) use the same compact rows.
 - **Progressive disclosure:** rows show only the essentials; five new detail sheets (batch, profit, stock item, recipe, supplier) hold the rest. See `docs/design-system.md`.
 - **Still open:** sheets are bottom sheets, whereas Stitch shows some flows (batch run, invoice generation) as full pages with a step bar; goal bars and hero imagery are skipped because the app has no such data.
+
+## 11. Lite flows, running batches, data safety (latest)
+
+- **Full-page flows:** Add Stock, Use Stock, Start Batch, Complete Batch, Create Invoice, Receive Payment, Add Expense, Add Customer, Count Stock, Recipe builder, Business Profile and the edit pages for customer, supplier, product and stock item. Only read-only detail sheets and the small Create Supplier/Material pop-ups (opened from inside a page) remain modals.
+- **Batch lifecycle:** `in_progress` status. Starting loads inputs, completing records the output and books finished stock, packaging and final cost, cancelling restores the inputs. Recipes need inputs only. Dashboard totals count only confirmed batches.
+- **Honest defaults:** removed invented values (output 50 units, 20 kg pack, ₹500 price, ₹20 packaging cost, 1,000 kg opening stock for new materials, ₹5,000 prefills).
+- **Data safety:** versioned JSON backup and restore, and a start-fresh option that keeps business settings.
+- **Web correctness:** pressable cards no longer wrap buttons (nested `<button>`); the self-recursive modal close handlers are gone.
+- **Still open:** a React Native Web "text node" warning was reported once and could not be reproduced from a production build; sample data still loads on first run; no login or sync (planned for launch).
