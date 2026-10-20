@@ -1,4 +1,4 @@
-import { getDB, resetDB } from '../mockDatabase';
+import { clearDatabase, exportDatabase, getDB, importDatabase, resetDB } from '../mockDatabase';
 import { salesService } from '../salesService';
 import { inventoryService } from '../inventoryService';
 import { customerService } from '../customerService';
@@ -331,5 +331,31 @@ describe('using stock outside a batch', () => {
         kind: 'usage',
       }),
     ).rejects.toThrow(/raw materials/);
+  });
+});
+
+describe('backup and restore', () => {
+  it('round-trips everything through an export', () => {
+    const file = exportDatabase();
+    const customers = getDB().customers.length;
+    clearDatabase();
+    expect(getDB().customers).toHaveLength(0);
+    importDatabase(file);
+    expect(getDB().customers).toHaveLength(customers);
+  });
+
+  it('keeps business settings when clearing', () => {
+    const name = getDB().settings.factoryName;
+    clearDatabase();
+    expect(getDB().settings.factoryName).toBe(name);
+    expect(getDB().invoices).toHaveLength(0);
+  });
+
+  it('rejects files that are not backups', () => {
+    expect(() => importDatabase('nope')).toThrow('not a BatchIQ backup');
+    expect(() => importDatabase(JSON.stringify({ app: 'other', data: {} }))).toThrow();
+    expect(() =>
+      importDatabase(JSON.stringify({ app: 'batchiq', version: 1, data: { settings: {} } })),
+    ).toThrow('incomplete');
   });
 });

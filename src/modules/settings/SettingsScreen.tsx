@@ -4,7 +4,13 @@ import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
-import { resetDB } from '../../services/api/mockDatabase';
+import {
+  clearDatabase,
+  exportDatabase,
+  importDatabase,
+  resetDB,
+} from '../../services/api/mockDatabase';
+import { pickBackupFile, saveBackupFile } from '../../utils/backupFile';
 import { useFactorySettings } from '../../hooks/api/useDashboard';
 import { useAppStore } from '../../stores/useAppStore';
 import {
@@ -39,10 +45,44 @@ export const SettingsScreen: React.FC = () => {
     });
   };
 
-  const handleExportCSV = () => {
+  const [confirm, setConfirm] = useState<'clear' | null>(null);
+
+  const handleBackup = async () => {
+    try {
+      await saveBackupFile(exportDatabase());
+      setBannerAlert({
+        title: 'Backup ready',
+        message: 'Keep the file somewhere safe. You can restore it here later.',
+        variant: 'success',
+      });
+    } catch (err: any) {
+      setBannerAlert({ title: 'Backup failed', message: err.message, variant: 'danger' });
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      const text = await pickBackupFile();
+      if (text === null) return;
+      importDatabase(text);
+      queryClient.invalidateQueries();
+      setBannerAlert({
+        title: 'Backup restored',
+        message: 'Your records were replaced with the backup.',
+        variant: 'success',
+      });
+    } catch (err: any) {
+      setBannerAlert({ title: 'Could not restore', message: err.message, variant: 'danger' });
+    }
+  };
+
+  const handleClear = () => {
+    clearDatabase();
+    queryClient.invalidateQueries();
+    setConfirm(null);
     setBannerAlert({
-      title: 'Export coming soon',
-      message: 'CSV export is not available yet. Your records are saved on this device.',
+      title: 'Fresh start',
+      message: 'All records were cleared. Your business profile was kept.',
       variant: 'info',
     });
   };
@@ -187,23 +227,31 @@ export const SettingsScreen: React.FC = () => {
               color="primary"
               style={{ marginBottom: theme.spacing.xsm }}
             >
-              Data Export & Backups
+              Backup & Restore
             </Typography>
             <Typography
               variant="bodySmall"
               color="secondary"
               style={{ marginBottom: theme.spacing.md }}
             >
-              Export complete historical ledger, batches, stock movements, and customer accounts for
-              offline backups or spreadsheet analysis.
+              Your records live only on this device. Save a backup file regularly, and restore it
+              here if you change phones or lose data.
             </Typography>
 
-            <Button
-              label="Export Factory Records to CSV"
-              variant="subtle"
-              leftIcon="download-outline"
-              onPress={handleExportCSV}
-            />
+            <Row gap="sm" wrap>
+              <Button
+                label="Save backup"
+                variant="subtle"
+                leftIcon="download-outline"
+                onPress={handleBackup}
+              />
+              <Button
+                label="Restore backup"
+                variant="subtle"
+                leftIcon="push-outline"
+                onPress={handleRestore}
+              />
+            </Row>
           </Card>
 
           <Card variant="elevated" padding="normal">
@@ -224,12 +272,29 @@ export const SettingsScreen: React.FC = () => {
               data. This cannot be undone.
             </Typography>
             <Button
-              label="Reset to Sample Data"
+              label="Start fresh (clear all records)"
               variant="danger"
+              leftIcon="trash-outline"
+              onPress={() => setConfirm('clear')}
+              style={{ marginBottom: theme.spacing.sm }}
+            />
+            <Button
+              label="Reset to Sample Data"
+              variant="subtle"
               leftIcon="refresh-outline"
               onPress={() => setConfirmResetVisible(true)}
             />
           </Card>
+
+          <ConfirmDialog
+            visible={confirm === 'clear'}
+            onClose={() => setConfirm(null)}
+            onConfirm={handleClear}
+            title="Clear all records?"
+            message="Every recipe, batch, stock level, invoice, customer and expense is removed. Your business profile stays. Save a backup first if you may need them."
+            confirmLabel="Clear everything"
+            isDestructive
+          />
 
           <ConfirmDialog
             visible={confirmResetVisible}
