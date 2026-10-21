@@ -126,3 +126,7 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Sheets close by gesture:** the handle strip on every bottom sheet follows the finger and closes on a drag down (or a quick flick); a short drag springs back. Tapping outside still closes. Full-page flows keep their back arrow.
 - **Run time and rate:** a recipe can store a speed (packs per hour). Start Batch takes either hours or expected output and fills in the other, shows the expected finish time, and records `startedAt`, `plannedHours` and `expectedUnits`. Complete Batch measures the real run time, shows output per hour, per minute and minutes per pack, and can save the measured speed back to the recipe.
 - **Estimates:** Start and Complete both show materials, packaging, total cost, cost per pack, sales value at the product's selling price, estimated profit and margin. Without a selling price they ask for one instead of guessing. Batch details show run time, rate and profit for finished batches.
+
+## 14. Batch breakdown (latest)
+
+- One breakdown (`batchBreakdown` in `src/utils/batchEstimates.ts`, shown by `BatchBreakdownView`) is used on Start Batch (expected), Complete Batch (actual) and batch details: total production in packs and base unit, cost per item with its share, materials, packaging, total cost, cost per pack and per kg, sales value, **value added** (sales − materials), **gain** (sales − total cost), margin and gain per pack and per kg. Labour, power and other expenses stay under Expenses.
