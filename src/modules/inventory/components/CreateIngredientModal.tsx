@@ -1,9 +1,17 @@
-import { useCurrencySymbol } from '../../../hooks/useMoney';
 import { theme } from '../../../theme';
 import React, { useState } from 'react';
 import { useCreateIngredient } from '../../../hooks/api/useInventory';
 import { useAppStore } from '../../../stores/useAppStore';
-import { Modal, Box, Stack, Row, Typography, TextInput, Button } from '../../../components';
+import {
+  Modal,
+  Box,
+  Stack,
+  Row,
+  Typography,
+  TextInput,
+  Button,
+  PriceBasisInput,
+} from '../../../components';
 
 export interface CreateIngredientModalProps {
   visible: boolean;
@@ -18,14 +26,13 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
   onClose,
   onCreated,
 }) => {
-  const symbol = useCurrencySymbol();
   const createIngredientMutation = useCreateIngredient();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<'raw_material' | 'packaging'>('raw_material');
   const [unit, setUnit] = useState('kg');
-  const [unitCost, setUnitCost] = useState('20');
+  const [unitCost, setUnitCost] = useState('');
   const [initialStock, setInitialStock] = useState('0');
   const [minThreshold, setMinThreshold] = useState('100');
   const [error, setError] = useState('');
@@ -160,17 +167,9 @@ export const CreateIngredientModal: React.FC<CreateIngredientModalProps> = ({
           />
         </Box>
 
-        {/* Unit Cost & Initial Stock */}
+        <PriceBasisInput label="Price on the bill" unit={unit} onChangePerUnit={setUnitCost} />
+
         <Row gap="md">
-          <Box flex={1}>
-            <TextInput
-              label={`Standard Cost / ${unit}`}
-              value={unitCost}
-              onChangeText={setUnitCost}
-              keyboardType="numeric"
-              prefix={symbol}
-            />
-          </Box>
           <Box flex={1}>
             <TextInput
               label={`Initial Stock (${unit})`}

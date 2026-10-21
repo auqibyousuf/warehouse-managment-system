@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useCurrencySymbol } from '../../../hooks/useMoney';
 import {
   useDeleteIngredient,
   useInventoryItems,
@@ -13,6 +12,7 @@ import {
   FlowHeaderCard,
   FlowPage,
   FlowSection,
+  PriceBasisInput,
   OptionGrid,
   Row,
   Stack,
@@ -29,7 +29,6 @@ const UNITS = ['kg', 'L', 'g', 'ml', 'tons', 'bags', 'drums', 'pcs'];
 
 /** Edit a raw material or packaging item. Stock changes here are logged as an audit adjustment. */
 export const EditStockItemPage: React.FC<EditStockItemPageProps> = ({ onClose, itemId }) => {
-  const symbol = useCurrencySymbol();
   const { data: items = [] } = useInventoryItems();
   const update = useUpdateIngredient();
   const remove = useDeleteIngredient();
@@ -129,16 +128,14 @@ export const EditStockItemPage: React.FC<EditStockItemPageProps> = ({ onClose, i
       </FlowSection>
 
       <FlowSection label="Cost & alerts">
+        <PriceBasisInput
+          key={item.id}
+          label="Price on the bill"
+          unit={unit}
+          initialPerUnit={unitCost}
+          onChangePerUnit={setUnitCost}
+        />
         <Row gap="sm">
-          <Box flex={1}>
-            <TextInput
-              label={`Cost per ${unit}`}
-              value={unitCost}
-              onChangeText={setUnitCost}
-              keyboardType="numeric"
-              prefix={symbol}
-            />
-          </Box>
           <Box flex={1}>
             <TextInput
               label={`Alert below (${unit})`}

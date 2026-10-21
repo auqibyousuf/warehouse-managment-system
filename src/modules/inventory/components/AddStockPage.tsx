@@ -11,6 +11,7 @@ import {
   FlowHeaderCard,
   FlowPage,
   FlowSection,
+  PriceBasisInput,
   QuantityStepper,
   Row,
   SelectedCard,
@@ -160,16 +161,14 @@ export const AddStockPage: React.FC<AddStockPageProps> = ({ onClose, preselected
       </FlowSection>
 
       <FlowSection label="Cost & payment">
+        <PriceBasisInput
+          key={item?.id ?? 'none'}
+          label="Price on the bill"
+          unit={item?.unit ?? 'unit'}
+          initialPerUnit={String(item?.unitCost ?? '')}
+          onChangePerUnit={setUnitPrice}
+        />
         <Row gap="md" align="flex-start">
-          <Box flex={1}>
-            <TextInput
-              label="Unit cost"
-              value={unitPrice ?? String(item?.unitCost ?? '')}
-              onChangeText={setUnitPrice}
-              keyboardType="decimal-pad"
-              prefix={symbol}
-            />
-          </Box>
           <Box flex={1}>
             <TextInput
               label="Paid now"
