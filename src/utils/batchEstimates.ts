@@ -58,3 +58,79 @@ export const profitEstimate = (
     profitPerUnit: profit / units,
   };
 };
+
+export interface BreakdownLine {
+  name: string;
+  quantity: number;
+  unit: string;
+  /** Cost of one unit. */
+  rate: number;
+}
+
+export interface BatchBreakdownInput {
+  lines: BreakdownLine[];
+  packagingCost: number;
+  /** Packs made (expected or actual). */
+  units: number;
+  /** Size of one pack in `baseUnit`; 0 when unknown. */
+  packSize: number;
+  /** Selling price of one pack; 0 when not set. */
+  price: number;
+}
+
+export interface BatchBreakdown {
+  lines: (BreakdownLine & { cost: number; sharePct: number })[];
+  materialsCost: number;
+  packagingCost: number;
+  totalCost: number;
+  units: number;
+  /** Total made in the base unit (packs × pack size), 0 when pack size unknown. */
+  totalQuantity: number;
+  costPerUnit: number;
+  costPerBaseUnit: number;
+  /** Null when no selling price is set. */
+  sales: null | {
+    salesValue: number;
+    /** What the batch added on top of the materials it used: sales value − materials. */
+    valueAdded: number;
+    /** What is left after materials and packaging: sales value − total cost. */
+    gain: number;
+    marginPct: number;
+    gainPerUnit: number;
+    gainPerBaseUnit: number;
+  };
+}
+
+/** Everything the batch screens show about cost, value added and gain, from one set of inputs. */
+export const batchBreakdown = (input: BatchBreakdownInput): BatchBreakdown => {
+  const costed = input.lines.map((l) => ({ ...l, cost: l.quantity * l.rate }));
+  const materialsCost = costed.reduce((sum, l) => sum + l.cost, 0);
+  const totalCost = materialsCost + input.packagingCost;
+  const units = input.units > 0 ? input.units : 0;
+  const totalQuantity = units * (input.packSize > 0 ? input.packSize : 0);
+  const salesValue = units * input.price;
+  return {
+    lines: costed.map((l) => ({
+      ...l,
+      sharePct: materialsCost > 0 ? Math.round((l.cost / materialsCost) * 1000) / 10 : 0,
+    })),
+    materialsCost,
+    packagingCost: input.packagingCost,
+    totalCost,
+    units,
+    totalQuantity,
+    costPerUnit: units > 0 ? totalCost / units : 0,
+    costPerBaseUnit: totalQuantity > 0 ? totalCost / totalQuantity : 0,
+    sales:
+      units > 0 && input.price > 0
+        ? {
+            salesValue,
+            valueAdded: salesValue - materialsCost,
+            gain: salesValue - totalCost,
+            marginPct: Math.round(((salesValue - totalCost) / salesValue) * 1000) / 10,
+            gainPerUnit: (salesValue - totalCost) / units,
+            gainPerBaseUnit: totalQuantity > 0 ? (salesValue - totalCost) / totalQuantity : 0,
+          }
+        : null,
+  };
+};

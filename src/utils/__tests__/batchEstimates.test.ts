@@ -1,4 +1,5 @@
 import {
+  batchBreakdown,
   formatDuration,
   hoursForOutput,
   outputForHours,
@@ -32,5 +33,40 @@ describe('batch estimates', () => {
     expect(e.marginPct).toBe(40);
     expect(e.profitPerUnit).toBe(20);
     expect(profitEstimate(100, 0, 3000)).toBeNull();
+  });
+});
+
+describe('batch breakdown', () => {
+  const input = {
+    lines: [
+      { name: 'Bran', quantity: 300, unit: 'kg', rate: 10 },
+      { name: 'Salt', quantity: 20, unit: 'kg', rate: 5 },
+    ],
+    packagingCost: 200,
+    units: 20,
+    packSize: 20,
+    price: 300,
+  };
+
+  it('splits cost, value added and gain', () => {
+    const b = batchBreakdown(input);
+    expect(b.materialsCost).toBe(3100);
+    expect(b.totalCost).toBe(3300);
+    expect(b.totalQuantity).toBe(400);
+    expect(b.costPerUnit).toBe(165);
+    expect(b.costPerBaseUnit).toBe(8.25);
+    expect(b.sales?.salesValue).toBe(6000);
+    expect(b.sales?.valueAdded).toBe(2900);
+    expect(b.sales?.gain).toBe(2700);
+    expect(b.sales?.marginPct).toBe(45);
+    expect(b.sales?.gainPerUnit).toBe(135);
+    expect(b.lines[0].sharePct).toBeCloseTo(96.8, 1);
+  });
+
+  it('has no sales figures without a price, and no per-unit figures without output', () => {
+    expect(batchBreakdown({ ...input, price: 0 }).sales).toBeNull();
+    const none = batchBreakdown({ ...input, units: 0 });
+    expect(none.costPerUnit).toBe(0);
+    expect(none.sales).toBeNull();
   });
 });

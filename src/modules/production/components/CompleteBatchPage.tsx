@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { useMoney } from '../../../hooks/useMoney';
 import {
   useCompleteBatchRun,
   useProductionBatches,
   useProductionSetups,
 } from '../../../hooks/api/useProduction';
 import { useIngredients, useProducts } from '../../../hooks/api/useInventory';
-import { formatDuration, profitEstimate, ratesFor } from '../../../utils/batchEstimates';
+import { batchBreakdown, formatDuration, ratesFor } from '../../../utils/batchEstimates';
+import { BatchBreakdownView } from './BatchBreakdownView';
 import { useFactorySettings } from '../../../hooks/api/useDashboard';
 import { useAppStore } from '../../../stores/useAppStore';
 import {
-  Badge,
   Box,
   Button,
   Card,
@@ -31,7 +30,6 @@ export interface CompleteBatchPageProps {
 
 /** Complete Batch: now the output is known, record it. Finished stock and final cost are booked here. */
 export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, batchId }) => {
-  const money = useMoney();
   const { data: batches = [] } = useProductionBatches();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
@@ -75,7 +73,6 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
   const finished = made * packSize;
   const packaging = ingredients.find((i) => i.category === 'packaging');
   const packagingCost = packaging ? made * packaging.unitCost : 0;
-  const total = batch.ingredientCost + packagingCost;
   const short = packaging && made > packaging.currentStock;
   const elapsedMinutes = batch.startedAt
     ? Math.max(1, Math.round((openedAt - Date.parse(batch.startedAt)) / 60000))
@@ -84,7 +81,18 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
   const rates = ratesFor(made, minutes);
   const product = products.find((p) => p.id === batch.productId);
   const price = product?.sellingPricePerUnit ?? product?.sellingPricePerBag ?? 0;
-  const estimate = profitEstimate(made, price, total);
+  const breakdown = batchBreakdown({
+    lines: batch.itemsConsumed.map((i) => ({
+      name: i.ingredientName,
+      quantity: i.actualQuantity,
+      unit: i.unit,
+      rate: i.unitCostSnapshot,
+    })),
+    packagingCost,
+    units: made,
+    packSize,
+    price,
+  });
 
   const submit = async () => {
     if (!(made > 0)) return setError('Enter how much the batch made');
@@ -225,76 +233,13 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
         />
       </FlowSection>
 
-      <FlowSection label="Batch totals">
-        <Row justify="space-between">
-          <Typography variant="bodySmall" color="secondary">
-            Materials
-          </Typography>
-          <Typography variant="dataMedium" tabular>
-            {money(batch.ingredientCost)}
-          </Typography>
-        </Row>
-        {packaging && (
-          <Row justify="space-between">
-            <Typography variant="bodySmall" color="secondary">
-              Packaging ({made} × {money(packaging.unitCost)})
-            </Typography>
-            <Typography variant="dataMedium" tabular>
-              {money(packagingCost)}
-            </Typography>
-          </Row>
-        )}
-        <Row justify="space-between" align="center">
-          <Typography variant="title">Total cost</Typography>
-          <Typography variant="dataLarge" tabular>
-            {money(total)}
-          </Typography>
-        </Row>
-        {made > 0 && (
-          <Row gap="xs">
-            <Badge
-              label={`${money(total / made)} cost / ${outputUnit}`}
-              variant="neutral"
-              size="sm"
-            />
-          </Row>
-        )}
-        {estimate ? (
-          <>
-            <Row justify="space-between">
-              <Typography variant="bodySmall" color="secondary">
-                Sales value at {money(price)} each
-              </Typography>
-              <Typography variant="dataMedium" tabular>
-                {money(estimate.revenue)}
-              </Typography>
-            </Row>
-            <Row justify="space-between" align="center">
-              <Typography variant="title">Estimated profit</Typography>
-              <Typography
-                variant="dataLarge"
-                color={estimate.profit >= 0 ? 'success' : 'error'}
-                tabular
-              >
-                {money(estimate.profit)}
-              </Typography>
-            </Row>
-            <Row gap="xs">
-              <Badge label={`${estimate.marginPct}% margin`} variant="neutral" size="sm" />
-              <Badge
-                label={`${money(estimate.profitPerUnit)} profit / ${outputUnit}`}
-                variant="neutral"
-                size="sm"
-              />
-            </Row>
-          </>
-        ) : (
-          <Typography variant="bodySmall" color="secondary">
-            {made > 0
-              ? 'Set a selling price on the product to see the profit estimate.'
-              : 'Enter the output above to see cost per pack and profit.'}
-          </Typography>
-        )}
+      <FlowSection label="Batch summary">
+        <BatchBreakdownView
+          breakdown={breakdown}
+          outputUnit={outputUnit}
+          baseUnit={baseUnit}
+          price={price}
+        />
       </FlowSection>
 
       <FlowSection label="Loss & notes" hint="Optional">

@@ -1,6 +1,7 @@
 import { openSheet } from '../../navigation/sheets';
-import { formatDuration, profitEstimate, ratesFor } from '../../utils/batchEstimates';
+import { batchBreakdown, formatDuration, ratesFor } from '../../utils/batchEstimates';
 import { useProducts } from '../../hooks/api/useInventory';
+import { BatchBreakdownView } from '../production/components/BatchBreakdownView';
 import { batchStatusView } from '../../utils/batchStatus';
 import React, { useState } from 'react';
 import { useMoney } from '../../hooks/useMoney';
@@ -12,7 +13,6 @@ import {
   Button,
   Card,
   ConfirmDialog,
-  Divider,
   InsetStats,
   Modal,
   Row,
@@ -43,16 +43,23 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
   if (!batch) return null;
   const rates = batch.durationMinutes ? ratesFor(batch.unitsPacked, batch.durationMinutes) : null;
   const price = products.find((p) => p.id === batch.productId)?.sellingPricePerUnit ?? 0;
-  const estimate =
-    batch.status === 'confirmed'
-      ? profitEstimate(batch.unitsPacked, price, batch.directBatchCost)
-      : null;
+  const breakdown = batchBreakdown({
+    lines: batch.itemsConsumed.map((i) => ({
+      name: i.ingredientName,
+      quantity: i.actualQuantity,
+      unit: i.unit,
+      rate: i.unitCostSnapshot,
+    })),
+    packagingCost: batch.packagingCost,
+    units: batch.status === 'confirmed' ? batch.unitsPacked : 0,
+    packSize: batch.unitsPacked > 0 ? batch.actualFinishedQuantity / batch.unitsPacked : 0,
+    price,
+  });
 
   const reversed = batch.status === 'reversed';
   const running = batch.status === 'in_progress';
   const view = batchStatusView(batch.status);
   const perUnit = batch.directCostPerUnit ?? batch.directCostPerBag ?? 0;
-  const perBase = batch.directCostPerBaseUnit ?? batch.directCostPerKg ?? 0;
 
   const handleReverse = async () => {
     try {
@@ -117,44 +124,15 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
           />
 
           <Card variant="flat" padding="compact">
-            <Stack gap="xs">
-              <Row justify="space-between">
-                <Typography variant="bodySmall" color="secondary">
-                  Ingredients
-                </Typography>
-                <Typography variant="dataMedium" color="primary" tabular>
-                  {money(batch.ingredientCost)}
-                </Typography>
-              </Row>
-              <Row justify="space-between">
-                <Typography variant="bodySmall" color="secondary">
-                  Packaging
-                </Typography>
-                <Typography variant="dataMedium" color="primary" tabular>
-                  {money(batch.packagingCost)}
-                </Typography>
-              </Row>
-              <Divider variant="subtle" spacing="xs" />
-              <Row justify="space-between">
-                <Typography variant="bodySmall" weight="semibold" color="primary">
-                  Total batch cost
-                </Typography>
-                <Typography variant="dataMedium" color="primary" tabular>
-                  {money(batch.directBatchCost)}
-                </Typography>
-              </Row>
-              <Row justify="space-between">
-                <Typography variant="caption" color="muted">
-                  Per {batch.baseUnit || 'unit of measure'}
-                </Typography>
-                <Typography variant="caption" color="muted">
-                  {money(perBase)}
-                </Typography>
-              </Row>
-            </Stack>
+            <BatchBreakdownView
+              breakdown={breakdown}
+              outputUnit={batch.outputUnit}
+              baseUnit={batch.baseUnit || 'kg'}
+              price={price}
+            />
           </Card>
 
-          {(rates || estimate) && (
+          {(rates || batch.durationMinutes) && (
             <Card variant="flat" padding="compact">
               <Stack gap="xs">
                 {batch.durationMinutes ? (
@@ -176,30 +154,6 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
                       {rates.perHour} {batch.outputUnit}/h · {rates.perMinute}/min
                     </Typography>
                   </Row>
-                )}
-                {estimate && (
-                  <>
-                    <Row justify="space-between">
-                      <Typography variant="bodySmall" color="secondary">
-                        Sales value at current price
-                      </Typography>
-                      <Typography variant="dataMedium" tabular>
-                        {money(estimate.revenue)}
-                      </Typography>
-                    </Row>
-                    <Row justify="space-between">
-                      <Typography variant="bodySmall" weight="semibold" color="primary">
-                        Estimated profit
-                      </Typography>
-                      <Typography
-                        variant="dataMedium"
-                        color={estimate.profit >= 0 ? 'success' : 'error'}
-                        tabular
-                      >
-                        {money(estimate.profit)} ({estimate.marginPct}%)
-                      </Typography>
-                    </Row>
-                  </>
                 )}
               </Stack>
             </Card>
