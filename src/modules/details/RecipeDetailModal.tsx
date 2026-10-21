@@ -55,6 +55,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   const lines = setup.recipeItems.map((item, index) => ({
     item,
     color: series[index % series.length],
+    rate: ingredients.find((i) => i.id === item.ingredientId)?.unitCost ?? 0,
     cost:
       item.targetQuantity * (ingredients.find((i) => i.id === item.ingredientId)?.unitCost ?? 0),
   }));
@@ -123,23 +124,25 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
 
         <InsetStats
           stats={[
-            { label: 'Standard batch cost', value: money(batchCost) },
-            { label: 'Cost per unit', value: units > 0 ? money(batchCost / units) : '—' },
+            { label: 'Estimated cost of one mix', value: money(batchCost) },
+            { label: 'Cost per pack', value: units > 0 ? money(batchCost / units) : 'Not set' },
           ]}
         />
         <Typography variant="bodySmall" color="secondary">
-          One batch makes {units} {setup.outputUnit || 'units'} of{' '}
-          {setup.unitSize || setup.bagWeightKg} {setup.baseUnit || 'kg'} each.
+          {units > 0
+            ? `Usually makes ${units} ${setup.outputUnit || 'units'} of ${setup.unitSize || setup.bagWeightKg} ${setup.baseUnit || 'kg'} each.`
+            : 'Output is entered when you run a batch, so cost per pack appears then.'}{' '}
+          Costs use each item&apos;s current rate from Stock, before packaging.
         </Typography>
 
         <Box>
           <Typography variant="label" color="muted" style={{ marginBottom: 8 }}>
-            Formulation
+            Share of cost
           </Typography>
           <ProgressBar
             height={10}
-            accessibilityLabel="Formulation by quantity"
-            segments={lines.map((l) => ({ value: l.item.targetQuantity, color: l.color }))}
+            accessibilityLabel="Share of cost by ingredient"
+            segments={lines.map((l) => ({ value: l.cost, color: l.color }))}
           />
           <Stack gap="xs" style={{ marginTop: 12 }}>
             {lines.map((l) => (
@@ -160,7 +163,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                     {l.item.targetQuantity} {l.item.unit}
                   </Typography>
                   <Typography variant="caption" color="muted">
-                    {money(l.cost)}
+                    {money(l.rate)}/{l.item.unit} = {money(l.cost)}
                   </Typography>
                 </Box>
               </Row>
