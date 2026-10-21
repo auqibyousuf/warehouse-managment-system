@@ -132,7 +132,7 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
           {units > 0
             ? `Usually makes ${units} ${setup.outputUnit || 'units'} of ${setup.unitSize || setup.bagWeightKg} ${setup.baseUnit || 'kg'} each.`
             : 'Output is entered when you run a batch, so cost per pack appears then.'}{' '}
-          Costs use each item's current rate from Stock, before packaging.
+          Costs use each item&apos;s current rate from Stock, before packaging.
         </Typography>
 
         <Box>
