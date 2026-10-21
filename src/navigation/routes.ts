@@ -12,7 +12,6 @@ export const routeToTab = (routeName: string): NavTabId =>
 
 /** Screens reached from the Manage list (stack routes, no tab bar). */
 export type ManageRoute =
-  | '/recipes'
   | '/suppliers'
   | '/customers'
   | '/expenses'

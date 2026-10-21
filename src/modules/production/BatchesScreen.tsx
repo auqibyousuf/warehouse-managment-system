@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
-import { openManage } from '../../navigation/routes';
+import { goToTab } from '../../navigation/routes';
 import { theme } from '../../theme';
 import { useMoney } from '../../hooks/useMoney';
 import { useProductionBatches, useReverseProductionBatch } from '../../hooks/api/useProduction';
@@ -161,11 +161,11 @@ export const BatchesScreen: React.FC = () => {
             </Typography>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Recipes and full history"
-              onPress={() => openManage('/recipes')}
+              accessibilityLabel="Open recipes"
+              onPress={() => goToTab('recipes')}
             >
               <Typography variant="bodySmall" weight="medium" color="brandPrimary">
-                Recipes & history
+                Recipes
               </Typography>
             </Pressable>
           </Row>
