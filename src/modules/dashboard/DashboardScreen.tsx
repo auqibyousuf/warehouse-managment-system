@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
-import { goToTab, openManage } from '../../navigation/routes';
+import { goToTab } from '../../navigation/routes';
 import { theme, useColors } from '../../theme';
 import { batchStatusView } from '../../utils/batchStatus';
 import { useMoney } from '../../hooks/useMoney';
@@ -212,7 +212,7 @@ export const DashboardScreen: React.FC = () => {
               tone="success"
               value={(metrics?.production.totalUnitsProduced ?? 0).toLocaleString('en-IN')}
               caption={`${(metrics?.production.totalBaseQuantity ?? 0).toLocaleString('en-IN')} ${metrics?.production.baseUnit || 'kg'}`}
-              onPress={() => openManage('/recipes')}
+              onPress={() => goToTab('batches')}
             />
             <StatTile
               label="Batches done"
@@ -220,7 +220,7 @@ export const DashboardScreen: React.FC = () => {
               tone="success"
               value={String(metrics?.production.totalBatches ?? 0)}
               caption="Confirmed"
-              onPress={() => openManage('/recipes')}
+              onPress={() => goToTab('batches')}
             />
           </Row>
           <Row gap="sm" align="stretch">
@@ -395,7 +395,7 @@ export const DashboardScreen: React.FC = () => {
               <Badge label={String(batches.length)} variant="neutral" size="sm" />
             </Row>
             <Pressable
-              onPress={() => openManage('/recipes')}
+              onPress={() => goToTab('batches')}
               accessibilityRole="button"
               accessibilityLabel="View all batches"
             >

@@ -17,12 +17,6 @@ const GROUPS: { title: string; items: ManageItem[] }[] = [
     title: 'Production & stock',
     items: [
       {
-        route: '/recipes',
-        title: 'Recipes & Batches',
-        description: 'Formulas, batch history, reversals',
-        icon: 'flask-outline',
-      },
-      {
         route: '/movements',
         title: 'Stock Movements',
         description: 'Every change to stock, with its source',

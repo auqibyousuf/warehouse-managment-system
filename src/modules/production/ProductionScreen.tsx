@@ -23,9 +23,10 @@ import {
 type ProductionTab = 'setups' | 'batches';
 
 /** Recipes and batch history. Rows stay short; tap one for its full details. */
-export const ProductionScreen: React.FC = () => {
+export const ProductionScreen: React.FC<{ only?: ProductionTab }> = ({ only }) => {
   const money = useMoney();
-  const [activeTab, setActiveTab] = useState<ProductionTab>('setups');
+  const [chosenTab, setActiveTab] = useState<ProductionTab>('setups');
+  const activeTab = only ?? chosenTab;
   const { data: setups = [], isLoading: loadingSetups } = useProductionSetups();
   const { data: batches = [], isLoading: loadingBatches } = useProductionBatches();
   const { data: ingredients = [] } = useIngredients();
@@ -46,15 +47,17 @@ export const ProductionScreen: React.FC = () => {
           onPress={() => openSheet('create_setup')}
         />
       </Row>
-      <ChipPicker
-        variant="segmented"
-        options={[
-          { value: 'setups', label: 'Recipes', count: setups.length },
-          { value: 'batches', label: 'Batches', count: batches.length },
-        ]}
-        selected={activeTab}
-        onSelect={(tab) => setActiveTab(tab as ProductionTab)}
-      />
+      {!only && (
+        <ChipPicker
+          variant="segmented"
+          options={[
+            { value: 'setups', label: 'Recipes', count: setups.length },
+            { value: 'batches', label: 'Batches', count: batches.length },
+          ]}
+          selected={activeTab}
+          onSelect={(tab) => setActiveTab(tab as ProductionTab)}
+        />
+      )}
     </Stack>
   );
 

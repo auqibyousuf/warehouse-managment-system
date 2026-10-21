@@ -7,6 +7,7 @@ import { useProductionBatches } from '../../hooks/api/useProduction';
 const TITLES: Record<string, string> = {
   index: 'Overview',
   batches: 'Batches',
+  recipes: 'Recipes',
   stock: 'Stock & Materials',
   invoices: 'Invoices & Receipts',
 };
@@ -31,6 +32,7 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="batches" />
+      <Tabs.Screen name="recipes" />
       <Tabs.Screen name="stock" />
       <Tabs.Screen name="invoices" />
     </Tabs>
