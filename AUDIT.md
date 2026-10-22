@@ -131,6 +131,12 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 
 - One breakdown (`batchBreakdown` in `src/utils/batchEstimates.ts`, shown by `BatchBreakdownView`) is used on Start Batch (expected), Complete Batch (actual) and batch details: total production in packs and base unit, cost per item with its share, materials, packaging, total cost, cost per pack and per kg, sales value, **value added** (sales − materials), **gain** (sales − total cost), margin and gain per pack and per kg. Labour, power and other expenses stay under Expenses.
 
+## 15. Batch edit, delete, run again; visible recipe actions (latest)
+
+- **Batches:** Edit (finished: output, pack size, hours, wastage, date, notes, with finished stock and packaging moved to match; running: planned hours, expected output, notes), Delete (puts stock back and removes the batch and its ledger entries; refused if the output was already sold), and Run again (opens Start Batch pre-filled with the recipe, amounts, hours and output). Cancel and Reverse remain for keeping the record. Ingredient amounts of a finished batch are not editable; delete and rerun instead.
+- **Recipes:** Edit and Start batch buttons are on every recipe row and at the top of the recipe sheet, next to Delete.
+- **Fix:** the service now returns copies of batches and recipes, so a status change made in place (a batch completing) refreshes every screen, including the tab badge.
+
 ## 16. Production items and selling price (latest)
 
 - **Labelling:** what batches make is shown in Stock as a **Production item** (filter "Production items"), kept apart from raw material and packaging, and left out of the raw-material value line.

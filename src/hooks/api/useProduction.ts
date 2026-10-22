@@ -5,6 +5,7 @@ import {
   CreateSetupInput,
   StartBatchRunInput,
   CompleteBatchRunInput,
+  UpdateBatchInput,
 } from '../../services/api/productionService';
 import { SetupStatus } from '../../types';
 
@@ -109,5 +110,22 @@ export const useDeleteProductionSetup = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['production', 'setups'] });
     },
+  });
+};
+
+export const useUpdateBatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateBatchInput }) =>
+      productionService.updateBatch(id, input),
+    onSuccess: () => refreshProduction(queryClient),
+  });
+};
+
+export const useDeleteBatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => productionService.deleteBatch(id),
+    onSuccess: () => refreshProduction(queryClient),
   });
 };
