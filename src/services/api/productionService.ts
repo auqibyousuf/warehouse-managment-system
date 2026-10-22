@@ -3,7 +3,7 @@
  * Authoritative batch costing, recipe setups, versioning, and atomic inventory transactions.
  */
 
-import { getDB } from './mockDatabase';
+import { getDB, DatabaseState } from './mockDatabase';
 import { simulateNetwork, generateId, nextDocumentNumber } from './apiClient';
 import {
   Product,
@@ -63,6 +63,19 @@ export interface StartBatchRunInput {
   notes?: string;
 }
 
+export interface UpdateBatchInput {
+  /** Finished batches only: the output actually made. Moves finished stock and packaging. */
+  unitsPacked?: number;
+  unitSize?: number;
+  durationMinutes?: number;
+  measurableWastage?: number;
+  notes?: string;
+  date?: string;
+  /** Running batches only. */
+  plannedHours?: number;
+  expectedUnits?: number;
+}
+
 export interface CompleteBatchRunInput {
   unitsPacked: number;
   outputUnit?: string;
@@ -79,12 +92,103 @@ export interface CompleteBatchRunInput {
   notes?: string;
 }
 
+/** Undo a batch in the stock ledger. Throws if its output was already sold. Callers check the status first. */
+const reverseInDb = (db: DatabaseState, batch: ProductionBatch, reason?: string): void => {
+  const running = batch.status === 'in_progress';
+
+  const product = db.products.find((p) => p.id === batch.productId);
+  const bagItem = db.ingredients.find((i) => i.category === 'packaging');
+
+  // Guard first: never reverse if the batch output has already left the warehouse,
+  // otherwise raw materials would be restored while the sold goods stay unaccounted for.
+  if (product && !running) {
+    const units = batch.unitsPacked || batch.bagsPacked || 0;
+    const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
+    if (onHand < units) {
+      throw new Error(
+        `Cannot reverse ${batch.batchNumber}: only ${onHand} of ${units} ${batch.outputUnit || 'units'} are still in stock. Cancel the related sales first.`,
+      );
+    }
+  }
+
+  // Compensating stock restoration: Return raw materials
+  for (const item of batch.itemsConsumed) {
+    const ing = db.ingredients.find((i) => i.id === item.ingredientId);
+    if (ing) {
+      ing.currentStock += item.actualQuantity;
+    }
+    db.movements.unshift({
+      id: generateId('mov'),
+      date: new Date().toISOString().split('T')[0],
+      itemId: item.ingredientId,
+      itemName: item.ingredientName,
+      itemType: 'raw_material',
+      movementType: 'reversal',
+      quantity: item.actualQuantity,
+      unit: item.unit,
+      direction: 'in',
+      referenceType: 'batch',
+      referenceId: batch.id,
+      notes: `Batch reversal ${batch.batchNumber}: ${reason || 'Operator reversal'}`,
+    });
+  }
+
+  // Return packaging
+  if (bagItem && !running) {
+    const returnPackaging = batch.packagingUsedUnits || batch.packagingUsedBags || 0;
+    bagItem.currentStock += returnPackaging;
+    db.movements.unshift({
+      id: generateId('mov'),
+      date: new Date().toISOString().split('T')[0],
+      itemId: bagItem.id,
+      itemName: bagItem.name,
+      itemType: 'packaging',
+      movementType: 'reversal',
+      quantity: returnPackaging,
+      unit: 'pcs',
+      direction: 'in',
+      referenceType: 'batch',
+      referenceId: batch.id,
+      notes: `Packaging reversal for ${batch.batchNumber}`,
+    });
+  }
+
+  // Deduct finished goods stock
+  if (product && !running) {
+    const units = batch.unitsPacked || batch.bagsPacked || 0;
+    product.currentStockUnits =
+      (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;
+    product.currentStockBags = product.currentStockUnits;
+
+    db.movements.unshift({
+      id: generateId('mov'),
+      date: new Date().toISOString().split('T')[0],
+      itemId: product.id,
+      itemName: product.name,
+      itemType: 'finished_goods',
+      movementType: 'reversal',
+      quantity: units,
+      unit: (batch.outputUnit || 'units') as any,
+      direction: 'out',
+      referenceType: 'batch',
+      referenceId: batch.id,
+      notes: `Finished goods deduction on batch reversal ${batch.batchNumber}`,
+    });
+  }
+
+  batch.status = 'reversed';
+  batch.reversedAt = new Date().toISOString();
+  if (reason) {
+    batch.notes = (batch.notes ? batch.notes + ' | ' : '') + `Reversal Reason: ${reason}`;
+  }
+};
+
 export const productionService = {
   // Fetch all persistent setups
   getSetups: async (): Promise<ProductionSetup[]> => {
     return simulateNetwork(() => {
       const db = getDB();
-      return [...db.setups];
+      return JSON.parse(JSON.stringify(db.setups)) as ProductionSetup[];
     });
   },
 
@@ -294,7 +398,9 @@ export const productionService = {
   getBatches: async (): Promise<ProductionBatch[]> => {
     return simulateNetwork(() => {
       const db = getDB();
-      return [...db.batches].sort(
+      // Copies, not the live records: batches change in place, and React Query only notices a
+      // change when the data it is handed is different from what it already holds.
+      return (JSON.parse(JSON.stringify(db.batches)) as ProductionBatch[]).sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       );
     });
@@ -691,95 +797,112 @@ export const productionService = {
       const batch = db.batches.find((b) => b.id === batchId);
       if (!batch) throw new Error('Batch not found');
       if (batch.status === 'reversed') throw new Error('Batch has already been reversed.');
-      const running = batch.status === 'in_progress';
+      reverseInDb(db, batch, reason);
+      return { ...batch };
+    });
+  },
 
-      const product = db.products.find((p) => p.id === batch.productId);
-      const bagItem = db.ingredients.find((i) => i.category === 'packaging');
+  // Edit what can safely change after the fact. Output changes move finished stock and packaging.
+  updateBatch: async (batchId: string, input: UpdateBatchInput): Promise<ProductionBatch> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const batch = db.batches.find((b) => b.id === batchId);
+      if (!batch) throw new Error('Batch not found');
+      if (batch.status === 'reversed') throw new Error('A cancelled batch cannot be edited.');
 
-      // Guard first: never reverse if the batch output has already left the warehouse,
-      // otherwise raw materials would be restored while the sold goods stay unaccounted for.
-      if (product && !running) {
-        const units = batch.unitsPacked || batch.bagsPacked || 0;
-        const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
-        if (onHand < units) {
-          throw new Error(
-            `Cannot reverse ${batch.batchNumber}: only ${onHand} of ${units} ${batch.outputUnit || 'units'} are still in stock. Cancel the related sales first.`,
+      if (batch.status === 'confirmed' && input.unitsPacked !== undefined) {
+        if (!(input.unitsPacked > 0)) throw new Error('Output must be above 0.');
+        const delta = input.unitsPacked - batch.unitsPacked;
+        const product = db.products.find((p) => p.id === batch.productId);
+        const packaging = db.ingredients.find((i) => i.category === 'packaging');
+        if (delta !== 0 && product) {
+          const onHand = product.currentStockUnits ?? product.currentStockBags ?? 0;
+          if (onHand + delta < 0) {
+            throw new Error(
+              `Only ${onHand} ${batch.outputUnit} of this are still in stock, so the output cannot be lowered by ${-delta}.`,
+            );
+          }
+          if (packaging && delta > 0 && packaging.currentStock < delta) {
+            throw new Error(`Not enough ${packaging.name} for ${delta} more.`);
+          }
+          product.currentStockUnits = onHand + delta;
+          product.currentStockBags = product.currentStockUnits;
+          if (packaging) packaging.currentStock -= delta;
+          const date = new Date().toISOString().split('T')[0];
+          db.movements.unshift({
+            id: generateId('mov'),
+            date,
+            itemId: product.id,
+            itemName: product.name,
+            itemType: 'finished_feed',
+            movementType: 'adjustment',
+            quantity: Math.abs(delta),
+            unit: (batch.outputUnit || 'units') as any,
+            direction: delta > 0 ? 'in' : 'out',
+            referenceType: 'batch',
+            referenceId: batch.id,
+            notes: `Output of ${batch.batchNumber} edited from ${batch.unitsPacked} to ${input.unitsPacked}`,
+          });
+        }
+        const packUsed = packaging ? input.unitsPacked : 0;
+        const packagingCost = packUsed * (batch.packagingUnitCostSnapshot || 0);
+        const size =
+          input.unitSize ??
+          (batch.unitsPacked > 0 ? batch.actualFinishedQuantity / batch.unitsPacked : 0);
+        const finished = input.unitsPacked * size;
+        const directBatchCost = batch.ingredientCost + packagingCost;
+        Object.assign(batch, {
+          unitsPacked: input.unitsPacked,
+          bagsPacked: input.unitsPacked,
+          packagingUsedUnits: packUsed,
+          packagingUsedBags: packUsed,
+          packagingCost,
+          actualFinishedQuantity: finished,
+          actualFinishedWeightKg: finished,
+          directBatchCost,
+          directCostPerUnit: Number((directBatchCost / input.unitsPacked).toFixed(2)),
+          directCostPerBaseUnit: finished > 0 ? Number((directBatchCost / finished).toFixed(2)) : 0,
+        });
+        const minutes = input.durationMinutes ?? batch.durationMinutes;
+        if (minutes) {
+          batch.durationMinutes = minutes;
+          batch.outputPerHour = Number(((input.unitsPacked * 60) / minutes).toFixed(2));
+        }
+      } else if (input.durationMinutes !== undefined && batch.status === 'confirmed') {
+        batch.durationMinutes = input.durationMinutes;
+        if (input.durationMinutes > 0 && batch.unitsPacked > 0) {
+          batch.outputPerHour = Number(
+            ((batch.unitsPacked * 60) / input.durationMinutes).toFixed(2),
           );
         }
       }
 
-      // Compensating stock restoration: Return raw materials
-      for (const item of batch.itemsConsumed) {
-        const ing = db.ingredients.find((i) => i.id === item.ingredientId);
-        if (ing) {
-          ing.currentStock += item.actualQuantity;
-        }
-        db.movements.unshift({
-          id: generateId('mov'),
-          date: new Date().toISOString().split('T')[0],
-          itemId: item.ingredientId,
-          itemName: item.ingredientName,
-          itemType: 'raw_material',
-          movementType: 'reversal',
-          quantity: item.actualQuantity,
-          unit: item.unit,
-          direction: 'in',
-          referenceType: 'batch',
-          referenceId: batch.id,
-          notes: `Batch reversal ${batch.batchNumber}: ${reason || 'Operator reversal'}`,
-        });
+      if (input.measurableWastage !== undefined) {
+        batch.measurableWastage = input.measurableWastage;
+        batch.measurableWastageKg = input.measurableWastage;
       }
-
-      // Return packaging
-      if (bagItem && !running) {
-        const returnPackaging = batch.packagingUsedUnits || batch.packagingUsedBags || 0;
-        bagItem.currentStock += returnPackaging;
-        db.movements.unshift({
-          id: generateId('mov'),
-          date: new Date().toISOString().split('T')[0],
-          itemId: bagItem.id,
-          itemName: bagItem.name,
-          itemType: 'packaging',
-          movementType: 'reversal',
-          quantity: returnPackaging,
-          unit: 'pcs',
-          direction: 'in',
-          referenceType: 'batch',
-          referenceId: batch.id,
-          notes: `Packaging reversal for ${batch.batchNumber}`,
-        });
+      if (input.notes !== undefined) batch.notes = input.notes;
+      if (input.date) batch.date = input.date;
+      if (batch.status === 'in_progress') {
+        if (input.plannedHours !== undefined) batch.plannedHours = input.plannedHours;
+        if (input.expectedUnits !== undefined) batch.expectedUnits = input.expectedUnits;
       }
-
-      // Deduct finished goods stock
-      if (product && !running) {
-        const units = batch.unitsPacked || batch.bagsPacked || 0;
-        product.currentStockUnits =
-          (product.currentStockUnits ?? product.currentStockBags ?? 0) - units;
-        product.currentStockBags = product.currentStockUnits;
-
-        db.movements.unshift({
-          id: generateId('mov'),
-          date: new Date().toISOString().split('T')[0],
-          itemId: product.id,
-          itemName: product.name,
-          itemType: 'finished_goods',
-          movementType: 'reversal',
-          quantity: units,
-          unit: (batch.outputUnit || 'units') as any,
-          direction: 'out',
-          referenceType: 'batch',
-          referenceId: batch.id,
-          notes: `Finished goods deduction on batch reversal ${batch.batchNumber}`,
-        });
-      }
-
-      batch.status = 'reversed';
-      batch.reversedAt = new Date().toISOString();
-      if (reason) {
-        batch.notes = (batch.notes ? batch.notes + ' | ' : '') + `Reversal Reason: ${reason}`;
-      }
-
       return { ...batch };
+    });
+  },
+
+  // Remove a batch as if it never happened: stock is put back and its ledger entries are removed.
+  deleteBatch: async (batchId: string): Promise<void> => {
+    return simulateNetwork(() => {
+      const db = getDB();
+      const index = db.batches.findIndex((b) => b.id === batchId);
+      if (index === -1) throw new Error('Batch not found');
+      const batch = db.batches[index];
+      if (batch.status !== 'reversed') reverseInDb(db, batch, 'Batch deleted');
+      db.movements = db.movements.filter(
+        (m) => !(m.referenceType === 'batch' && m.referenceId === batchId),
+      );
+      db.batches.splice(index, 1);
     });
   },
 };

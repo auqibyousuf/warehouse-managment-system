@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useColors } from '../../../theme';
 import { openSheet } from '../../../navigation/sheets';
-import { useProductionSetups, useStartBatchRun } from '../../../hooks/api/useProduction';
+import {
+  useProductionBatches,
+  useProductionSetups,
+  useStartBatchRun,
+} from '../../../hooks/api/useProduction';
 import { useIngredients, useProducts } from '../../../hooks/api/useInventory';
 import {
   formatDuration,
@@ -32,14 +36,21 @@ import {
 export interface StartBatchPageProps {
   onClose: () => void;
   preselectedSetupId?: string | null;
+  /** Pre-fill from an earlier batch: same recipe, amounts, hours and output. */
+  rerunBatchId?: string | null;
 }
 
 /** Start Batch: pick a recipe, set the target, check stock, confirm. Full-page flow from the Stitch Lite design. */
-export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, preselectedSetupId }) => {
+export const StartBatchPage: React.FC<StartBatchPageProps> = ({
+  onClose,
+  preselectedSetupId,
+  rerunBatchId,
+}) => {
   const colors = useColors();
   const { data: setups = [] } = useProductionSetups();
   const { data: ingredients = [] } = useIngredients();
   const { data: products = [] } = useProducts();
+  const { data: batches = [] } = useProductionBatches();
   const startRun = useStartBatchRun();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
 
@@ -63,6 +74,27 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
   const rate = setup?.outputPerHour ?? 0;
   const [hoursText, setHoursText] = useState<string | null>(null);
   const [outText, setOutText] = useState<string | null>(null);
+  // Run again: copy the earlier batch's recipe, amounts, hours and output once (state set during render).
+  const rerun = rerunBatchId ? batches.find((b) => b.id === rerunBatchId) : undefined;
+  const [seededRerun, setSeededRerun] = useState<string | null>(null);
+  if (rerun && seededRerun !== rerun.id) {
+    setSeededRerun(rerun.id);
+    setSetupId(rerun.setupId);
+    setOverrides(
+      Object.fromEntries(
+        rerun.itemsConsumed.map((i) => [i.ingredientId, String(i.actualQuantity)]),
+      ),
+    );
+    setAdjusting(true);
+    const out = rerun.status === 'confirmed' ? rerun.unitsPacked : rerun.expectedUnits;
+    if (out) setOutText(String(out));
+    const hours = rerun.durationMinutes
+      ? Math.round((rerun.durationMinutes / 60) * 100) / 100
+      : rerun.plannedHours;
+    if (hours && !out) setHoursText(String(hours));
+  }
+  const rerunRecipe = rerun ? setups.find((x) => x.id === rerun.setupId) : undefined;
+  const rerunBlocked = !!rerun && rerunRecipe?.status !== 'active';
   const outUnit = setup?.outputUnit || 'packs';
   const usual = expectedUnits * loads;
   const expected =
@@ -175,6 +207,23 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({ onClose, presele
         description="Load the mixer now. You enter the output when it finishes."
         chip="Production"
       />
+
+      {rerun && !rerunBlocked && (
+        <Card tone="info" padding="compact">
+          <Typography variant="bodySmall" color="secondary">
+            Same as {rerun.batchNumber}: recipe, amounts, hours and output are copied. Change
+            anything before you start.
+          </Typography>
+        </Card>
+      )}
+      {rerunBlocked && (
+        <Card tone="warning" padding="compact">
+          <Typography variant="bodySmall" color="secondary">
+            The recipe for {rerun?.batchNumber} is paused or archived, so it cannot be run again.
+            Activate it on the Recipes tab, or pick another recipe below.
+          </Typography>
+        </Card>
+      )}
 
       <FlowSection
         label="Recipe"
