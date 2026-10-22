@@ -130,3 +130,8 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 ## 14. Batch breakdown (latest)
 
 - One breakdown (`batchBreakdown` in `src/utils/batchEstimates.ts`, shown by `BatchBreakdownView`) is used on Start Batch (expected), Complete Batch (actual) and batch details: total production in packs and base unit, cost per item with its share, materials, packaging, total cost, cost per pack and per kg, sales value, **value added** (sales − materials), **gain** (sales − total cost), margin and gain per pack and per kg. Labour, power and other expenses stay under Expenses.
+
+## 16. Production items and selling price (latest)
+
+- **Labelling:** what batches make is shown in Stock as a **Production item** (filter "Production items"), kept apart from raw material and packaging, and left out of the raw-material value line.
+- **Selling price lives in one place:** the production item. Stock details show "Selling price" with Add selling price / Change price; batch screens show the same button whenever the item has no price, so profit and value added can be shown. Recipes and raw materials never ask for a selling price.

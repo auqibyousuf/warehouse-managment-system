@@ -5,6 +5,7 @@ import { useInventoryItems, useInventoryMovements } from '../../hooks/api/useInv
 import {
   Badge,
   Box,
+  Card,
   Button,
   InsetStats,
   Modal,
@@ -24,7 +25,7 @@ export interface StockDetailModalProps {
 const KIND: Record<string, string> = {
   raw_material: 'Raw material',
   packaging: 'Packaging',
-  finished_feed: 'Finished goods',
+  finished_feed: 'Production item',
 };
 
 /** Full picture of one stock item: level, value, recent movements, and every action. */
@@ -101,10 +102,37 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({ visible, onC
                 Safety minimum {item.minThreshold.toLocaleString('en-IN')} {item.unit}
               </Typography>
               <Typography variant="caption" color="muted">
-                {isFinished ? 'Price' : 'Cost'} {money(item.unitCostOrPrice)} / {item.unit}
+                {isFinished ? 'Retail' : 'Cost'} {money(item.unitCostOrPrice)} / {item.unit}
               </Typography>
             </Row>
           </Box>
+
+          {isFinished && (
+            <Card variant="flat" padding="compact">
+              <Row justify="space-between" align="center" gap="sm">
+                <Box flex={1}>
+                  <Typography variant="label" color="muted">
+                    Selling price
+                  </Typography>
+                  <Typography
+                    variant="title"
+                    color={item.unitCostOrPrice > 0 ? 'primary' : 'muted'}
+                  >
+                    {item.unitCostOrPrice > 0
+                      ? `${money(item.unitCostOrPrice)} per ${item.unit}`
+                      : 'Not set'}
+                  </Typography>
+                </Box>
+                <Button
+                  label={item.unitCostOrPrice > 0 ? 'Change price' : 'Add selling price'}
+                  variant={item.unitCostOrPrice > 0 ? 'subtle' : 'primary'}
+                  size="sm"
+                  leftIcon="pricetag-outline"
+                  onPress={() => go(() => openSheet('set_price', { productId: item.id }))}
+                />
+              </Row>
+            </Card>
+          )}
 
           <Row gap="sm" wrap>
             {!isFinished && (

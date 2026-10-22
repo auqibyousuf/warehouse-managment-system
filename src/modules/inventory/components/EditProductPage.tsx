@@ -39,7 +39,7 @@ export const EditProductPage: React.FC<EditProductPageProps> = ({ onClose, produ
     if (!product) return;
     if (!name.trim()) return setError('Product name is required');
     const value = Number(price);
-    if (Number.isNaN(value) || value <= 0) return setError('Selling price must be greater than 0');
+    if (Number.isNaN(value) || value < 0) return setError('Selling price cannot be negative');
     try {
       await updateMutation.mutateAsync({
         id: product.id,

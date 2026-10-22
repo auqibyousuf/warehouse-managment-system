@@ -112,16 +112,18 @@ export const StockScreen: React.FC = () => {
           { value: 'all', label: 'All', count: counts.all },
           { value: 'raw_material', label: 'Raw', count: counts.raw_material },
           { value: 'packaging', label: 'Packaging', count: counts.packaging },
-          { value: 'finished_feed', label: 'Finished', count: counts.finished_feed },
+          { value: 'finished_feed', label: 'Production items', count: counts.finished_feed },
           ...(counts.low > 0 ? [{ value: 'low', label: 'Low stock', count: counts.low }] : []),
         ]}
         selected={category}
         onSelect={(value) => setCategory(value as CategoryFilter)}
       />
 
-      <Typography variant="caption" color="muted">
-        Raw material and packaging on hand: {money(stockValue)} at cost
-      </Typography>
+      {category !== 'finished_feed' && (
+        <Typography variant="caption" color="muted">
+          Raw material and packaging on hand: {money(stockValue)} at cost
+        </Typography>
+      )}
     </Stack>
   );
 
@@ -159,7 +161,7 @@ export const StockScreen: React.FC = () => {
                       </Typography>
                       <Typography variant="bodySmall" color="muted">
                         {isFinished
-                          ? 'Finished goods'
+                          ? 'Production item'
                           : item.type === 'packaging'
                             ? 'Packaging'
                             : 'Raw material'}
@@ -175,7 +177,7 @@ export const StockScreen: React.FC = () => {
                       />
                     ) : (
                       <Badge
-                        label={isFinished ? 'Ready to ship' : 'In stock'}
+                        label={'In stock'}
                         variant="success"
                         icon="checkmark-circle-outline"
                         size="sm"
@@ -195,7 +197,7 @@ export const StockScreen: React.FC = () => {
                       {low
                         ? 'Low stock level'
                         : isFinished
-                          ? 'Ready to ship'
+                          ? 'Made in your batches'
                           : 'Available quantity'}
                     </Typography>
                     <Row gap="xs" align="flex-end">

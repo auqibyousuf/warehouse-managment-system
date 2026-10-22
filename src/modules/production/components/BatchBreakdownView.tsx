@@ -1,7 +1,7 @@
 import React from 'react';
 import { useMoney } from '../../../hooks/useMoney';
 import { BatchBreakdown } from '../../../utils/batchEstimates';
-import { Badge, Divider, Row, Stack, Typography } from '../../../components';
+import { Badge, Button, Divider, Row, Stack, Typography } from '../../../components';
 
 export interface BatchBreakdownViewProps {
   breakdown: BatchBreakdown;
@@ -11,6 +11,8 @@ export interface BatchBreakdownViewProps {
   price: number;
   /** Hint when the breakdown is only an estimate. */
   estimate?: boolean;
+  /** Opens the selling price page for this item; shown only while no price is set. */
+  onAddPrice?: () => void;
 }
 
 /** Total production, where the cost goes, what the batch added and what is gained. */
@@ -20,6 +22,7 @@ export const BatchBreakdownView: React.FC<BatchBreakdownViewProps> = ({
   baseUnit,
   price,
   estimate,
+  onAddPrice,
 }) => {
   const money = useMoney();
   const row = (
@@ -129,11 +132,22 @@ export const BatchBreakdownView: React.FC<BatchBreakdownViewProps> = ({
           </Typography>
         </>
       ) : (
-        <Typography variant="bodySmall" color="secondary">
-          {b.units > 0
-            ? 'Set a selling price on the product to see value added and gain.'
-            : 'Enter the output above to see value added and gain.'}
-        </Typography>
+        <Stack gap="xs">
+          <Typography variant="bodySmall" color="secondary">
+            {b.units > 0
+              ? 'This item has no selling price yet, so value added and gain cannot be shown.'
+              : 'Enter the output above to see value added and gain.'}
+          </Typography>
+          {onAddPrice && (
+            <Button
+              label="Add selling price"
+              variant="subtle"
+              size="sm"
+              leftIcon="pricetag-outline"
+              onPress={onAddPrice}
+            />
+          )}
+        </Stack>
       )}
     </Stack>
   );
