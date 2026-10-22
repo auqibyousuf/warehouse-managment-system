@@ -132,7 +132,14 @@ export const BatchesScreen: React.FC = () => {
                   ) : (
                     <>
                       <Button
-                        label="Cancel run"
+                        label="Edit"
+                        variant="subtle"
+                        size="sm"
+                        style={{ flex: 1 }}
+                        onPress={() => openSheet('edit_batch', { batchId: b.id })}
+                      />
+                      <Button
+                        label="Cancel"
                         variant="subtle"
                         size="sm"
                         style={{ flex: 1 }}
@@ -179,25 +186,46 @@ export const BatchesScreen: React.FC = () => {
             finished.map((b) => {
               const reversed = b.status === 'reversed';
               return (
-                <Card
-                  key={b.id}
-                  variant="elevated"
-                  padding="compact"
-                  onPress={() => openSheet('batch_detail', { batchId: b.id })}
-                >
-                  <Row justify="space-between" align="center" gap="sm">
-                    <Box flex={1}>
-                      <Typography variant="title" color="primary" numberOfLines={1}>
-                        {b.productName}
-                      </Typography>
-                      <Typography variant="bodySmall" color="secondary">
-                        {reversed ? 'Cancelled' : `${b.unitsPacked} ${b.outputUnit}`} · {b.date}
-                      </Typography>
-                    </Box>
-                    <Badge
-                      label={reversed ? 'Cancelled' : 'Done'}
-                      variant={reversed ? 'danger' : 'success'}
+                <Card key={b.id} variant="elevated" padding="compact">
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`${b.batchNumber} details`}
+                    onPress={() => openSheet('batch_detail', { batchId: b.id })}
+                  >
+                    <Row justify="space-between" align="center" gap="sm">
+                      <Box flex={1}>
+                        <Typography variant="title" color="primary" numberOfLines={1}>
+                          {b.productName}
+                        </Typography>
+                        <Typography variant="bodySmall" color="secondary">
+                          {reversed ? 'Cancelled' : `${b.unitsPacked} ${b.outputUnit}`} · {b.date}
+                        </Typography>
+                      </Box>
+                      <Badge
+                        label={reversed ? 'Cancelled' : 'Done'}
+                        variant={reversed ? 'danger' : 'success'}
+                        size="sm"
+                      />
+                    </Row>
+                  </Pressable>
+                  <Row gap="sm" style={{ marginTop: theme.spacing.sm }}>
+                    {!reversed && (
+                      <Button
+                        label="Edit"
+                        variant="subtle"
+                        size="sm"
+                        leftIcon="create-outline"
+                        style={{ flex: 1 }}
+                        onPress={() => openSheet('edit_batch', { batchId: b.id })}
+                      />
+                    )}
+                    <Button
+                      label="Run again"
+                      variant="subtle"
                       size="sm"
+                      leftIcon="repeat-outline"
+                      style={{ flex: 1 }}
+                      onPress={() => openSheet('start_batch', { rerunBatchId: b.id })}
                     />
                   </Row>
                 </Card>

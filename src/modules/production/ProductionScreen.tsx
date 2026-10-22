@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Pressable } from 'react-native';
 import { openSheet } from '../../navigation/sheets';
 import { theme } from '../../theme';
 import { batchStatusView } from '../../utils/batchStatus';
@@ -90,27 +91,49 @@ export const ProductionScreen: React.FC<{ only?: ProductionTab }> = ({ only }) =
             0,
           );
           return (
-            <Card
-              variant="elevated"
-              padding="compact"
-              onPress={() => openSheet('recipe_detail', { setupId: setup.id })}
-            >
-              <Row gap="sm" align="center">
-                <IconTile icon="flask-outline" tone={active ? 'primary' : 'neutral'} size={40} />
-                <Box flex={1}>
-                  <Typography variant="title" color="primary" numberOfLines={1}>
-                    {setup.name}
-                  </Typography>
-                  <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
-                    {setup.productName}
-                    {units > 0 && batchCost > 0 ? ` • ${money(batchCost / units)} per unit` : ''}
-                  </Typography>
-                </Box>
-                <Badge
-                  label={active ? 'Active' : 'Paused'}
-                  variant={active ? 'success' : 'neutral'}
+            <Card variant="elevated" padding="compact">
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${setup.name} details`}
+                onPress={() => openSheet('recipe_detail', { setupId: setup.id })}
+              >
+                <Row gap="sm" align="center">
+                  <IconTile icon="flask-outline" tone={active ? 'primary' : 'neutral'} size={40} />
+                  <Box flex={1}>
+                    <Typography variant="title" color="primary" numberOfLines={1}>
+                      {setup.name}
+                    </Typography>
+                    <Typography variant="bodySmall" color="secondary" numberOfLines={1}>
+                      {setup.productName}
+                      {units > 0 && batchCost > 0 ? ` • ${money(batchCost / units)} per unit` : ''}
+                    </Typography>
+                  </Box>
+                  <Badge
+                    label={active ? 'Active' : 'Paused'}
+                    variant={active ? 'success' : 'neutral'}
+                    size="sm"
+                  />
+                </Row>
+              </Pressable>
+              <Row gap="sm" style={{ marginTop: theme.spacing.sm }}>
+                <Button
+                  label="Edit"
+                  variant="subtle"
                   size="sm"
+                  leftIcon="create-outline"
+                  style={{ flex: 1 }}
+                  onPress={() => openSheet('edit_setup', { setupId: setup.id })}
                 />
+                {active && (
+                  <Button
+                    label="Start batch"
+                    variant="subtle"
+                    size="sm"
+                    leftIcon="play-circle-outline"
+                    style={{ flex: 1 }}
+                    onPress={() => openSheet('start_batch', { setupId: setup.id })}
+                  />
+                )}
               </Row>
             </Card>
           );

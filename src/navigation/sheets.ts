@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 export type SheetName =
   | 'start_batch'
   | 'complete_batch'
+  | 'edit_batch'
   | 'create_setup'
   | 'edit_setup'
   | 'record_purchase'
@@ -39,6 +40,8 @@ export interface SheetParams {
   itemId?: string;
   kind?: string;
   batchId?: string;
+  /** Start Batch: begin from a finished or running batch's amounts, hours and output. */
+  rerunBatchId?: string;
   period?: string;
 }
 

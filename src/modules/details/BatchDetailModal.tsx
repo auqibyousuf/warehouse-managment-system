@@ -5,7 +5,11 @@ import { BatchBreakdownView } from '../production/components/BatchBreakdownView'
 import { batchStatusView } from '../../utils/batchStatus';
 import React, { useState } from 'react';
 import { useMoney } from '../../hooks/useMoney';
-import { useProductionBatches, useReverseProductionBatch } from '../../hooks/api/useProduction';
+import {
+  useDeleteBatch,
+  useProductionBatches,
+  useReverseProductionBatch,
+} from '../../hooks/api/useProduction';
 import { useAppStore } from '../../stores/useAppStore';
 import {
   Badge,
@@ -37,6 +41,8 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
   const reverse = useReverseProductionBatch();
   const setBannerAlert = useAppStore((s) => s.setBannerAlert);
   const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const remove = useDeleteBatch();
 
   const { data: products = [] } = useProducts();
   const batch = batches.find((b) => b.id === batchId);
@@ -60,6 +66,27 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
   const running = batch.status === 'in_progress';
   const view = batchStatusView(batch.status);
   const perUnit = batch.directCostPerUnit ?? batch.directCostPerBag ?? 0;
+
+  const handleDelete = async () => {
+    try {
+      await remove.mutateAsync(batch.id);
+      setBannerAlert({
+        title: 'Batch deleted',
+        message: `${batch.batchNumber} was removed and its stock put back.`,
+        variant: 'info',
+      });
+      setDeleting(false);
+      onClose();
+    } catch (err: any) {
+      setDeleting(false);
+      setBannerAlert({ title: 'Could not delete', message: err.message, variant: 'danger' });
+    }
+  };
+
+  const rerun = () => {
+    onClose();
+    openSheet('start_batch', { rerunBatchId: batch.id });
+  };
 
   const handleReverse = async () => {
     try {
@@ -90,7 +117,7 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
         secondaryAction={{ label: 'Close', onPress: onClose }}
         primaryAction={
           reversed
-            ? undefined
+            ? { label: 'Run again', onPress: rerun }
             : running
               ? {
                   label: 'Complete Batch',
@@ -100,7 +127,7 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
                   },
                   variant: 'success',
                 }
-              : { label: 'Reverse Batch', onPress: () => setConfirming(true), variant: 'danger' }
+              : { label: 'Run again', onPress: rerun }
         }
       >
         <Stack gap="md">
@@ -111,6 +138,35 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
                 Recipe v{batch.setupVersion}
               </Typography>
             ) : null}
+          </Row>
+
+          <Row gap="sm" wrap>
+            {!reversed && (
+              <Button
+                label="Edit"
+                variant="subtle"
+                size="sm"
+                leftIcon="create-outline"
+                onPress={() => {
+                  onClose();
+                  openSheet('edit_batch', { batchId: batch.id });
+                }}
+              />
+            )}
+            <Button
+              label="Run again"
+              variant="subtle"
+              size="sm"
+              leftIcon="repeat-outline"
+              onPress={rerun}
+            />
+            <Button
+              label="Delete"
+              variant="ghost"
+              size="sm"
+              leftIcon="trash-outline"
+              onPress={() => setDeleting(true)}
+            />
           </Row>
 
           <InsetStats
@@ -187,10 +243,10 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
             </Stack>
           </Box>
 
-          {running && (
+          {!reversed && (
             <Button
-              label="Cancel run"
-              variant="subtle"
+              label={running ? 'Cancel run (keep record)' : 'Reverse batch (keep record)'}
+              variant="ghost"
               size="sm"
               onPress={() => setConfirming(true)}
             />
@@ -208,6 +264,22 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
           ) : null}
         </Stack>
       </Modal>
+
+      <ConfirmDialog
+        visible={deleting}
+        onClose={() => setDeleting(false)}
+        onConfirm={handleDelete}
+        title="Delete this batch?"
+        message={
+          reversed
+            ? 'The record and its ledger entries are removed. Stock is already back.'
+            : `The record is removed and stock goes back as if it never ran${running ? '' : `: materials return and ${batch.unitsPacked} ${batch.outputUnit} of finished goods are taken out`}. This cannot be done if they were already sold.`
+        }
+        confirmLabel="Delete batch"
+        cancelLabel="Keep"
+        isDestructive
+        loading={remove.isPending}
+      />
 
       <ConfirmDialog
         visible={confirming}

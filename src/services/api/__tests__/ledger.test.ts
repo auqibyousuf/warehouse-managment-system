@@ -199,6 +199,67 @@ describe('run time and rate', () => {
   });
 });
 
+describe('editing and deleting batches', () => {
+  const stock = (id: string) => getDB().ingredients.find((i) => i.id === id)!.currentStock;
+  const finishedUnits = () => getDB().products.find((p) => p.id === 'prod-1')!.currentStockUnits!;
+  const finishedBatch = async () => {
+    const run = await productionService.startBatchRun({
+      setupId: 'setup-1',
+      date: '2026-01-01',
+      actualItems: [{ ingredientId: 'ing-1', actualQuantity: 100 }],
+    });
+    return productionService.completeBatchRun(run.id, { unitsPacked: 10, unitSize: 20 });
+  };
+
+  it('moves finished stock when the output is edited', async () => {
+    const batch = await finishedBatch();
+    const before = finishedUnits();
+    const edited = await productionService.updateBatch(batch.id, {
+      unitsPacked: 12,
+      notes: 'fixed',
+    });
+    expect(edited.unitsPacked).toBe(12);
+    expect(edited.actualFinishedQuantity).toBe(240);
+    expect(edited.notes).toBe('fixed');
+    expect(finishedUnits()).toBe(before + 2);
+  });
+
+  it('refuses to lower output below what is still in stock', async () => {
+    const batch = await finishedBatch();
+    await salesService.createInvoice({
+      customerId: 'cust-1',
+      productId: 'prod-1',
+      quantity: finishedUnits(),
+      unitPrice: 100,
+      amountPaidNow: 0,
+      date: today,
+    });
+    await expect(productionService.updateBatch(batch.id, { unitsPacked: 1 })).rejects.toThrow();
+  });
+
+  it('deleting puts stock back and removes the ledger entries', async () => {
+    const bran = stock('ing-1');
+    const finished = finishedUnits();
+    const batch = await finishedBatch();
+    await productionService.deleteBatch(batch.id);
+    expect(stock('ing-1')).toBe(bran);
+    expect(finishedUnits()).toBe(finished);
+    expect(getDB().batches.some((b) => b.id === batch.id)).toBe(false);
+    expect(getDB().movements.some((m) => m.referenceId === batch.id)).toBe(false);
+  });
+
+  it('deletes a running batch and returns its inputs', async () => {
+    const bran = stock('ing-1');
+    const run = await productionService.startBatchRun({
+      setupId: 'setup-1',
+      date: '2026-01-01',
+      actualItems: [{ ingredientId: 'ing-1', actualQuantity: 50 }],
+    });
+    await productionService.deleteBatch(run.id);
+    expect(stock('ing-1')).toBe(bran);
+  });
+});
+
 describe('deleting a recipe', () => {
   it('removes an unused recipe and archives one with batch history', async () => {
     const created = await productionService.createSetup({

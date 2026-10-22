@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { closeSheet, SheetName, SheetParams } from '../../navigation/sheets';
 import { StartBatchPage } from '../../modules/production/components/StartBatchPage';
+import { EditBatchPage } from '../../modules/production/components/EditBatchPage';
 import { CompleteBatchPage } from '../../modules/production/components/CompleteBatchPage';
 import { RecipePage } from '../../modules/production/components/RecipePage';
 import { AddStockPage } from '../../modules/inventory/components/AddStockPage';
@@ -30,7 +31,14 @@ import { CompanyProfilePage } from '../../modules/business/components/CompanyPro
 const onClose = closeSheet;
 
 const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
-  start_batch: (p) => <StartBatchPage onClose={onClose} preselectedSetupId={p.setupId ?? null} />,
+  start_batch: (p) => (
+    <StartBatchPage
+      onClose={onClose}
+      preselectedSetupId={p.setupId ?? null}
+      rerunBatchId={p.rerunBatchId ?? null}
+    />
+  ),
+  edit_batch: (p) => <EditBatchPage onClose={onClose} batchId={p.batchId ?? null} />,
   complete_batch: (p) => <CompleteBatchPage onClose={onClose} batchId={p.batchId ?? null} />,
   create_setup: () => <RecipePage onClose={onClose} />,
   edit_setup: (p) => <RecipePage onClose={onClose} setupId={p.setupId ?? null} />,
