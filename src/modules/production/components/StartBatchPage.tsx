@@ -388,6 +388,7 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({
               baseUnit={setup?.baseUnit || 'kg'}
               price={price}
               estimate
+              onAddPrice={() => openSheet('set_price', { productId: setup?.productId })}
             />
           </FlowSection>
 

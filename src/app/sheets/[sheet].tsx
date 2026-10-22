@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { closeSheet, SheetName, SheetParams } from '../../navigation/sheets';
 import { StartBatchPage } from '../../modules/production/components/StartBatchPage';
+import { SetSellingPricePage } from '../../modules/inventory/components/SetSellingPricePage';
 import { EditBatchPage } from '../../modules/production/components/EditBatchPage';
 import { CompleteBatchPage } from '../../modules/production/components/CompleteBatchPage';
 import { RecipePage } from '../../modules/production/components/RecipePage';
@@ -39,6 +40,7 @@ const SHEETS: Record<SheetName, (p: SheetParams) => React.ReactElement> = {
     />
   ),
   edit_batch: (p) => <EditBatchPage onClose={onClose} batchId={p.batchId ?? null} />,
+  set_price: (p) => <SetSellingPricePage onClose={onClose} productId={p.productId ?? null} />,
   complete_batch: (p) => <CompleteBatchPage onClose={onClose} batchId={p.batchId ?? null} />,
   create_setup: () => <RecipePage onClose={onClose} />,
   edit_setup: (p) => <RecipePage onClose={onClose} setupId={p.setupId ?? null} />,

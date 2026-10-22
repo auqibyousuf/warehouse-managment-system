@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 export type SheetName =
   | 'start_batch'
   | 'complete_batch'
+  | 'set_price'
   | 'edit_batch'
   | 'create_setup'
   | 'edit_setup'

@@ -185,6 +185,10 @@ export const BatchDetailModal: React.FC<BatchDetailModalProps> = ({
               outputUnit={batch.outputUnit}
               baseUnit={batch.baseUnit || 'kg'}
               price={price}
+              onAddPrice={() => {
+                onClose();
+                openSheet('set_price', { productId: batch.productId });
+              }}
             />
           </Card>
 

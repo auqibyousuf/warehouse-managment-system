@@ -1,3 +1,4 @@
+import { openSheet } from '../../../navigation/sheets';
 import React, { useState } from 'react';
 import {
   useCompleteBatchRun,
@@ -239,6 +240,7 @@ export const CompleteBatchPage: React.FC<CompleteBatchPageProps> = ({ onClose, b
           outputUnit={outputUnit}
           baseUnit={baseUnit}
           price={price}
+          onAddPrice={() => openSheet('set_price', { productId: batch.productId })}
         />
       </FlowSection>
 

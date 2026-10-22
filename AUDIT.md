@@ -136,3 +136,8 @@ Source: Stitch project "BatchIQ Warehouse Operations Manager" (20 screens, light
 - **Batches:** Edit (finished: output, pack size, hours, wastage, date, notes, with finished stock and packaging moved to match; running: planned hours, expected output, notes), Delete (puts stock back and removes the batch and its ledger entries; refused if the output was already sold), and Run again (opens Start Batch pre-filled with the recipe, amounts, hours and output). Cancel and Reverse remain for keeping the record. Ingredient amounts of a finished batch are not editable; delete and rerun instead.
 - **Recipes:** Edit and Start batch buttons are on every recipe row and at the top of the recipe sheet, next to Delete.
 - **Fix:** the service now returns copies of batches and recipes, so a status change made in place (a batch completing) refreshes every screen, including the tab badge.
+
+## 16. Production items and selling price (latest)
+
+- **Labelling:** what batches make is shown in Stock as a **Production item** (filter "Production items"), kept apart from raw material and packaging, and left out of the raw-material value line.
+- **Selling price lives in one place:** the production item. Stock details show "Selling price" with Add selling price / Change price; batch screens show the same button whenever the item has no price, so profit and value added can be shown. Recipes and raw materials never ask for a selling price.
