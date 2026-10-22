@@ -96,7 +96,8 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({
   const rerunRecipe = rerun ? setups.find((x) => x.id === rerun.setupId) : undefined;
   const rerunBlocked = !!rerun && rerunRecipe?.status !== 'active';
   const outUnit = setup?.outputUnit || 'packs';
-  const usual = expectedUnits * loads;
+  // Output is for the whole batch, however many mixer loads it takes: never multiplied by loads.
+  const usual = expectedUnits;
   const expected =
     outText !== null
       ? Number(outText) || 0
@@ -255,7 +256,10 @@ export const StartBatchPage: React.FC<StartBatchPageProps> = ({
 
       {setup && (
         <>
-          <FlowSection label="Mixer loads" hint="Amounts below are for one mix">
+          <FlowSection
+            label="Mixer loads"
+            hint="Ingredient amounts below are per mix. Output is for the whole batch."
+          >
             <QuantityStepper
               value={loads}
               onChange={(v) => {
